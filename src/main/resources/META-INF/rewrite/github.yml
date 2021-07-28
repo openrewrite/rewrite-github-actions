@@ -26,16 +26,3 @@ recipeList:
       yaml: |-
         workflow_dispatch:
       fileMatcher: '.github/workflows/*.yml'
----
-type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.github.AddCronTrigger
-displayName: Add cron workflow trigger
-description: The `schedule` [event](https://docs.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events) allows you to trigger a workflow at a scheduled time.
-tags:
-  - github
-recipeList:
-  - org.openrewrite.yaml.InsertYaml:
-      key: /on
-      yaml: |-
-        workflow_dispatch: {}
-      fileMatcher: '.github/workflows/*.yml'
