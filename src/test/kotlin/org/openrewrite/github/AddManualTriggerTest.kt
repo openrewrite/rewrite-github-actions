@@ -31,7 +31,6 @@ class AddManualTriggerTest : YamlRecipeTest {
             .build()
             .activateRecipes("org.openrewrite.github.AddManualTrigger")
 
-    @Disabled
     @Test
     fun manualTrigger(@TempDir tempDir: Path) = assertChanged(
         before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
@@ -42,6 +41,8 @@ class AddManualTriggerTest : YamlRecipeTest {
                       push:
                         branches:
                           - main
+                    env:
+                      TEST: 'value'
                 """.trimIndent()
             )
         },
@@ -51,7 +52,9 @@ class AddManualTriggerTest : YamlRecipeTest {
               push:
                 branches:
                   - main
-              workflow_dispatch: {}
+              workflow_dispatch:
+            env:
+              TEST: 'value'
         """
     )
 }

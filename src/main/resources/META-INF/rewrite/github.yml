@@ -24,7 +24,7 @@ recipeList:
   - org.openrewrite.yaml.InsertYaml:
       key: /on
       yaml: |-
-        workflow_dispatch: {}
+        workflow_dispatch:
       fileMatcher: '.github/workflows/*.yml'
 ---
 type: specs.openrewrite.org/v1beta/recipe
