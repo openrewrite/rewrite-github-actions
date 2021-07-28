@@ -39,6 +39,7 @@ class AutoCancelInProgressWorkflowTest : YamlRecipeTest {
                     """.trimIndent()
             )
         },
+        relativeTo = tempDir,
         after = """
             jobs:
               build:

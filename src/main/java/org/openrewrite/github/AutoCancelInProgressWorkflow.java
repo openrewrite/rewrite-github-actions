@@ -46,7 +46,7 @@ public class AutoCancelInProgressWorkflow extends Recipe {
 
     @Override
     protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new HasSourcePath<>("**/.github/workflows/*.yml");
+        return new HasSourcePath<>(".github/workflows/*.yml");
     }
 
     @Override
