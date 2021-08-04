@@ -18,8 +18,6 @@ package org.openrewrite.github
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.openrewrite.Recipe
-import org.openrewrite.config.Environment
-import org.openrewrite.yaml.InsertYaml
 import org.openrewrite.yaml.YamlRecipeTest
 import java.nio.file.Path
 
