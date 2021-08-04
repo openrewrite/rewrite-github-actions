@@ -21,8 +21,9 @@ description: You can manually trigger workflow runs. To trigger specific workflo
 tags:
   - github
 recipeList:
-  - org.openrewrite.yaml.InsertYaml:
+  - org.openrewrite.yaml.MergeYaml:
       key: /on
       yaml: |-
         workflow_dispatch:
+      acceptTheirs: true
       fileMatcher: '.github/workflows/*.yml'

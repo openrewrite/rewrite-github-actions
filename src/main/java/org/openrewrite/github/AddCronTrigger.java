@@ -19,7 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.openrewrite.Option;
 import org.openrewrite.Recipe;
-import org.openrewrite.yaml.InsertYaml;
+import org.openrewrite.yaml.MergeYaml;
 
 @EqualsAndHashCode(callSuper = false)
 @Getter
@@ -32,11 +32,12 @@ public class AddCronTrigger extends Recipe {
 
     public AddCronTrigger(String cron) {
         this.cron = cron;
-        doNext(new InsertYaml(
+        doNext(new MergeYaml(
                 "/on",
                 "" +
                         "schedule:\n" +
                         "  - cron: \"0 18 * * *\"",
+                true,
                 ".github/workflows/*.yml")
         );
     }
