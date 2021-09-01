@@ -1,0 +1,82 @@
+/*
+ * Copyright 2021 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.openrewrite.github;
+
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.HasSourcePath;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
+import org.openrewrite.yaml.JsonPathMatcher;
+import org.openrewrite.yaml.YamlIsoVisitor;
+import org.openrewrite.yaml.YamlVisitor;
+import org.openrewrite.yaml.tree.Yaml;
+
+import java.util.Collections;
+import java.util.Set;
+
+public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
+    @Override
+    public String getDisplayName() {
+        return "Use `actions/setup-java` `temurin` distribution";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Adopt OpenJDK got moved to Eclipse Temurin and won't be updated anymore. " +
+                "It is highly recommended to migrate workflows from adopt to temurin to keep receiving software and security updates. " +
+                "See more details in the [Good-bye AdoptOpenJDK post](https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/).";
+    }
+
+    @Override
+    public Set<String> getTags() {
+        return Collections.singleton("security");
+    }
+
+    @Override
+    protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
+        return new HasSourcePath<>(".github/workflows/*.yml");
+    }
+
+    @Override
+    protected YamlVisitor<ExecutionContext> getVisitor() {
+        return new ActionsSetupJavaAdoptOpenJDKToTemurinVisitor();
+    }
+
+    private static class ActionsSetupJavaAdoptOpenJDKToTemurinVisitor extends YamlIsoVisitor<ExecutionContext> {
+        private static final JsonPathMatcher distribution = new JsonPathMatcher(".distribution");
+
+        @Override
+        public Yaml.Mapping visitMapping(Yaml.Mapping mapping, ExecutionContext ctx) {
+            if (mapping.getEntries().stream().anyMatch(e -> e.getValue() instanceof Yaml.Scalar && ((Yaml.Scalar) e.getValue()).getValue().contains("actions/setup-java@v2"))) {
+                getCursor().putMessage("USES_ACTIONS_SETUP_JAVA", true);
+            }
+            return super.visitMapping(mapping, ctx);
+        }
+
+        @Override
+        public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
+            Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
+            if (Boolean.TRUE.equals(getCursor().getNearestMessage("USES_ACTIONS_SETUP_JAVA"))) {
+                if (distribution.matches(getCursor()) && ((Yaml.Scalar) e.getValue()).getValue().contains("adopt")) {
+                    return super.visitMappingEntry(e.withValue(((Yaml.Scalar) e.getValue()).withValue("temurin")), ctx);
+                }
+            }
+            return e;
+        }
+
+    }
+
+}
