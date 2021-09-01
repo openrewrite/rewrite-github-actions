@@ -33,7 +33,7 @@ class AddManualTriggerTest : YamlRecipeTest {
     fun manualTrigger(@TempDir tempDir: Path) = assertChanged(
         before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
             parentFile.mkdirs()
-            writeText(
+            writeText(//language=yml
                 """
                     on:
                       push:
@@ -55,4 +55,5 @@ class AddManualTriggerTest : YamlRecipeTest {
               TEST: 'value'
         """
     )
+
 }

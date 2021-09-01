@@ -29,14 +29,14 @@ class AutoCancelInProgressWorkflowTest : YamlRecipeTest {
     fun autoCancel(@TempDir tempDir: Path) = assertChanged(
         before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
             parentFile.mkdirs()
-            writeText(
+            writeText(//language=yml
                 """
-                        jobs:
-                          build:
-                            runs-on: linux
-                            steps:
-                              - uses: actions/checkout@v2
-                    """.trimIndent()
+                    jobs:
+                      build:
+                        runs-on: linux
+                        steps:
+                          - uses: actions/checkout@v2
+                """.trimIndent()
             )
         },
         relativeTo = tempDir,
@@ -51,4 +51,5 @@ class AutoCancelInProgressWorkflowTest : YamlRecipeTest {
                   - uses: actions/checkout@v2
         """
     )
+
 }

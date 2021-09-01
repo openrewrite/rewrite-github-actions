@@ -29,7 +29,7 @@ class AddCronTriggerTest : YamlRecipeTest {
     fun cronTrigger(@TempDir tempDir: Path) = assertChanged(
         before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
             parentFile.mkdirs()
-            writeText(
+            writeText(//language=yml
                 """
                     on:
                       push:
@@ -48,4 +48,5 @@ class AddCronTriggerTest : YamlRecipeTest {
                 - cron: "0 18 * * *"
         """
     )
+
 }
