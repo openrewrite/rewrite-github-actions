@@ -24,7 +24,6 @@ import org.openrewrite.yaml.MergeYaml;
 @EqualsAndHashCode(callSuper = false)
 @Getter
 public class AddCronTrigger extends Recipe {
-
     @Option(displayName = "Cron expression",
             description = "Using the [POSIX cron syntax](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html#tag_20_25_07).",
             example = "0 18 * * *")
@@ -33,7 +32,7 @@ public class AddCronTrigger extends Recipe {
     public AddCronTrigger(String cron) {
         this.cron = cron;
         doNext(new MergeYaml(
-                "/on",
+                "$.on",
                 "" +
                         "schedule:\n" +
                         "  - cron: \"0 18 * * *\"",

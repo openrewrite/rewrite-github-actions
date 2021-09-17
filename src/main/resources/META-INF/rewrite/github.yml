@@ -22,7 +22,7 @@ tags:
   - github
 recipeList:
   - org.openrewrite.yaml.MergeYaml:
-      key: /on
+      key: $.on
       yaml: |-
         workflow_dispatch:
       acceptTheirs: true

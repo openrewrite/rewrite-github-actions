@@ -28,7 +28,6 @@ import org.openrewrite.yaml.tree.Yaml;
 @Value
 @EqualsAndHashCode(callSuper = true)
 public class AutoCancelInProgressWorkflow extends Recipe {
-
     @Option(displayName = "Access token",
             description = "A repository or organization secret that contains a Github personal access token with permission to cancel workflows.",
             example = "WORKFLOWS_ACCESS_TOKEN")
