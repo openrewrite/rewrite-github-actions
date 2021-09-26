@@ -60,7 +60,8 @@ public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
 
         @Override
         public Yaml.Mapping visitMapping(Yaml.Mapping mapping, ExecutionContext ctx) {
-            if (mapping.getEntries().stream().anyMatch(e -> e.getValue() instanceof Yaml.Scalar && ((Yaml.Scalar) e.getValue()).getValue().contains("actions/setup-java@v2"))) {
+            if (mapping.getEntries().stream().anyMatch(e -> e.getValue() instanceof Yaml.Scalar &&
+                    ((Yaml.Scalar) e.getValue()).getValue().contains("actions/setup-java@v2"))) {
                 getCursor().putMessage("USES_ACTIONS_SETUP_JAVA", true);
             }
             return super.visitMapping(mapping, ctx);
@@ -76,7 +77,5 @@ public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
             }
             return e;
         }
-
     }
-
 }
