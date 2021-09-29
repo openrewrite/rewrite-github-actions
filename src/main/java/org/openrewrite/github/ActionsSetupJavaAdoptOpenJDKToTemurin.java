@@ -56,26 +56,14 @@ public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
     }
 
     private static class ActionsSetupJavaAdoptOpenJDKToTemurinVisitor extends YamlIsoVisitor<ExecutionContext> {
-        private static final JsonPathMatcher distribution = new JsonPathMatcher(".distribution");
-
-        @Override
-        public Yaml.Mapping visitMapping(Yaml.Mapping mapping, ExecutionContext ctx) {
-            if (mapping.getEntries().stream().anyMatch(e -> e.getValue() instanceof Yaml.Scalar &&
-                    ((Yaml.Scalar) e.getValue()).getValue().contains("actions/setup-java@v2"))) {
-                getCursor().putMessage("USES_ACTIONS_SETUP_JAVA", true);
-            }
-            return super.visitMapping(mapping, ctx);
-        }
+        private static final JsonPathMatcher distribution = new JsonPathMatcher("..steps[?(@.uses =~ 'actions/setup-java@v2.*')].with.distribution");
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
-            if (Boolean.TRUE.equals(getCursor().getNearestMessage("USES_ACTIONS_SETUP_JAVA"))) {
-                if (distribution.matches(getCursor()) && ((Yaml.Scalar) e.getValue()).getValue().contains("adopt")) {
-                    return super.visitMappingEntry(e.withValue(((Yaml.Scalar) e.getValue()).withValue("temurin")), ctx);
-                }
+            if (distribution.matches(getCursor()) && ((Yaml.Scalar) entry.getValue()).getValue().contains("adopt")) {
+                return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue("temurin")), ctx);
             }
-            return e;
+            return super.visitMappingEntry(entry, ctx);
         }
     }
 }
