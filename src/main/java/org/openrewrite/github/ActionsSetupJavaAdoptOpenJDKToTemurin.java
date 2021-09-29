@@ -60,7 +60,7 @@ public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            if (distribution.matches(getCursor()) && ((Yaml.Scalar) entry.getValue()).getValue().contains("adopt")) {
+            if (distribution.encloses(getCursor()) && ((Yaml.Scalar) entry.getValue()).getValue().contains("adopt")) {
                 return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue("temurin")), ctx);
             }
             return super.visitMappingEntry(entry, ctx);

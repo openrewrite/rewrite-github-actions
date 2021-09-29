@@ -183,4 +183,29 @@ class ActionsSetupJavaAdoptOpenJDKToTemurinTest : YamlRecipeTest {
         """
     )
 
+    @Test
+    fun doNotChangedWhenNoMatches(@TempDir tempDir: Path) = assertUnchanged(
+        before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
+            parentFile.mkdirs()
+            writeText(//language=yml
+                """
+                    jobs:
+                      build:
+                        steps:
+                          - name: set-up-example
+                            uses: example/example@v1
+                            with:
+                              distribution: "adopt"
+                              java-version: "11"
+                          - name: set-up-jdk
+                            uses: actions/setup-java@v1
+                            with:
+                              distribution: "adopt"
+                              java-version: "11"
+                """
+            )
+        },
+        relativeTo = tempDir
+    )
+
 }
