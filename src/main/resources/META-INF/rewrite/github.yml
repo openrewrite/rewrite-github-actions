@@ -27,3 +27,31 @@ recipeList:
         workflow_dispatch:
       acceptTheirs: true
       fileMatcher: '.github/workflows/*.yml'
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.github.DependabotCheckForGithubActionsUpdatesDaily
+displayName: Check for `github-actions` updates daily
+description: Set `dependabot` to check for `github-actions` updates daily.
+tags:
+  - demo
+  - dependabot
+  - dependencies
+  - github
+recipeList:
+  - org.openrewrite.github.ChangeDependabotScheduleInterval:
+      packageEcosystem: github-actions
+      interval: daily
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.github.DependabotCheckForGithubActionsUpdatesWeekly
+displayName: Check for `github-actions` updates weekly
+description: Set `dependabot` to check for `github-actions` updates weekly.
+tags:
+  - demo
+  - dependabot
+  - dependencies
+  - github
+recipeList:
+  - org.openrewrite.github.ChangeDependabotScheduleInterval:
+      packageEcosystem: github-actions
+      interval: weekly
