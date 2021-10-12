@@ -30,25 +30,25 @@ import java.util.Set;
 @EqualsAndHashCode(callSuper = true)
 public class ChangeDependabotScheduleInterval extends Recipe {
     @Option(displayName = "Package ecosystem",
-            description = "The `package-ecosystem` to make updates on.",
+            description = "The package-ecosystem to make updates on.",
             example = "maven")
     String packageEcosystem;
 
     @Option(displayName = "Schedule interval",
-            description = "The schedule `interval` value the `package-ecosystem` should use.",
+            description = "The schedule interval value the package-ecosystem should use.",
             valid = {"daily", "weekly", "monthly"},
             example = "weekly")
     String interval;
 
     @Override
     public String getDisplayName() {
-        return "Change `dependabot` schedule interval";
+        return "Change dependabot schedule interval";
     }
 
     @Override
     public String getDescription() {
         return "Change the schedule interval for a given package-ecosystem in a `dependabot.yml` configuration file. " +
-                "[The available configuration options for `dependabot` are listed on GitHub](https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates).";
+                "[The available configuration options for dependabot are listed on GitHub](https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates).";
     }
 
     @Override

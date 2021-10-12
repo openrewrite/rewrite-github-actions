@@ -30,8 +30,8 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.DependabotCheckForGithubActionsUpdatesDaily
-displayName: Check for `github-actions` updates daily
-description: Set `dependabot` to check for `github-actions` updates daily.
+displayName: Check for github-actions updates daily
+description: Set dependabot to check for github-actions updates daily.
 tags:
   - demo
   - dependabot
@@ -44,8 +44,8 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.DependabotCheckForGithubActionsUpdatesWeekly
-displayName: Check for `github-actions` updates weekly
-description: Set `dependabot` to check for `github-actions` updates weekly.
+displayName: Check for github-actions updates weekly
+description: Set dependabot to check for github-actions updates weekly.
 tags:
   - demo
   - dependabot
