@@ -8,3 +8,4 @@
 ### What is this?
 
 This project implements [Rewrite recipes](https://github.com/openrewrite/rewrite) to perform Github Actions hygiene and migration tasks.
+
