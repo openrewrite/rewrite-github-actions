@@ -23,6 +23,7 @@ import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.YamlVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,6 +50,11 @@ public class ChangeDependabotScheduleInterval extends Recipe {
     public String getDescription() {
         return "Change the schedule interval for a given package-ecosystem in a `dependabot.yml` configuration file. " +
                 "[The available configuration options for dependabot are listed on GitHub](https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates).";
+    }
+
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(5);
     }
 
     @Override

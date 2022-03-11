@@ -21,6 +21,8 @@ import org.openrewrite.Option;
 import org.openrewrite.Recipe;
 import org.openrewrite.yaml.MergeYaml;
 
+import java.time.Duration;
+
 @EqualsAndHashCode(callSuper = false)
 @Getter
 public class AddCronTrigger extends Recipe {
@@ -49,5 +51,10 @@ public class AddCronTrigger extends Recipe {
     @Override
     public String getDescription() {
         return "The `schedule` [event](https://docs.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events) allows you to trigger a workflow at a scheduled time.";
+    }
+
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(5);
     }
 }

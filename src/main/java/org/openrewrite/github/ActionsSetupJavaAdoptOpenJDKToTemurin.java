@@ -24,6 +24,7 @@ import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.YamlVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Set;
 
@@ -38,6 +39,11 @@ public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
         return "Adopt OpenJDK got moved to Eclipse Temurin and won't be updated anymore. " +
                 "It is highly recommended to migrate workflows from adopt to temurin to keep receiving software and security updates. " +
                 "See more details in the [Good-bye AdoptOpenJDK post](https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/).";
+    }
+
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(5);
     }
 
     @Override

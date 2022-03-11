@@ -27,6 +27,8 @@ import org.openrewrite.yaml.YamlParser;
 import org.openrewrite.yaml.YamlVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
+import java.time.Duration;
+
 @Value
 @EqualsAndHashCode(callSuper = true)
 @SuppressWarnings("ConcatenationWithEmptyString")
@@ -47,6 +49,11 @@ public class AutoCancelInProgressWorkflow extends Recipe {
     public String getDescription() {
         return "When a workflow is already running and would be triggered again, cancel the existing workflow. " +
                 "See [`styfle/cancel-workflow-action`](https://github.com/styfle/cancel-workflow-action) for details.";
+    }
+
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(5);
     }
 
     @Override
