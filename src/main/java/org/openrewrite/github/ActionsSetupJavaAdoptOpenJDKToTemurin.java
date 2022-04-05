@@ -59,23 +59,13 @@ public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
     }
 
     private static class ActionsSetupJavaAdoptOpenJDKToTemurinVisitor extends YamlIsoVisitor<ExecutionContext> {
-        private static final JsonPathMatcher inSteps = new JsonPathMatcher("..steps");
-        private static final JsonPathMatcher distribution = new JsonPathMatcher("..[?(@.uses =~ 'actions/setup-java@v[23].*')].with.distribution");
+        private static final JsonPathMatcher distribution = new JsonPathMatcher("..steps[?(@.uses =~ 'actions/setup-java@v[23].*')].with.distribution");
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            Cursor inSequence = getCursor().dropParentUntil(is -> is instanceof Yaml.Sequence.Entry || is instanceof Yaml.Document);
-            if (inSequence.getValue() instanceof Yaml.Sequence.Entry) {
-                Cursor inMappingEntry = inSequence.dropParentUntil(is -> is instanceof Yaml.Mapping.Entry || is instanceof Yaml.Document);
-                if (inMappingEntry.getValue() instanceof Yaml.Mapping.Entry && inSteps.matches(inMappingEntry)) {
-                    if (distribution.matches(getCursor()) && ((Yaml.Scalar) entry.getValue()).getValue().contains("adopt")) {
-                        return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue("temurin")), ctx);
-                    }
-                }
+            if (distribution.matches(getCursor()) && ((Yaml.Scalar) entry.getValue()).getValue().contains("adopt")) {
+                return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue("temurin")), ctx);
             }
-//                    if (distribution.matches(getCursor()) && ((Yaml.Scalar) entry.getValue()).getValue().contains("adopt")) {
-//                        return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue("temurin")), ctx);
-//                    }
             return super.visitMappingEntry(entry, ctx);
         }
     }
