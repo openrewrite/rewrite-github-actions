@@ -64,7 +64,7 @@ public class AutoCancelInProgressWorkflow extends Recipe {
     @Override
     protected YamlVisitor<ExecutionContext> getVisitor() {
         JsonPathMatcher firstStep = new JsonPathMatcher("$.jobs.build.steps[:1].uses");
-        JsonPathMatcher jobSteps = new JsonPathMatcher("$.jobs.build.steps[]");
+        JsonPathMatcher jobSteps = new JsonPathMatcher("$.jobs.build.steps.*");
 
         String userProvidedAccessTokenTemplate = "" +
                 "- uses: styfle/cancel-workflow-action@0.9.1\n" +
@@ -89,7 +89,7 @@ public class AutoCancelInProgressWorkflow extends Recipe {
             @Override
             public Yaml.Sequence visitSequence(Yaml.Sequence sequence, ExecutionContext ctx) {
                 Yaml.Sequence s = super.visitSequence(sequence, ctx);
-                if (jobSteps.encloses(getCursor()) && Boolean.TRUE.equals(getCursor().getMessage("ADD_STEP"))) {
+                if (jobSteps.matches(getCursor()) && Boolean.TRUE.equals(getCursor().getMessage("ADD_STEP"))) {
                     Yaml.Documents documents = new YamlParser().parse(ctx, StringUtils.isNullOrEmpty(accessToken) ? defaultAccessTokenTemplate : userProvidedAccessTokenTemplate).get(0);
                     Yaml.Sequence.Entry cancelWorkflowAction = ((Yaml.Sequence) documents.getDocuments().get(0).getBlock()).getEntries().get(0);
                     cancelWorkflowAction = autoFormat(cancelWorkflowAction.withPrefix("\n"), ctx, getCursor());

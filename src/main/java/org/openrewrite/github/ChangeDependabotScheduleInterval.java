@@ -78,7 +78,7 @@ public class ChangeDependabotScheduleInterval extends Recipe {
 
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-                if (targetEcosystem.encloses(getCursor()) && !((Yaml.Scalar) entry.getValue()).getValue().equals(interval)) {
+                if (targetEcosystem.matches(getCursor()) && !((Yaml.Scalar) entry.getValue()).getValue().equals(interval)) {
                     return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue(interval)), ctx);
                 }
                 return super.visitMappingEntry(entry, ctx);
