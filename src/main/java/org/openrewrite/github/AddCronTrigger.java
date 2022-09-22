@@ -39,7 +39,8 @@ public class AddCronTrigger extends Recipe {
                         "schedule:\n" +
                         "  - cron: \"0 18 * * *\"",
                 true,
-                ".github/workflows/*.yml")
+                ".github/workflows/*.yml",
+                null)
         );
     }
 

@@ -57,14 +57,14 @@ public class SetupJavaCaching extends Recipe {
                     doAfterVisit(new MergeYaml("$.jobs.build.steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
                             "" +
                                     "with:\n" +
-                                    "  cache: 'gradle'", true, null));
+                                    "  cache: 'gradle'", true, null, null));
                     deleteCacheAction();
                 }
                 if (!FindKey.find(documents, "$.jobs.build.steps[?(@.run =~ '.*mvn.*')]").isEmpty()) {
                     doAfterVisit(new MergeYaml("$.jobs.build.steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
                             "" +
                                     "with:\n" +
-                                    "  cache: 'maven'", true, null));
+                                    "  cache: 'maven'", true, null, null));
                     deleteCacheAction();
                 }
                 return documents;
