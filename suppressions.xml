@@ -6,7 +6,7 @@
                 sev:HIGH
                 In FasterXML jackson-databind before 2.14.0-rc1, resource exhaustion can occur because of a lack of a check in primitive value deserializers to avoid deep wrapper array nesting, when the UNWRAP_SINGLE_VALUE_ARRAYS feature is enabled.
             ]]></notes>
-        <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@2.13.4.*$</packageUrl>
+        <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@2.13.*$</packageUrl>
         <cve>CVE-2022-42003</cve>
     </suppress>
 </suppressions>
