@@ -17,35 +17,32 @@ package org.openrewrite.github
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import org.openrewrite.Recipe
 import org.openrewrite.config.Environment
-import org.openrewrite.yaml.YamlRecipeTest
+import org.openrewrite.test.RecipeSpec
+import org.openrewrite.test.RewriteTest
+import org.openrewrite.yaml.Assertions.yaml
 import java.nio.file.Path
 
-class AddManualTriggerTest : YamlRecipeTest {
-    override val recipe: Recipe
-        get() = Environment.builder()
+class AddManualTriggerTest : RewriteTest {
+
+    override fun defaults(spec: RecipeSpec) {
+        spec.recipe(Environment.builder()
             .scanRuntimeClasspath()
             .build()
-            .activateRecipes("org.openrewrite.github.AddManualTrigger")
+            .activateRecipes("org.openrewrite.github.AddManualTrigger"))
+    }
 
     @Test
-    fun manualTrigger(@TempDir tempDir: Path) = assertChanged(
-        before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
-            parentFile.mkdirs()
-            writeText(//language=yml
-                """
-                    on:
-                      push:
-                        branches:
-                          - main
-                    env:
-                      TEST: 'value'
-                """.trimIndent()
-            )
-        },
-        relativeTo = tempDir,
-        after = """
+    fun manualTrigger(@TempDir tempDir: Path) = rewriteRun(
+        yaml("""
+            on:
+              push:
+                branches:
+                  - main
+            env:
+              TEST: 'value'
+                """,
+            """
             on:
               push:
                 branches:
@@ -53,7 +50,8 @@ class AddManualTriggerTest : YamlRecipeTest {
               workflow_dispatch:
             env:
               TEST: 'value'
-        """
+          """) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
     )
-
 }

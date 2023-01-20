@@ -17,48 +17,46 @@ package org.openrewrite.github
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import org.openrewrite.Recipe
-import org.openrewrite.yaml.YamlRecipeTest
+import org.openrewrite.test.RecipeSpec
+import org.openrewrite.test.RewriteTest
+import org.openrewrite.yaml.Assertions.yaml
 import java.nio.file.Path
 
-class ActionsSetupJavaAdoptOpenJDKToTemurinTest : YamlRecipeTest {
-    override val recipe: Recipe
-        get() = ActionsSetupJavaAdoptOpenJDKToTemurin()
+class ActionsSetupJavaAdoptOpenJDKToTemurinTest : RewriteTest {
+
+    override fun defaults(spec: RecipeSpec) {
+        spec.recipe(ActionsSetupJavaAdoptOpenJDKToTemurin())
+    }
 
     @Test
-    fun actionsSetupJavaAdoptOpenJDKToTemurin(@TempDir tempDir: Path) = assertChanged(
-        before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
-            parentFile.mkdirs()
-            writeText(//language=yml
-                """
-                    jobs:
-                      build:
-                        steps:
-                          - uses: actions/checkout@v2
-                            with:
-                              fetch-depth: 0
-                          - name: set-up-jdk-0
-                            uses: actions/setup-java@v2.3.0
-                            with:
-                              distribution: "adopt"
-                              java-version: "11"
-                          - name: set-up-jdk-1
-                            uses: actions/setup-java@v2.3.0
-                            with:
-                              distribution: "adopt-hotspot"
-                              java-version: "11"
-                          - name: set-up-jdk-2
-                            uses: actions/setup-java@v2.3.0
-                            with:
-                              distribution: "adopt-openj9"
-                              java-version: "11"
-                          - name: build
-                            run: ./gradlew build test
-                """.trimIndent()
-            )
-        },
-        relativeTo = tempDir,
-        after = """
+    fun actionsSetupJavaAdoptOpenJDKToTemurin() = rewriteRun(
+        yaml(
+            """
+            jobs:
+              build:
+                steps:
+                  - uses: actions/checkout@v2
+                    with:
+                      fetch-depth: 0
+                  - name: set-up-jdk-0
+                    uses: actions/setup-java@v2.3.0
+                    with:
+                      distribution: "adopt"
+                      java-version: "11"
+                  - name: set-up-jdk-1
+                    uses: actions/setup-java@v2.3.0
+                    with:
+                      distribution: "adopt-hotspot"
+                      java-version: "11"
+                  - name: set-up-jdk-2
+                    uses: actions/setup-java@v2.3.0
+                    with:
+                      distribution: "adopt-openj9"
+                      java-version: "11"
+                  - name: build
+                    run: ./gradlew build test
+        """,
+            """
             jobs:
               build:
                 steps:
@@ -83,41 +81,39 @@ class ActionsSetupJavaAdoptOpenJDKToTemurinTest : YamlRecipeTest {
                   - name: build
                     run: ./gradlew build test
         """
+        ) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
     )
 
     @Test
-    fun replaceUnderMultipleJobNames(@TempDir tempDir: Path) = assertChanged(
-        before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
-            parentFile.mkdirs()
-            writeText(//language=yml
-                """
-                    jobs:
-                      build:
-                        steps:
-                          - uses: actions/checkout@v2
-                          - name: set-up-jdk-0
-                            uses: actions/setup-java@v2.3.0
-                            with:
-                              distribution: "adopt"
-                              java-version: "11"
-                          - name: build
-                            run: ./gradlew build test
-                      publish-snapshots:
-                        needs: [build]
-                        steps:
-                          - uses: actions/checkout@v2
-                          - name: set-up-jdk-0
-                            uses: actions/setup-java@v2
-                            with:
-                              distribution: "adopt"
-                              java-version: "11"
-                          - name: build
-                            run: ./gradlew snapshot publish
-                """.trimIndent()
-            )
-        },
-        relativeTo = tempDir,
-        after = """
+    fun replaceUnderMultipleJobNames(@TempDir tempDir: Path) = rewriteRun(
+        yaml(
+            """
+                jobs:
+                  build:
+                    steps:
+                      - uses: actions/checkout@v2
+                      - name: set-up-jdk-0
+                        uses: actions/setup-java@v2.3.0
+                        with:
+                          distribution: "adopt"
+                          java-version: "11"
+                      - name: build
+                        run: ./gradlew build test
+                  publish-snapshots:
+                    needs: [build]
+                    steps:
+                      - uses: actions/checkout@v2
+                      - name: set-up-jdk-0
+                        uses: actions/setup-java@v2
+                        with:
+                          distribution: "adopt"
+                          java-version: "11"
+                      - name: build
+                        run: ./gradlew snapshot publish
+            """,
+            """
             jobs:
               build:
                 steps:
@@ -141,32 +137,30 @@ class ActionsSetupJavaAdoptOpenJDKToTemurinTest : YamlRecipeTest {
                   - name: build
                     run: ./gradlew snapshot publish
         """
+        ) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
     )
 
     @Test
-    fun onlyReplaceStepsWithUsesActionsSetupJava(@TempDir tempDir: Path) = assertChanged(
-        before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
-            parentFile.mkdirs()
-            writeText(//language=yml
-                """
-                    jobs:
-                      build:
-                        steps:
-                          - name: set-up-example
-                            uses: example/example@v1
-                            with:
-                              distribution: "adopt"
-                              java-version: "11"
-                          - name: set-up-jdk
-                            uses: actions/setup-java@v2.3.0
-                            with:
-                              distribution: "adopt"
-                              java-version: "11"
-                """.trimIndent()
-            )
-        },
-        relativeTo = tempDir,
-        after = """
+    fun onlyReplaceStepsWithUsesActionsSetupJava() = rewriteRun(
+        yaml(
+            """
+            jobs:
+              build:
+                steps:
+                  - name: set-up-example
+                    uses: example/example@v1
+                    with:
+                      distribution: "adopt"
+                      java-version: "11"
+                  - name: set-up-jdk
+                    uses: actions/setup-java@v2.3.0
+                    with:
+                      distribution: "adopt"
+                      java-version: "11"
+            """,
+            """
             jobs:
               build:
                 steps:
@@ -180,15 +174,13 @@ class ActionsSetupJavaAdoptOpenJDKToTemurinTest : YamlRecipeTest {
                     with:
                       distribution: "temurin"
                       java-version: "11"
-        """
+        """) { spec -> spec.path(".github/workflows/ci.yml") }
     )
 
     @Test
-    fun doNotChangedWhenNoMatches(@TempDir tempDir: Path) = assertUnchanged(
-        before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
-            parentFile.mkdirs()
-            writeText(//language=yml
-                """
+    fun doNotChangedWhenNoMatches(@TempDir tempDir: Path) = rewriteRun(
+        yaml(
+            """
                     jobs:
                       build:
                         steps:
@@ -203,9 +195,9 @@ class ActionsSetupJavaAdoptOpenJDKToTemurinTest : YamlRecipeTest {
                               distribution: "adopt"
                               java-version: "11"
                 """
-            )
-        },
-        relativeTo = tempDir
+        ) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
     )
 
 }

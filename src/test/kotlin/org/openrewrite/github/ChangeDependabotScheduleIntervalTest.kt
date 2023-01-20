@@ -17,36 +17,33 @@ package org.openrewrite.github
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import org.openrewrite.yaml.YamlRecipeTest
+import org.openrewrite.test.RewriteTest
+import org.openrewrite.yaml.Assertions.yaml
 import java.nio.file.Path
 
-class ChangeDependabotScheduleIntervalTest : YamlRecipeTest {
+class ChangeDependabotScheduleIntervalTest : RewriteTest {
+
     @Test
-    fun `change dependabot schedule interval`(@TempDir tempDir: Path) = assertChanged(
-        recipe = ChangeDependabotScheduleInterval("github-actions", "weekly"),
-        before = tempDir.resolve(".github/dependabot.yml").toFile().apply {
-            parentFile.mkdirs()
-            writeText(//language=yml
-                """
-                    version: 2
-                    updates:
-                      - package-ecosystem: github-actions
-                        directory: /
-                        schedule:
-                          interval: daily
-                      - package-ecosystem: maven
-                        directory: /
-                        schedule:
-                          interval: weekly
-                      - package-ecosystem: gradle
-                        directory: /
-                        schedule:
-                          interval: monthly
-                """.trimIndent()
-            )
-        },
-        relativeTo = tempDir,
-        after = """
+    fun `change dependabot schedule interval`(@TempDir tempDir: Path) = rewriteRun(
+        { spec -> spec.recipe(ChangeDependabotScheduleInterval("github-actions", "weekly")) },
+        yaml(
+            """
+            version: 2
+            updates:
+              - package-ecosystem: github-actions
+                directory: /
+                schedule:
+                  interval: daily
+              - package-ecosystem: maven
+                directory: /
+                schedule:
+                  interval: weekly
+              - package-ecosystem: gradle
+                directory: /
+                schedule:
+                  interval: monthly
+            """,
+            """
             version: 2
             updates:
               - package-ecosystem: github-actions
@@ -62,15 +59,16 @@ class ChangeDependabotScheduleIntervalTest : YamlRecipeTest {
                 schedule:
                   interval: monthly
         """
+        ) { spec ->
+            spec.path(".github/dependabot.yml")
+        }
     )
 
     @Test
-    fun `do not change when no matching package-ecosystem`(@TempDir tempDir: Path) = assertUnchanged(
-        recipe = ChangeDependabotScheduleInterval("npm", "weekly"),
-        before = tempDir.resolve(".github/dependabot.yml").toFile().apply {
-            parentFile.mkdirs()
-            writeText(//language=yml
-                """
+    fun `do not change when no matching package-ecosystem`(@TempDir tempDir: Path) = rewriteRun(
+        { spec -> spec.recipe(ChangeDependabotScheduleInterval("npm", "weekly")) },
+        yaml(//language=yml
+            """
                     version: 2
                     updates:
                       - package-ecosystem: github-actions
@@ -90,36 +88,32 @@ class ChangeDependabotScheduleIntervalTest : YamlRecipeTest {
                           interval: monthly
                           day: sunday
                 """
-            )
-        },
-        relativeTo = tempDir
+        ) { spec ->
+            spec.path(".github/dependabot.yml")
+        }
     )
 
     @Test
-    fun `do not change when configuration already matches`(@TempDir tempDir: Path) = assertUnchanged(
-        recipe = ChangeDependabotScheduleInterval("github-actions", "daily"),
-        before = tempDir.resolve(".github/dependabot.yml").toFile().apply {
-            parentFile.mkdirs()
-            writeText(//language=yml
-                """
-                    version: 2
-                    updates:
-                      - package-ecosystem: github-actions
-                        directory: /
-                        schedule:
-                          interval: daily
-                      - package-ecosystem: maven
-                        directory: /
-                        schedule:
-                          interval: weekly
-                      - package-ecosystem: gradle
-                        directory: /
-                        schedule:
-                          interval: monthly
-                """
-            )
-        },
-        relativeTo = tempDir
+    fun `do not change when configuration already matches`(@TempDir tempDir: Path) = rewriteRun(
+        { spec -> spec.recipe(ChangeDependabotScheduleInterval("github-actions", "daily")) },
+        yaml("""
+            version: 2
+            updates:
+              - package-ecosystem: github-actions
+                directory: /
+                schedule:
+                  interval: daily
+              - package-ecosystem: maven
+                directory: /
+                schedule:
+                  interval: weekly
+              - package-ecosystem: gradle
+                directory: /
+                schedule:
+                  interval: monthly
+            """
+        ) { spec ->
+            spec.path(".github/dependabot.yml")
+        }
     )
-
 }

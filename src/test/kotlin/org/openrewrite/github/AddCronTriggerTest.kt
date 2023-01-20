@@ -16,37 +16,36 @@
 package org.openrewrite.github
 
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import org.openrewrite.Recipe
-import org.openrewrite.yaml.YamlRecipeTest
-import java.nio.file.Path
+import org.openrewrite.test.RecipeSpec
+import org.openrewrite.test.RewriteTest
+import org.openrewrite.yaml.Assertions.yaml
 
-class AddCronTriggerTest : YamlRecipeTest {
-    override val recipe: Recipe
-        get() = AddCronTrigger("0 18 * * *")
+class AddCronTriggerTest : RewriteTest {
+
+    override fun defaults(spec: RecipeSpec) {
+        spec.recipe(AddCronTrigger("0 18 * * *"))
+    }
 
     @Test
-    fun cronTrigger(@TempDir tempDir: Path) = assertChanged(
-        before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
-            parentFile.mkdirs()
-            writeText(//language=yml
-                """
-                    on:
-                      push:
-                        branches:
-                          - main
-                """.trimIndent()
-            )
-        },
-        relativeTo = tempDir,
-        after = """
+    fun cronTrigger() = rewriteRun(
+        //language=yml
+        yaml(
+            """
+            on:
+              push:
+                branches:
+                  - main
+            """,
+            """
             on:
               push:
                 branches:
                   - main
               schedule:
                 - cron: "0 18 * * *"
-        """
+            """
+        ) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
     )
-
 }

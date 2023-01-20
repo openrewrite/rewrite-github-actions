@@ -15,16 +15,17 @@
  */
 package org.openrewrite.github
 
-import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.openrewrite.Recipe
-import org.openrewrite.yaml.YamlRecipeTest
-import java.nio.file.Path
+import org.openrewrite.test.RecipeSpec
+import org.openrewrite.test.RewriteTest
+import org.openrewrite.yaml.Assertions.yaml
 
-class SetupJavaCachingTest : YamlRecipeTest {
-    override val recipe: Recipe
-        get() = SetupJavaCaching()
+class SetupJavaCachingTest : RewriteTest {
+
+    override fun defaults(spec: RecipeSpec) {
+        spec.recipe(SetupJavaCaching())
+    }
 
     @ParameterizedTest
     @ValueSource(
@@ -33,29 +34,23 @@ class SetupJavaCachingTest : YamlRecipeTest {
             "./mvnw install -> maven"
         ]
     )
-    fun setupJavaCachingGradle(buildTool: String, @TempDir tempDir: Path) = assertChanged(
-        before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
-            parentFile.mkdirs()
-            writeText(//language=yml
-                """
-                    jobs:
-                      build:
-                        steps:
-                          - uses: actions/checkout
-                          - uses: actions/setup-java
-                            with:
-                              distribution: 'temurin'
-                              java-version: '11'
-                          - run: ${buildTool.split("->")[0].trim()}
-                          - name: setup-cache
-                            uses: actions/cache@v2.1.6
-                            with:
-                              path: '~/.gradle/caches'
-                """.trimIndent()
-            )
-        },
-        relativeTo = tempDir,
-        after = """
+    fun setupJavaCachingGradle(buildTool: String) = rewriteRun(
+        yaml("""
+            jobs:
+              build:
+                steps:
+                  - uses: actions/checkout
+                  - uses: actions/setup-java
+                    with:
+                      distribution: 'temurin'
+                      java-version: '11'
+                  - run: ${buildTool.split("->")[0].trim()}
+                  - name: setup-cache
+                    uses: actions/cache@v2.1.6
+                    with:
+                      path: '~/.gradle/caches'
+            """,
+            """
             jobs:
               build:
                 steps:
@@ -66,6 +61,8 @@ class SetupJavaCachingTest : YamlRecipeTest {
                       java-version: '11'
                       cache: '${buildTool.split("->")[1].trim()}'
                   - run: ${buildTool.split("->")[0].trim()}
-        """
+        """) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
     )
 }

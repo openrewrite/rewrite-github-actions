@@ -16,28 +16,23 @@
 package org.openrewrite.github
 
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import org.openrewrite.yaml.YamlRecipeTest
-import java.nio.file.Path
+import org.openrewrite.test.RewriteTest
+import org.openrewrite.yaml.Assertions.yaml
 
-class AutoCancelInProgressWorkflowTest : YamlRecipeTest {
+class AutoCancelInProgressWorkflowTest : RewriteTest {
+
     @Test
-    fun useDefaultAccessToken(@TempDir tempDir: Path) = assertChanged(
-        recipe = AutoCancelInProgressWorkflow(null),
-        before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
-            parentFile.mkdirs()
-            writeText(//language=yml
-                """
-                    jobs:
-                      build:
-                        runs-on: linux
-                        steps:
-                          - uses: actions/checkout@v2
-                """.trimIndent()
-            )
-        },
-        relativeTo = tempDir,
-        after = """
+    fun useDefaultAccessToken() = rewriteRun(
+        { spec -> spec.recipe(AutoCancelInProgressWorkflow(null)) },
+        yaml(
+            """
+            jobs:
+              build:
+                runs-on: linux
+                steps:
+                  - uses: actions/checkout@v2
+            """,
+            """
             jobs:
               build:
                 runs-on: linux
@@ -46,26 +41,24 @@ class AutoCancelInProgressWorkflowTest : YamlRecipeTest {
                     with:
                       access_token: ${'$'}{{ github.token }}
                   - uses: actions/checkout@v2
-        """
+          """
+        ) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
     )
 
     @Test
-    fun useUserProvidedAccessToken(@TempDir tempDir: Path) = assertChanged(
-        recipe = AutoCancelInProgressWorkflow("WORKFLOWS_ACCESS_TOKEN"),
-        before = tempDir.resolve(".github/workflows/ci.yml").toFile().apply {
-            parentFile.mkdirs()
-            writeText(//language=yml
-                """
-                    jobs:
-                      build:
-                        runs-on: linux
-                        steps:
-                          - uses: actions/checkout@v2
-                """.trimIndent()
-            )
-        },
-        relativeTo = tempDir,
-        after = """
+    fun useUserProvidedAccessToken() = rewriteRun(
+        { spec -> spec.recipe(AutoCancelInProgressWorkflow("WORKFLOWS_ACCESS_TOKEN")) },
+        yaml(
+            """
+                jobs:
+                  build:
+                    runs-on: linux
+                    steps:
+                      - uses: actions/checkout@v2
+            """,
+            """
             jobs:
               build:
                 runs-on: linux
@@ -74,7 +67,8 @@ class AutoCancelInProgressWorkflowTest : YamlRecipeTest {
                     with:
                       access_token: ${'$'}{{ secrets.WORKFLOWS_ACCESS_TOKEN }}
                   - uses: actions/checkout@v2
-        """
+          """) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
     )
-
 }
