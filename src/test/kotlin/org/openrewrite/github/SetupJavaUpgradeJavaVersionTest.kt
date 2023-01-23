@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.openrewrite.test.RecipeSpec
 import org.openrewrite.test.RewriteTest
-import org.openrewrite.yaml.Assertions
+import org.openrewrite.yaml.Assertions.yaml
 import java.nio.file.Path
 
 class SetupJavaUpgradeJavaVersionTest : RewriteTest {
@@ -29,7 +29,7 @@ class SetupJavaUpgradeJavaVersionTest : RewriteTest {
 
     @Test
     fun actionsSetupJavaVersionUpdates() = rewriteRun(
-        Assertions.yaml(
+        yaml(
             """
             jobs:
               build:
@@ -59,7 +59,7 @@ class SetupJavaUpgradeJavaVersionTest : RewriteTest {
                       java-version: "18"
                   - name: build
                     run: ./gradlew build test
-        """,
+            """,
             """
             jobs:
               build:
@@ -89,7 +89,7 @@ class SetupJavaUpgradeJavaVersionTest : RewriteTest {
                       java-version: "18"
                   - name: build
                     run: ./gradlew build test
-        """
+            """
         ) { spec ->
             spec.path(".github/workflows/ci.yml")
         }
@@ -97,16 +97,16 @@ class SetupJavaUpgradeJavaVersionTest : RewriteTest {
 
     @Test
     fun doesNotChangeVersionInOtherActions(@TempDir tempDir: Path) = rewriteRun(
-        Assertions.yaml(
+        yaml(
             """
-                    jobs:
-                      build:
-                        steps:
-                          - name: set-up-example
-                            uses: example/example@v1
-                            with:
-                              java-version: "11"
-                """
+            jobs:
+              build:
+                steps:
+                  - name: set-up-example
+                    uses: example/example@v1
+                    with:
+                      java-version: "11"
+            """
         ) { spec ->
             spec.path(".github/workflows/ci.yml")
         }
