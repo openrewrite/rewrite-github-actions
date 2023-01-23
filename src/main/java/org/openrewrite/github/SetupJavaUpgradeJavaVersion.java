@@ -15,6 +15,7 @@
  */
 package org.openrewrite.github;
 
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
@@ -22,6 +23,9 @@ import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlVisitor;
 import org.openrewrite.yaml.tree.Yaml;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
@@ -55,14 +59,12 @@ public class SetupJavaUpgradeJavaVersion extends Recipe {
         );
     }
 
+    @AllArgsConstructor
     private static class UpgradeJavaVersionVisitor extends YamlVisitor<ExecutionContext> {
         private static final JsonPathMatcher javaVersion = new JsonPathMatcher("..steps[?(@.uses =~ 'actions/setup-java@v*.*')].with.java-version");
+        private static final Pattern javaVersionPattern = Pattern.compile("([0-9]+)(\\.[0-9]+)*([-+].*)?");
 
         private final int minimumJavaMajorVersion;
-
-        public UpgradeJavaVersionVisitor(int minimumJavaMajorVersion) {
-            this.minimumJavaMajorVersion = minimumJavaMajorVersion;
-        }
 
         @Override
         public Yaml visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
@@ -73,8 +75,18 @@ public class SetupJavaUpgradeJavaVersion extends Recipe {
             Yaml.Scalar currentValue = (Yaml.Scalar) entry.getValue();
 
             // specific versions are allowed by `actions/setup-java`
-            String[] currentVersionParts = currentValue.getValue().split("\\.");
-            int currentMajorVersion = Integer.parseInt(currentVersionParts[0]);
+            Matcher matcher = javaVersionPattern.matcher(currentValue.getValue());
+            if (!matcher.matches()) {
+                return super.visitMappingEntry(entry, ctx);
+            }
+
+            int currentMajorVersion;
+            try {
+                currentMajorVersion = Integer.parseInt(matcher.group(1));
+            } catch (NumberFormatException ex) {
+                return super.visitMappingEntry(entry, ctx);
+            }
+
             if (currentMajorVersion >= minimumJavaMajorVersion) {
                 return super.visitMappingEntry(entry, ctx);
             }

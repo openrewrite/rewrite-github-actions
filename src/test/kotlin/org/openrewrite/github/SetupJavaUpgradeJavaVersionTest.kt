@@ -28,7 +28,7 @@ class SetupJavaUpgradeJavaVersionTest : RewriteTest {
     }
 
     @Test
-    fun actionsSetupJavaVersionUpdates() = rewriteRun(
+    fun updatesOldMajorVersion() = rewriteRun(
         yaml(
             """
             jobs:
@@ -37,26 +37,10 @@ class SetupJavaUpgradeJavaVersionTest : RewriteTest {
                   - uses: actions/checkout@v2
                     with:
                       fetch-depth: 0
-                  - name: set-up-jdk-0
+                  - name: set-up-jdk
                     uses: actions/setup-java@v2.3.0
                     with:
                       java-version: "11"
-                  - name: set-up-jdk-1
-                    uses: actions/setup-java@v2.3.0
-                    with:
-                      java-version: "11.0.17"
-                  - name: set-up-jdk-2
-                    uses: actions/setup-java@v2.3.0
-                    with:
-                      java-version: "17"
-                  - name: set-up-jdk-3
-                    uses: actions/setup-java@v2.3.0
-                    with:
-                      java-version: "17.0.4+11"
-                  - name: set-up-jdk-4
-                    uses: actions/setup-java@v2.3.0
-                    with:
-                      java-version: "18"
                   - name: build
                     run: ./gradlew build test
             """,
@@ -67,26 +51,10 @@ class SetupJavaUpgradeJavaVersionTest : RewriteTest {
                   - uses: actions/checkout@v2
                     with:
                       fetch-depth: 0
-                  - name: set-up-jdk-0
+                  - name: set-up-jdk
                     uses: actions/setup-java@v2.3.0
                     with:
                       java-version: "17"
-                  - name: set-up-jdk-1
-                    uses: actions/setup-java@v2.3.0
-                    with:
-                      java-version: "17"
-                  - name: set-up-jdk-2
-                    uses: actions/setup-java@v2.3.0
-                    with:
-                      java-version: "17"
-                  - name: set-up-jdk-3
-                    uses: actions/setup-java@v2.3.0
-                    with:
-                      java-version: "17.0.4+11"
-                  - name: set-up-jdk-4
-                    uses: actions/setup-java@v2.3.0
-                    with:
-                      java-version: "18"
                   - name: build
                     run: ./gradlew build test
             """
@@ -96,7 +64,146 @@ class SetupJavaUpgradeJavaVersionTest : RewriteTest {
     )
 
     @Test
-    fun doesNotChangeVersionInOtherActions(@TempDir tempDir: Path) = rewriteRun(
+    fun updatesOldPatchVersion() = rewriteRun(
+        yaml(
+            """
+            jobs:
+              build:
+                steps:
+                  - uses: actions/checkout@v2
+                    with:
+                      fetch-depth: 0
+                  - name: set-up-jdk
+                    uses: actions/setup-java@v2.3.0
+                    with:
+                      java-version: "11.0.17"
+                  - name: build
+                    run: ./gradlew build test
+            """,
+            """
+            jobs:
+              build:
+                steps:
+                  - uses: actions/checkout@v2
+                    with:
+                      fetch-depth: 0
+                  - name: set-up-jdk
+                    uses: actions/setup-java@v2.3.0
+                    with:
+                      java-version: "17"
+                  - name: build
+                    run: ./gradlew build test
+            """
+        ) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
+    )
+
+    @Test
+    fun updatesOldPatchVersionWithMetadata() = rewriteRun(
+        yaml(
+            """
+            jobs:
+              build:
+                steps:
+                  - uses: actions/checkout@v2
+                    with:
+                      fetch-depth: 0
+                  - name: set-up-jdk
+                    uses: actions/setup-java@v2.3.0
+                    with:
+                      java-version: "15.0.0-ea.2"
+                  - name: build
+                    run: ./gradlew build test
+            """,
+            """
+            jobs:
+              build:
+                steps:
+                  - uses: actions/checkout@v2
+                    with:
+                      fetch-depth: 0
+                  - name: set-up-jdk
+                    uses: actions/setup-java@v2.3.0
+                    with:
+                      java-version: "17"
+                  - name: build
+                    run: ./gradlew build test
+            """
+        ) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
+    )
+
+    @Test
+    fun doesNotUpdateSameVersion() = rewriteRun(
+        yaml(
+            """
+            jobs:
+              build:
+                steps:
+                  - uses: actions/checkout@v2
+                    with:
+                      fetch-depth: 0
+                  - name: set-up-jdk
+                    uses: actions/setup-java@v2.3.0
+                    with:
+                      java-version: "17.0.0"
+                  - name: build
+                    run: ./gradlew build test
+            """,
+        ) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
+    )
+
+    @Test
+    fun doesNotUpdateNewerVersion() = rewriteRun(
+        yaml(
+            """
+            jobs:
+              build:
+                steps:
+                  - uses: actions/checkout@v2
+                    with:
+                      fetch-depth: 0
+                  - name: set-up-jdk
+                    uses: actions/setup-java@v2.3.0
+                    with:
+                      java-version: "18.0.0"
+                  - name: build
+                    run: ./gradlew build test
+            """,
+        ) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
+    )
+
+    @Test
+    fun doesNotUpdateGarbageVersion() = rewriteRun(
+        yaml(
+            """
+            jobs:
+              build:
+                steps:
+                  - uses: actions/checkout@v2
+                    with:
+                      fetch-depth: 0
+                  - name: set-up-jdk
+                    uses: actions/setup-java@v2.3.0
+                    with:
+                      java-version: "${{ "11" }}"
+                  - name: build
+                    run: ./gradlew build test
+            """,
+        ) { spec ->
+            spec.path(".github/workflows/ci.yml")
+        }
+    )
+
+
+    @Test
+    fun doesNotUpdateVersionInOtherActions(@TempDir tempDir: Path) = rewriteRun(
         yaml(
             """
             jobs:
