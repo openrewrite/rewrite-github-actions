@@ -36,7 +36,7 @@ public class ReplaceRunners extends Recipe {
 
     @Option(displayName = "Runners",
             description = "The new list of runners to set",
-            example = "runner1,runner2"
+            example = "ubuntu-latest"
     )
     private final List<String> runners;
 
