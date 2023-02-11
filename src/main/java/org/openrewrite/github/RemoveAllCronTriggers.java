@@ -22,8 +22,6 @@ import org.openrewrite.yaml.DeleteKey;
 
 import java.time.Duration;
 
-@EqualsAndHashCode(callSuper = false)
-@Getter
 public class RemoveAllCronTriggers extends Recipe {
     public RemoveAllCronTriggers() {
         doNext(new DeleteKey(
