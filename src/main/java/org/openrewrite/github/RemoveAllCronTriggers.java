@@ -15,8 +15,6 @@
  */
 package org.openrewrite.github;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import org.openrewrite.Recipe;
 import org.openrewrite.yaml.DeleteKey;
 
