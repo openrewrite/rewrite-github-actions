@@ -57,7 +57,7 @@ public class PreferTemurinDistributions extends Recipe {
     private static class UseTemurinVisitor extends YamlIsoVisitor<ExecutionContext> {
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            if (DISTRIBUTION_MATCHER.matches(getCursor()) && !((Yaml.Scalar) entry.getValue()).getValue().equals("temurin")) {
+            if (DISTRIBUTION_MATCHER.matches(getCursor()) && !"temurin".equals(((Yaml.Scalar) entry.getValue()).getValue())) {
                 return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue("temurin")), ctx);
             }
             return super.visitMappingEntry(entry, ctx);
