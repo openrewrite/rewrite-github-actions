@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2023 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,40 +15,33 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.*;
-import org.openrewrite.yaml.JsonPathMatcher;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.HasSourcePath;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.YamlVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.Set;
 
-public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
+import static org.openrewrite.github.ActionsSetupJavaAdoptOpenJDKToTemurin.DISTRIBUTION_MATCHER;
 
-    static final JsonPathMatcher DISTRIBUTION_MATCHER = new JsonPathMatcher("..steps[?(@.uses =~ 'actions/setup-java@v[23].*')].with.distribution");
-
+public class PreferTemurinDistributions extends Recipe {
     @Override
     public String getDisplayName() {
-        return "Use `actions/setup-java` `temurin` distribution";
+        return "Use `actions/setup-java` `temurin` distribution as they are cached in hosted runners";
     }
 
     @Override
     public String getDescription() {
-        return "Adopt OpenJDK got moved to Eclipse Temurin and won't be updated anymore. " +
-                "It is highly recommended to migrate workflows from adopt to temurin to keep receiving software and security updates. " +
-                "See more details in the [Good-bye AdoptOpenJDK post](https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/).";
+        return "[Host runners](https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources/) include Temurin by default as part of the (hosted-tool-cache)(https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#hosted-tool-cache)." +
+                "\n. Using Temurin speeds up builds as there is no need to download and configure the Java SDK with every build.";
     }
 
     @Override
     public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
-
-    @Override
-    public Set<String> getTags() {
-        return Collections.singleton("security");
+        return Duration.ofMinutes(1);
     }
 
     @Override
@@ -58,14 +51,13 @@ public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
 
     @Override
     protected YamlVisitor<ExecutionContext> getVisitor() {
-        return new ActionsSetupJavaAdoptOpenJDKToTemurinVisitor();
+        return new UseTemurinVisitor();
     }
 
-    private static class ActionsSetupJavaAdoptOpenJDKToTemurinVisitor extends YamlIsoVisitor<ExecutionContext> {
-
+    private static class UseTemurinVisitor extends YamlIsoVisitor<ExecutionContext> {
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            if (DISTRIBUTION_MATCHER.matches(getCursor()) && ((Yaml.Scalar) entry.getValue()).getValue().contains("adopt")) {
+            if (DISTRIBUTION_MATCHER.matches(getCursor()) && !((Yaml.Scalar) entry.getValue()).getValue().equals("temurin")) {
                 return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue("temurin")), ctx);
             }
             return super.visitMappingEntry(entry, ctx);
