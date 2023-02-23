@@ -26,6 +26,9 @@ import java.util.Collections;
 import java.util.Set;
 
 public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
+
+    static final JsonPathMatcher DISTRIBUTION_MATCHER = new JsonPathMatcher("..steps[?(@.uses =~ 'actions/setup-java@v[23].*')].with.distribution");
+
     @Override
     public String getDisplayName() {
         return "Use `actions/setup-java` `temurin` distribution";
@@ -59,11 +62,10 @@ public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
     }
 
     private static class ActionsSetupJavaAdoptOpenJDKToTemurinVisitor extends YamlIsoVisitor<ExecutionContext> {
-        private static final JsonPathMatcher distribution = new JsonPathMatcher("..steps[?(@.uses =~ 'actions/setup-java@v[23].*')].with.distribution");
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            if (distribution.matches(getCursor()) && ((Yaml.Scalar) entry.getValue()).getValue().contains("adopt")) {
+            if (DISTRIBUTION_MATCHER.matches(getCursor()) && ((Yaml.Scalar) entry.getValue()).getValue().contains("adopt")) {
                 return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue("temurin")), ctx);
             }
             return super.visitMappingEntry(entry, ctx);
