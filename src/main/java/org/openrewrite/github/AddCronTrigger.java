@@ -31,7 +31,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class AddCronTrigger extends Recipe {
     @Option(displayName = "Cron expression",
             description = "Using the [POSIX cron syntax](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html#tag_20_25_07) or the non standard options" +
-                    " @hourly @daily @weekly @monthly @yearly.",
+                    " @hourly @daily @weekly @weekends @monthly @yearly.",
             example = "@daily")
     private final String cron;
 
@@ -61,14 +61,16 @@ public class AddCronTrigger extends Recipe {
         RandomCronExpression randomCronExpression = new RandomCronExpression(random);
 
         switch (cron){
+            case "@hourly":
+                return randomCronExpression.hourlyCron();
             case "@daily":
                 return randomCronExpression.dailyCron();
             case "@weekly":
                 return randomCronExpression.weeklyCron();
+            case "@weekends":
+                return randomCronExpression.weekends();
             case "@monthly":
                 return randomCronExpression.monthlyCron();
-            case "@hourly":
-                return randomCronExpression.hourlyCron();
             case "@yearly":
                 return randomCronExpression.yearlyCron();
             default:
@@ -119,6 +121,10 @@ public class AddCronTrigger extends Recipe {
 
         public String weeklyCron(){
             return String.format("%d %d * * %s",minute(),hour(), randomDayOfTheWeek());
+        }
+
+        public String weekends(){
+            return String.format("%d %d * * 6,0",minute(),hour());
         }
 
         public String monthlyCron(){

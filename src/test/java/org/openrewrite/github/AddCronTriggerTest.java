@@ -65,13 +65,14 @@ class AddCronTriggerTest implements RewriteTest {
     }
 
     @ParameterizedTest
-    @CsvSource({
-      "@daily,      1 1 * * *",
-      "@weekly,     1 1 * * 1",
-      "@monthly,    1 1 2 * 1",
-      "@hourly,     * 1 * * *",
-      "@yearly,     1 1 2 2 1"
-    })
+    @CsvSource(value = {
+      "@daily    |     1 1 * * *",
+      "@weekly   |     1 1 * * 1",
+      "@monthly  |     1 1 2 * 1",
+      "@hourly   |     * 1 * * *",
+      "@yearly   |     1 1 2 2 1",
+      "@weekends |     1 1 * * 6,0"
+    },delimiter = '|')
     void cronTriggerRandom(String cronExpression,String actualCronValue) {
         rewriteRun(
           spec -> spec.recipe(new AddCronTrigger(cronExpression, new StaticThreadLocalRandom())),
