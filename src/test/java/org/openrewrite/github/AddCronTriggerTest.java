@@ -68,7 +68,7 @@ class AddCronTriggerTest implements RewriteTest {
     @CsvSource(value = {
       "@daily    |     1 1 * * *",
       "@weekly   |     1 1 * * tue",
-      "@monthly  |     1 1 2 * tue",
+      "@monthly  |     1 1 2 * *",
       "@hourly   |     * 1 * * *",
       "@yearly   |     1 1 2 feb tue",
       "@weekends |     1 1 * * sat,sun"

@@ -133,7 +133,7 @@ public class AddCronTrigger extends Recipe {
 
         public String monthlyCron(){
 
-            return String.format("%d %d %s * %s",minute(),hour(), dayOfTheMonth(), dayOfWeek());
+            return String.format("%d %d %s * *",minute(),hour(), dayOfTheMonth());
         }
 
         public int dayOfTheMonth() {
