@@ -17,31 +17,63 @@ package org.openrewrite.github;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.openrewrite.Option;
 import org.openrewrite.Recipe;
 import org.openrewrite.yaml.MergeYaml;
 
 import java.time.Duration;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 @EqualsAndHashCode(callSuper = false)
 @Getter
 public class AddCronTrigger extends Recipe {
     @Option(displayName = "Cron expression",
-            description = "Using the [POSIX cron syntax](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html#tag_20_25_07).",
-            example = "0 18 * * *")
+            description = "Using the [POSIX cron syntax](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html#tag_20_25_07) or the non standard options" +
+                    " @daily @weekly @monthly @hourly @yearly.",
+            example = "@daily")
     private final String cron;
 
-    public AddCronTrigger(String cron) {
-        this.cron = cron;
+    @VisibleForTesting
+    final transient Random random;
+
+    @VisibleForTesting
+    AddCronTrigger(String cron,Random random){
+        this.random = random;
+        this.cron = parseExpression(cron);
         doNext(new MergeYaml(
                 "$.on",
-                "" +
+                String.format("" +
                         "schedule:\n" +
-                        "  - cron: \"0 18 * * *\"",
+                        "  - cron: \"%s\"", this.cron),
                 true,
                 ".github/workflows/*.yml",
-                null)
-        );
+                null));
+    }
+
+    public AddCronTrigger(String cron) {
+        this(cron,ThreadLocalRandom.current());
+    }
+
+    private String parseExpression(String cron) {
+
+        RandomCronExpression randomCronExpression = new RandomCronExpression(random);
+
+        switch (cron){
+            case "@daily":
+                return randomCronExpression.dailyCron();
+            case "@weekly":
+                return randomCronExpression.weeklyCron();
+            case "@monthly":
+                return randomCronExpression.monthlyCron();
+            case "@hourly":
+                return randomCronExpression.hourlyCron();
+            case "@yearly":
+                return randomCronExpression.yearlyCron();
+            default:
+                return cron;
+        }
     }
 
     @Override
@@ -58,4 +90,57 @@ public class AddCronTrigger extends Recipe {
     public Duration getEstimatedEffortPerOccurrence() {
         return Duration.ofMinutes(5);
     }
+
+    static class RandomCronExpression {
+        private final Random random;
+        public RandomCronExpression(Random random){
+            this.random = random;
+        }
+
+        public int random(int min, int max) {
+            return random.nextInt(max + 1 - min) + min;
+        }
+
+        public int minute(){
+            return random(0,59);
+        }
+
+        public int hour(){
+            return random(0,12);
+        }
+
+        public int randomDayOfTheWeek() {
+            return random(0,6);
+        }
+
+        public String dailyCron(){
+            return String.format("%d %d * * *",minute(),hour());
+        }
+
+        public String weeklyCron(){
+            return String.format("%d %d * * %s",minute(),hour(), randomDayOfTheWeek());
+        }
+
+        public String monthlyCron(){
+            return String.format("%d %d %s * %s",minute(),hour(), dayOfTheMonth(), randomDayOfTheWeek());
+        }
+
+        public int dayOfTheMonth() {
+            return random(1,31);
+        }
+
+        public int randomMonth() {
+            return random(1,12);
+        }
+
+        public String hourlyCron() {
+            return String.format("* %s * * *",hour());
+        }
+
+        public String yearlyCron() {
+            return String.format("%d %d %d %d %d",minute(),hour(),dayOfTheMonth(),randomMonth(),randomDayOfTheWeek());
+        }
+    }
+
+
 }
