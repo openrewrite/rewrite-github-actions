@@ -140,7 +140,7 @@ public class AddCronTrigger extends Recipe {
             return random(1,31);
         }
 
-        public String randomMonth() {
+        public String month() {
             final List<String> months = Arrays.asList("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec");
 
             return months.get(random.nextInt(months.size()));
@@ -152,7 +152,7 @@ public class AddCronTrigger extends Recipe {
         }
 
         public String yearlyCron() {
-            return String.format("%d %d %d %s %s",minute(),hour(),dayOfTheMonth(),randomMonth(), dayOfWeek());
+            return String.format("%d %d %d %s %s",minute(),hour(),dayOfTheMonth(), month(), dayOfWeek());
         }
     }
 
