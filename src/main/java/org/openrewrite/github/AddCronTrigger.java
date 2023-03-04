@@ -31,7 +31,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class AddCronTrigger extends Recipe {
     @Option(displayName = "Cron expression",
             description = "Using the [POSIX cron syntax](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html#tag_20_25_07) or the non standard options" +
-                    " @daily @weekly @monthly @hourly @yearly.",
+                    " @hourly @daily @weekly @monthly @yearly.",
             example = "@daily")
     private final String cron;
 
