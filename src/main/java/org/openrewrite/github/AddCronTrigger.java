@@ -23,6 +23,8 @@ import org.openrewrite.Recipe;
 import org.openrewrite.yaml.MergeYaml;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -95,6 +97,7 @@ public class AddCronTrigger extends Recipe {
 
     static class RandomCronExpression {
         private final Random random;
+
         public RandomCronExpression(Random random){
             this.random = random;
         }
@@ -111,8 +114,9 @@ public class AddCronTrigger extends Recipe {
             return random(0,12);
         }
 
-        public int randomDayOfTheWeek() {
-            return random(0,6);
+        public String dayOfWeek() {
+            final List<String> daysOfWeek = Arrays.asList("mon", "tue", "wed", "thu", "fri", "sat", "sun");
+            return daysOfWeek.get(random.nextInt(daysOfWeek.size()));
         }
 
         public String dailyCron(){
@@ -120,23 +124,27 @@ public class AddCronTrigger extends Recipe {
         }
 
         public String weeklyCron(){
-            return String.format("%d %d * * %s",minute(),hour(), randomDayOfTheWeek());
+            return String.format("%d %d * * %s",minute(),hour(), dayOfWeek());
         }
 
         public String weekends(){
-            return String.format("%d %d * * 6,0",minute(),hour());
+            return String.format("%d %d * * sat,sun",minute(),hour());
         }
 
         public String monthlyCron(){
-            return String.format("%d %d %s * %s",minute(),hour(), dayOfTheMonth(), randomDayOfTheWeek());
+
+            return String.format("%d %d %s * %s",minute(),hour(), dayOfTheMonth(), dayOfWeek());
         }
 
         public int dayOfTheMonth() {
             return random(1,31);
         }
 
-        public int randomMonth() {
-            return random(1,12);
+        public String randomMonth() {
+            final List<String> months = Arrays.asList("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec");
+
+            return months.get(random.nextInt(months.size()));
+
         }
 
         public String hourlyCron() {
@@ -144,7 +152,7 @@ public class AddCronTrigger extends Recipe {
         }
 
         public String yearlyCron() {
-            return String.format("%d %d %d %d %d",minute(),hour(),dayOfTheMonth(),randomMonth(),randomDayOfTheWeek());
+            return String.format("%d %d %d %s %s",minute(),hour(),dayOfTheMonth(),randomMonth(), dayOfWeek());
         }
     }
 

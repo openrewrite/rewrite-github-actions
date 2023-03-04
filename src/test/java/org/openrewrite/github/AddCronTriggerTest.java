@@ -67,11 +67,11 @@ class AddCronTriggerTest implements RewriteTest {
     @ParameterizedTest
     @CsvSource(value = {
       "@daily    |     1 1 * * *",
-      "@weekly   |     1 1 * * 1",
-      "@monthly  |     1 1 2 * 1",
+      "@weekly   |     1 1 * * tue",
+      "@monthly  |     1 1 2 * tue",
       "@hourly   |     * 1 * * *",
-      "@yearly   |     1 1 2 2 1",
-      "@weekends |     1 1 * * 6,0"
+      "@yearly   |     1 1 2 feb tue",
+      "@weekends |     1 1 * * sat,sun"
     },delimiter = '|')
     void cronTriggerRandom(String cronExpression,String actualCronValue) {
         rewriteRun(
