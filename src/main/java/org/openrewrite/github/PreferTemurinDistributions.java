@@ -59,7 +59,7 @@ public class PreferTemurinDistributions extends Recipe {
 
     private static List<String> runsOn = new ArrayList<>();
 
-    private static Pattern pattern = Pattern.compile("^(windows|ubuntu|macos)-(latest|\\d+(\\.\\d+)?)$");
+    private static final Pattern pattern = Pattern.compile( "^(windows|ubuntu|macos)-(latest|\\d+(\\.\\d+)?)$" );
 
     private static class UseTemurinVisitor extends YamlIsoVisitor<ExecutionContext> {
         @Override
@@ -71,7 +71,7 @@ public class PreferTemurinDistributions extends Recipe {
 
                 if (entry.getValue() instanceof Yaml.Sequence){
 
-                    Yaml.Sequence sequence = ((Yaml.Sequence) entry.getValue());
+                    Yaml.Sequence sequence = (Yaml.Sequence) entry.getValue();
 
                     for (Yaml.Sequence.Entry e : sequence.getEntries()){
                         runsOn.add(((Yaml.Scalar) e.getBlock()).getValue());
