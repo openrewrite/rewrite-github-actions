@@ -46,7 +46,7 @@ public class AddCronTrigger extends Recipe {
         this.cron = parseExpression(cron);
         doNext(new MergeYaml(
                 "$.on",
-                String.format("schedule:\n" +
+                String.format("schedule:%n" +
                               "  - cron: \"%s\"", this.cron),
                 true,
                 ".github/workflows/*.yml",
