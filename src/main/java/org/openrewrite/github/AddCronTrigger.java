@@ -155,7 +155,7 @@ public class AddCronTrigger extends Recipe {
         }
 
         public String yearlyCron() {
-            return String.format("%d %d %d %s %s", minute(), hour(), dayOfTheMonth(), month(), dayOfWeek());
+            return String.format("%d %d %d %s *", minute(), hour(), dayOfTheMonth(), month());
         }
     }
 
