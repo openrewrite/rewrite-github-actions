@@ -142,7 +142,7 @@ public class AddCronTrigger extends Recipe {
         }
 
         public int dayOfTheMonth() {
-            return random(1, 31);
+            return random(1, 28);
         }
 
         public String month() {
