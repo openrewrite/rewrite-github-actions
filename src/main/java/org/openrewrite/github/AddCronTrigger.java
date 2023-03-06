@@ -33,7 +33,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class AddCronTrigger extends Recipe {
     @Option(displayName = "Cron expression",
             description = "Using the [POSIX cron syntax](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html#tag_20_25_07) or the non standard options" +
-                    " @hourly @daily @weekly @weekends @monthly @yearly.",
+                          " @hourly @daily @weekly @weekdays @weekends @monthly @yearly.",
             example = "@daily")
     private final String cron;
 
@@ -41,34 +41,35 @@ public class AddCronTrigger extends Recipe {
     final transient Random random;
 
     @VisibleForTesting
-    AddCronTrigger(String cron,Random random){
+    AddCronTrigger(String cron, Random random) {
         this.random = random;
         this.cron = parseExpression(cron);
         doNext(new MergeYaml(
                 "$.on",
-                String.format("" +
-                        "schedule:\n" +
-                        "  - cron: \"%s\"", this.cron),
+                String.format("schedule:\n" +
+                              "  - cron: \"%s\"", this.cron),
                 true,
                 ".github/workflows/*.yml",
                 null));
     }
 
     public AddCronTrigger(String cron) {
-        this(cron,ThreadLocalRandom.current());
+        this(cron, ThreadLocalRandom.current());
     }
 
     private String parseExpression(String cron) {
 
         RandomCronExpression randomCronExpression = new RandomCronExpression(random);
 
-        switch (cron){
+        switch (cron) {
             case "@hourly":
                 return randomCronExpression.hourlyCron();
             case "@daily":
                 return randomCronExpression.dailyCron();
             case "@weekly":
                 return randomCronExpression.weeklyCron();
+            case "@weekdays":
+                return randomCronExpression.weekdays();
             case "@weekends":
                 return randomCronExpression.weekends();
             case "@monthly":
@@ -98,7 +99,7 @@ public class AddCronTrigger extends Recipe {
     static class RandomCronExpression {
         private final Random random;
 
-        public RandomCronExpression(Random random){
+        public RandomCronExpression(Random random) {
             this.random = random;
         }
 
@@ -106,12 +107,12 @@ public class AddCronTrigger extends Recipe {
             return random.nextInt(max + 1 - min) + min;
         }
 
-        public int minute(){
-            return random(0,59);
+        public int minute() {
+            return random(0, 59);
         }
 
-        public int hour(){
-            return random(0,12);
+        public int hour() {
+            return random(0, 12);
         }
 
         public String dayOfWeek() {
@@ -119,42 +120,43 @@ public class AddCronTrigger extends Recipe {
             return daysOfWeek.get(random.nextInt(daysOfWeek.size()));
         }
 
-        public String dailyCron(){
-            return String.format("%d %d * * *",minute(),hour());
+        public String dailyCron() {
+            return String.format("%d %d * * *", minute(), hour());
         }
 
-        public String weeklyCron(){
-            return String.format("%d %d * * %s",minute(),hour(), dayOfWeek());
+        public String weeklyCron() {
+            return String.format("%d %d * * %s", minute(), hour(), dayOfWeek());
         }
 
-        public String weekends(){
-            return String.format("%d %d * * sat,sun",minute(),hour());
+        public String weekdays() {
+            return String.format("%d %d * * 1-5", minute(), hour());
         }
 
-        public String monthlyCron(){
+        public String weekends() {
+            return String.format("%d %d * * sat,sun", minute(), hour());
+        }
 
-            return String.format("%d %d %s * *",minute(),hour(), dayOfTheMonth());
+        public String monthlyCron() {
+
+            return String.format("%d %d %s * *", minute(), hour(), dayOfTheMonth());
         }
 
         public int dayOfTheMonth() {
-            return random(1,31);
+            return random(1, 31);
         }
 
         public String month() {
             final List<String> months = Arrays.asList("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec");
-
             return months.get(random.nextInt(months.size()));
-
         }
 
         public String hourlyCron() {
-            return String.format("* %s * * *",hour());
+            return String.format("* %s * * *", hour());
         }
 
         public String yearlyCron() {
-            return String.format("%d %d %d %s %s",minute(),hour(),dayOfTheMonth(), month(), dayOfWeek());
+            return String.format("%d %d %d %s %s", minute(), hour(), dayOfTheMonth(), month(), dayOfWeek());
         }
     }
-
 
 }

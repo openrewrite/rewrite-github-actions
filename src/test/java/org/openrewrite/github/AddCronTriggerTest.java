@@ -32,7 +32,6 @@ class AddCronTriggerTest implements RewriteTest {
       "0 17 * 1 2"
     })
     void cronTrigger(String cron) {
-
         rewriteRun(
           spec -> spec.recipe(new AddCronTrigger(cron)),
           //language=yml
@@ -56,7 +55,7 @@ class AddCronTriggerTest implements RewriteTest {
         );
     }
 
-    static class StaticThreadLocalRandom extends Random{
+    static class StaticThreadLocalRandom extends Random {
         @Override
         public int nextInt(int any) {
             return 1;
@@ -65,15 +64,16 @@ class AddCronTriggerTest implements RewriteTest {
     }
 
     @ParameterizedTest
-    @CsvSource(value = {
-      "@daily    |     1 1 * * *",
-      "@weekly   |     1 1 * * tue",
-      "@monthly  |     1 1 2 * *",
-      "@hourly   |     * 1 * * *",
-      "@yearly   |     1 1 2 feb tue",
-      "@weekends |     1 1 * * sat,sun"
-    },delimiter = '|')
-    void cronTriggerRandom(String cronExpression,String actualCronValue) {
+    @CsvSource(delimiter = '|', textBlock = """
+      @daily    |     1 1 * * *
+      @weekly   |     1 1 * * tue
+      @monthly  |     1 1 2 * *
+      @hourly   |     * 1 * * *
+      @yearly   |     1 1 2 feb tue
+      @weekdays |     1 1 * * 1-5
+      @weekends |     1 1 * * sat,sun
+      """)
+    void cronTriggerRandom(String cronExpression, String actualCronValue) {
         rewriteRun(
           spec -> spec.recipe(new AddCronTrigger(cronExpression, new StaticThreadLocalRandom())),
           //language=yml
