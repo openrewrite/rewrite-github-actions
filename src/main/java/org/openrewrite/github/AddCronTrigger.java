@@ -112,7 +112,7 @@ public class AddCronTrigger extends Recipe {
         }
 
         public int hour() {
-            return random(0, 12);
+            return random(0, 23);
         }
 
         public String dayOfWeek() {
