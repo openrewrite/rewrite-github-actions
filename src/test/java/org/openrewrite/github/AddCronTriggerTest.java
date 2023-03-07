@@ -69,7 +69,7 @@ class AddCronTriggerTest implements RewriteTest {
       @weekly   |     1 1 * * tue
       @monthly  |     1 1 2 * *
       @hourly   |     * 1 * * *
-      @yearly   |     1 1 2 feb tue
+      @yearly   |     1 1 2 feb *
       @weekdays |     1 1 * * 1-5
       @weekends |     1 1 * * sat,sun
       """)
