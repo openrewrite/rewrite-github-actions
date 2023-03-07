@@ -15,21 +15,25 @@
  */
 package org.openrewrite.github;
 
-import org.junit.jupiter.api.Test;
-import org.openrewrite.test.RecipeSpec;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.openrewrite.test.RewriteTest;
+
+import java.util.Random;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
 class AddCronTriggerTest implements RewriteTest {
 
-    public void defaults(RecipeSpec spec) {
-        spec.recipe(new AddCronTrigger("0 18 * * *"));
-    }
-
-    @Test
-    void cronTrigger() {
+    @ParameterizedTest
+    @ValueSource(strings = {
+      "0 18 * * *",
+      "0 17 * 1 2"
+    })
+    void cronTrigger(String cron) {
         rewriteRun(
+          spec -> spec.recipe(new AddCronTrigger(cron)),
           //language=yml
           yaml(
             """
@@ -44,8 +48,50 @@ class AddCronTriggerTest implements RewriteTest {
                   branches:
                     - main
                 schedule:
-                  - cron: "0 18 * * *"
+                  - cron: "%s"
+              """.formatted(cron),
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    static class StaticThreadLocalRandom extends Random {
+        @Override
+        public int nextInt(int any) {
+            return 1;
+        }
+
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+      @daily    |     1 1 * * *
+      @weekly   |     1 1 * * tue
+      @monthly  |     1 1 2 * *
+      @hourly   |     * 1 * * *
+      @yearly   |     1 1 2 feb *
+      @weekdays |     1 1 * * 1-5
+      @weekends |     1 1 * * sat,sun
+      """)
+    void cronTriggerRandom(String cronExpression, String actualCronValue) {
+        rewriteRun(
+          spec -> spec.recipe(new AddCronTrigger(cronExpression, new StaticThreadLocalRandom())),
+          //language=yml
+          yaml(
+            """
+              on:
+                push:
+                  branches:
+                    - main
               """,
+            """
+              on:
+                push:
+                  branches:
+                    - main
+                schedule:
+                  - cron: "%s"
+              """.formatted(actualCronValue),
             spec -> spec.path(".github/workflows/ci.yml")
           )
         );
