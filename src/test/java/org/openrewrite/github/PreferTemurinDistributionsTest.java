@@ -187,7 +187,7 @@ class PreferTemurinDistributionsTest implements RewriteTest {
 
 
     @Test
-    void testChangesWhenAllAreHosted() {
+    void changesWhenAllAreHosted() {
         rewriteRun(
           //language=yaml
           yaml(
@@ -250,7 +250,7 @@ class PreferTemurinDistributionsTest implements RewriteTest {
 
 
     @Test
-    void testOnlyChangesSpecificJobs() {
+    void onlyChangesSpecificJobs() {
         rewriteRun(
           //language=yaml
           yaml(
@@ -358,7 +358,7 @@ class PreferTemurinDistributionsTest implements RewriteTest {
     }
 
     @Test
-    void testChangesMultipleJobs() {
+    void changesMultipleJobs() {
         rewriteRun(
           //language=yaml
           yaml(
