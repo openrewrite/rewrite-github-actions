@@ -35,10 +35,10 @@ public class AddCronTrigger extends Recipe {
             description = "Using the [POSIX cron syntax](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html#tag_20_25_07) or the non standard options" +
                           " @hourly @daily @weekly @weekdays @weekends @monthly @yearly.",
             example = "@daily")
-    private final String cron;
+    private String cron;
 
     @VisibleForTesting
-    final transient Random random;
+    transient Random random;
 
     @VisibleForTesting
     AddCronTrigger(String cron, Random random) {
