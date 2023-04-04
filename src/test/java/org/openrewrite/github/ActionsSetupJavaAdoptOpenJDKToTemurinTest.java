@@ -77,7 +77,7 @@ class ActionsSetupJavaAdoptOpenJDKToTemurinTest implements RewriteTest {
                     - name: set-up-jdk-2
                       uses: actions/setup-java@v2.3.0
                       with:
-                        distribution: "temurin"
+                        distribution: "adopt-openj9"
                         java-version: "11"
                     - name: build
                       run: ./gradlew build test
