@@ -20,6 +20,8 @@ import lombok.Getter;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.openrewrite.Option;
 import org.openrewrite.Recipe;
+import org.openrewrite.internal.StringUtils;
+import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.yaml.MergeYaml;
 
 import java.time.Duration;
@@ -37,24 +39,37 @@ public class AddCronTrigger extends Recipe {
             example = "@daily")
     private String cron;
 
+    @Option(displayName = "Workflow files to match",
+            description = "Matches one or more workflows to update. Defaults to `*.yml`",
+            required = false,
+            example = "build.yml")
+    private String workflowFileMatcher;
+
     @VisibleForTesting
     transient Random random;
 
     @VisibleForTesting
-    AddCronTrigger(String cron, Random random) {
+    AddCronTrigger(String cron,@Nullable String workflowFileMatcher, Random random) {
         this.random = random;
         this.cron = parseExpression(cron);
+
+        if (StringUtils.isBlank(workflowFileMatcher)) {
+            this.workflowFileMatcher = ".github/workflows/*.yml";
+        } else {
+            this.workflowFileMatcher = ".github/workflows/" + workflowFileMatcher;
+        }
+
         doNext(new MergeYaml(
                 "$.on",
                 String.format("schedule:%n" +
                               "  - cron: \"%s\"", this.cron),
                 true,
-                ".github/workflows/*.yml",
+                this.workflowFileMatcher,
                 null));
     }
 
-    public AddCronTrigger(String cron) {
-        this(cron, ThreadLocalRandom.current());
+    public AddCronTrigger(String cron, @Nullable String fileMatcher) {
+        this(cron, fileMatcher,ThreadLocalRandom.current());
     }
 
     private String parseExpression(String cron) {

@@ -15,8 +15,11 @@
  */
 package org.openrewrite.github;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.openrewrite.test.RewriteTest;
 
@@ -33,7 +36,7 @@ class AddCronTriggerTest implements RewriteTest {
     })
     void cronTrigger(String cron) {
         rewriteRun(
-          spec -> spec.recipe(new AddCronTrigger(cron)),
+          spec -> spec.recipe(new AddCronTrigger(cron,null)),
           //language=yml
           yaml(
             """
@@ -50,6 +53,83 @@ class AddCronTriggerTest implements RewriteTest {
                 schedule:
                   - cron: "%s"
               """.formatted(cron),
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+      "continuous_integration.yml",
+      "*_integration.yml",
+      "*.yml"
+    })
+    void makesChangesForMatchingWorkflow(String workflow) {
+        rewriteRun(
+          spec -> spec.recipe(new AddCronTrigger( "0 18 * * *",workflow)),
+          //language=yml
+          yaml(
+            """
+              on:
+                push:
+                  branches:
+                    - main
+              """,
+            """
+              on:
+                push:
+                  branches:
+                    - main
+                schedule:
+                  - cron: "0 18 * * *"
+              """,
+            spec -> spec.path(".github/workflows/continuous_integration.yml")
+          )
+        );
+    }
+
+    @Test
+    void invalidFileMatcherShouldNotMakeChanges() {
+        rewriteRun(
+          spec -> spec.recipe(new AddCronTrigger("0 17 * 1 2","someOtherFile.yml")),
+          //language=yml
+          yaml(
+            """
+              on:
+                push:
+                  branches:
+                    - main
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @ParameterizedTest
+    @DisplayName("Missing or null defaults to .github/workflows/ci.yml")
+    @NullSource
+    @ValueSource(strings = {
+      ""
+    })
+    void missingFileMatcher(String fileMatcher) {
+        rewriteRun(
+          spec -> spec.recipe(new AddCronTrigger("0 18 * * *",fileMatcher)),
+          //language=yml
+          yaml(
+            """
+              on:
+                push:
+                  branches:
+                    - main
+              """,
+            """
+              on:
+                push:
+                  branches:
+                    - main
+                schedule:
+                  - cron: "0 18 * * *"
+              """,
             spec -> spec.path(".github/workflows/ci.yml")
           )
         );
@@ -75,7 +155,7 @@ class AddCronTriggerTest implements RewriteTest {
       """)
     void cronTriggerRandom(String cronExpression, String actualCronValue) {
         rewriteRun(
-          spec -> spec.recipe(new AddCronTrigger(cronExpression, new StaticThreadLocalRandom())),
+          spec -> spec.recipe(new AddCronTrigger(cronExpression, "" ,new StaticThreadLocalRandom())),
           //language=yml
           yaml(
             """
