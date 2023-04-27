@@ -16,6 +16,7 @@
 package org.openrewrite.github;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -27,6 +28,7 @@ class ActionsSetupJavaAdoptOpenJDKToTemurinTest implements RewriteTest {
         spec.recipe(new ActionsSetupJavaAdoptOpenJDKToTemurin());
     }
 
+    @DocumentExample
     @Test
     void actionsSetupJavaAdoptOpenJDKToTemurin() {
         rewriteRun(
