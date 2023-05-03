@@ -15,12 +15,8 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.HasSourcePath;
-import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
+import org.openrewrite.*;
 import org.openrewrite.yaml.YamlIsoVisitor;
-import org.openrewrite.yaml.YamlVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
@@ -48,44 +44,39 @@ public class PreferTemurinDistributions extends Recipe {
     }
 
     @Override
-    protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new HasSourcePath<>(".github/workflows/*.yml");
-    }
-
-    @Override
-    protected YamlVisitor<ExecutionContext> getVisitor() {
-        return new UseTemurinVisitor();
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new UseTemurinVisitor());
     }
 
     private static List<String> runsOn = new ArrayList<>();
 
-    private static final Pattern pattern = Pattern.compile( "^(windows|ubuntu|macos)-(latest|\\d+(\\.\\d+)?)$" );
+    private static final Pattern pattern = Pattern.compile("^(windows|ubuntu|macos)-(latest|\\d+(\\.\\d+)?)$");
 
     private static class UseTemurinVisitor extends YamlIsoVisitor<ExecutionContext> {
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
 
-            if ("runs-on".equals(entry.getKey().getValue())){
+            if ("runs-on".equals(entry.getKey().getValue())) {
 
                 runsOn = new ArrayList<>();
 
-                if (entry.getValue() instanceof Yaml.Sequence){
+                if (entry.getValue() instanceof Yaml.Sequence) {
 
                     Yaml.Sequence sequence = (Yaml.Sequence) entry.getValue();
 
-                    for (Yaml.Sequence.Entry e : sequence.getEntries()){
+                    for (Yaml.Sequence.Entry e : sequence.getEntries()) {
                         runsOn.add(((Yaml.Scalar) e.getBlock()).getValue());
                     }
 
 
-                }else if (entry.getValue() instanceof Yaml.Scalar){
+                } else if (entry.getValue() instanceof Yaml.Scalar) {
                     runsOn.add(((Yaml.Scalar) entry.getValue()).getValue());
                 }
 
                 return super.visitMappingEntry(entry, ctx);
             }
 
-            final int hostedRunnersCount  = Math.toIntExact(runsOn.stream().filter(e -> pattern.matcher(e).matches()).count());
+            final int hostedRunnersCount = Math.toIntExact(runsOn.stream().filter(e -> pattern.matcher(e).matches()).count());
 
             if (hostedRunnersCount == runsOn.size() && DISTRIBUTION_MATCHER.matches(getCursor()) && !"temurin".equals(((Yaml.Scalar) entry.getValue()).getValue())) {
                 return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue("temurin")), ctx);

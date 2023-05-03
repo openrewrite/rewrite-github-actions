@@ -18,13 +18,13 @@ package org.openrewrite.github;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.openrewrite.Option;
-import org.openrewrite.Recipe;
+import org.openrewrite.*;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.yaml.MergeYaml;
+import org.openrewrite.yaml.YamlVisitor;
+import org.openrewrite.yaml.tree.Yaml;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -35,21 +35,21 @@ import java.util.concurrent.ThreadLocalRandom;
 public class AddCronTrigger extends Recipe {
     @Option(displayName = "Cron expression",
             description = "Using the [POSIX cron syntax](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html#tag_20_25_07) or the non standard options" +
-                          " @hourly @daily @weekly @weekdays @weekends @monthly @yearly.",
+                    " @hourly @daily @weekly @weekdays @weekends @monthly @yearly.",
             example = "@daily")
-    private String cron;
+    private final String cron;
 
     @Option(displayName = "Workflow files to match",
             description = "Matches one or more workflows to update. Defaults to `*.yml`",
             required = false,
             example = "build.yml")
-    private String workflowFileMatcher;
+    private final String workflowFileMatcher;
 
     @VisibleForTesting
     transient Random random;
 
     @VisibleForTesting
-    AddCronTrigger(String cron,@Nullable String workflowFileMatcher, Random random) {
+    AddCronTrigger(String cron, @Nullable String workflowFileMatcher, Random random) {
         this.random = random;
         this.cron = parseExpression(cron);
 
@@ -58,18 +58,10 @@ public class AddCronTrigger extends Recipe {
         } else {
             this.workflowFileMatcher = ".github/workflows/" + workflowFileMatcher;
         }
-
-        doNext(new MergeYaml(
-                "$.on",
-                String.format("schedule:%n" +
-                              "  - cron: \"%s\"", this.cron),
-                true,
-                this.workflowFileMatcher,
-                null));
     }
 
     public AddCronTrigger(String cron, @Nullable String fileMatcher) {
-        this(cron, fileMatcher,ThreadLocalRandom.current());
+        this(cron, fileMatcher, ThreadLocalRandom.current());
     }
 
     private String parseExpression(String cron) {
@@ -107,8 +99,20 @@ public class AddCronTrigger extends Recipe {
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(new HasSourcePath<>(workflowFileMatcher), new YamlVisitor<ExecutionContext>() {
+            @Override
+            public Yaml preVisit(Yaml tree, ExecutionContext ctx) {
+                stopAfterPreVisit();
+                doAfterVisit(new MergeYaml(
+                        "$.on",
+                        String.format("schedule:%n" +
+                                "  - cron: \"%s\"", cron),
+                        true,
+                        null));
+                return tree;
+            }
+        });
     }
 
     static class RandomCronExpression {

@@ -16,39 +16,26 @@
 package org.openrewrite.github;
 
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import org.openrewrite.Option;
-import org.openrewrite.Recipe;
-import org.openrewrite.internal.lang.NonNull;
+import lombok.Value;
+import org.openrewrite.*;
 import org.openrewrite.yaml.ChangeValue;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
+@Value
 @EqualsAndHashCode(callSuper = false)
-@Getter
 public class ReplaceRunners extends Recipe {
     @Option(displayName = "Job Name",
             description = "The name of the job to update",
             example = "build")
-    private final String jobName;
+    String jobName;
 
     @Option(displayName = "Runners",
             description = "The new list of runners to set",
             example = "ubuntu-latest"
     )
-    private final List<String> runners;
-
-    public ReplaceRunners(@NonNull String jobName, @NonNull List<String> runners) {
-        this.jobName = jobName;
-        this.runners = runners;
-        doNext(new ChangeValue(
-                String.format("$.jobs.%s.runs-on",jobName),
-                Arrays.toString(runners.toArray()),
-                ".github/workflows/*.yml")
-        );
-    }
+    List<String> runners;
 
     @Override
     public String getDisplayName() {
@@ -61,7 +48,16 @@ public class ReplaceRunners extends Recipe {
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new TreeVisitor<Tree, ExecutionContext>() {
+            @Override
+            public Tree preVisit(Tree tree, ExecutionContext ctx) {
+                stopAfterPreVisit();
+                doAfterVisit(new ChangeValue(
+                        String.format("$.jobs.%s.runs-on", jobName),
+                        Arrays.toString(runners.toArray())));
+                return tree;
+            }
+        });
     }
 }

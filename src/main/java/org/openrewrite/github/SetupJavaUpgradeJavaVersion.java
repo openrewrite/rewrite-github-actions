@@ -48,15 +48,10 @@ public class SetupJavaUpgradeJavaVersion extends Recipe {
     }
 
     @Override
-    protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new HasSourcePath<>(".github/workflows/*.yml");
-    }
-
-    @Override
-    protected TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new UpgradeJavaVersionVisitor(
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new UpgradeJavaVersionVisitor(
                 minimumJavaMajorVersion == null ? 17 : minimumJavaMajorVersion
-        );
+        ));
     }
 
     @AllArgsConstructor

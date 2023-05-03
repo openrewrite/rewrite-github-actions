@@ -15,18 +15,14 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.Recipe;
+import org.openrewrite.*;
 import org.openrewrite.yaml.DeleteKey;
+import org.openrewrite.yaml.YamlIsoVisitor;
+import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
 
 public class RemoveAllCronTriggers extends Recipe {
-    public RemoveAllCronTriggers() {
-        doNext(new DeleteKey(
-                "$.on.schedule",
-                null)
-        );
-    }
 
     @Override
     public String getDisplayName() {
@@ -41,5 +37,17 @@ public class RemoveAllCronTriggers extends Recipe {
     @Override
     public Duration getEstimatedEffortPerOccurrence() {
         return Duration.ofMinutes(1);
+    }
+
+    @Override
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new YamlIsoVisitor<ExecutionContext>() {
+            @Override
+            public Yaml preVisit(Yaml tree, ExecutionContext ctx) {
+                stopAfterPreVisit();
+                doAfterVisit(new DeleteKey("$.on.schedule"));
+                return tree;
+            }
+        });
     }
 }

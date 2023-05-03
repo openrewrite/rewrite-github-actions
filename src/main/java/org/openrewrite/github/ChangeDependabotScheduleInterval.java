@@ -20,10 +20,8 @@ import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
-import org.openrewrite.yaml.YamlVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
-import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -53,11 +51,6 @@ public class ChangeDependabotScheduleInterval extends Recipe {
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
-
-    @Override
     public Set<String> getTags() {
         Set<String> tags = new HashSet<>();
         tags.add("dependabot");
@@ -67,13 +60,8 @@ public class ChangeDependabotScheduleInterval extends Recipe {
     }
 
     @Override
-    protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new HasSourcePath<>(".github/dependabot.yml");
-    }
-
-    @Override
-    protected YamlVisitor<ExecutionContext> getVisitor() {
-        return new YamlIsoVisitor<ExecutionContext>() {
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(new HasSourcePath<>(".github/dependabot.yml"), new YamlIsoVisitor<ExecutionContext>() {
             private final JsonPathMatcher targetEcosystem = new JsonPathMatcher("$.updates[?(@.package-ecosystem =~ '" + packageEcosystem + "')].schedule.interval");
 
             @Override
@@ -83,7 +71,7 @@ public class ChangeDependabotScheduleInterval extends Recipe {
                 }
                 return super.visitMappingEntry(entry, ctx);
             }
-        };
+        });
     }
 
 }

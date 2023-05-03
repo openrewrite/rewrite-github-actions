@@ -15,17 +15,12 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.HasSourcePath;
-import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
+import org.openrewrite.*;
 import org.openrewrite.yaml.DeleteKey;
 import org.openrewrite.yaml.MergeYaml;
 import org.openrewrite.yaml.YamlVisitor;
 import org.openrewrite.yaml.search.FindKey;
 import org.openrewrite.yaml.tree.Yaml;
-
-import java.time.Duration;
 
 public class SetupJavaCaching extends Recipe {
     @Override
@@ -39,40 +34,30 @@ public class SetupJavaCaching extends Recipe {
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
-
-    @Override
-    protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new HasSourcePath<>(".github/workflows/*.yml");
-    }
-
-    @Override
-    protected YamlVisitor<ExecutionContext> getVisitor() {
-        return new YamlVisitor<ExecutionContext>() {
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new YamlVisitor<ExecutionContext>() {
             @Override
             public Yaml visitDocuments(Yaml.Documents documents, ExecutionContext ctx) {
                 if (!FindKey.find(documents, "$.jobs.build.steps[?(@.run =~ '.*gradle.*')]").isEmpty()) {
                     doAfterVisit(new MergeYaml("$.jobs.build.steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
                             "" +
                                     "with:\n" +
-                                    "  cache: 'gradle'", true, null, null));
+                                    "  cache: 'gradle'", true, null));
                     deleteCacheAction();
                 }
                 if (!FindKey.find(documents, "$.jobs.build.steps[?(@.run =~ '.*mvn.*')]").isEmpty()) {
                     doAfterVisit(new MergeYaml("$.jobs.build.steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
                             "" +
                                     "with:\n" +
-                                    "  cache: 'maven'", true, null, null));
+                                    "  cache: 'maven'", true, null));
                     deleteCacheAction();
                 }
                 return documents;
             }
 
             private void deleteCacheAction() {
-                doAfterVisit(new DeleteKey("$.jobs.build.steps[?(@.uses =~ 'actions/cache(?:@v.+)?')]", null));
+                doAfterVisit(new DeleteKey("$.jobs.build.steps[?(@.uses =~ 'actions/cache(?:@v.+)?')]"));
             }
-        };
+        });
     }
 }

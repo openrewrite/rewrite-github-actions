@@ -24,10 +24,7 @@ import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.YamlParser;
-import org.openrewrite.yaml.YamlVisitor;
 import org.openrewrite.yaml.tree.Yaml;
-
-import java.time.Duration;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
@@ -52,17 +49,7 @@ public class AutoCancelInProgressWorkflow extends Recipe {
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
-
-    @Override
-    protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new HasSourcePath<>(".github/workflows/*.yml");
-    }
-
-    @Override
-    protected YamlVisitor<ExecutionContext> getVisitor() {
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
         JsonPathMatcher firstStep = new JsonPathMatcher("$.jobs.build.steps[:1].uses");
         JsonPathMatcher jobSteps = new JsonPathMatcher("$.jobs.build.steps.*");
 
@@ -76,7 +63,7 @@ public class AutoCancelInProgressWorkflow extends Recipe {
                 "  with:\n" +
                 "    access_token: ${{ github.token }}";
 
-        return new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new YamlIsoVisitor<ExecutionContext>() {
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 if (firstStep.matches(getCursor()) && (!(entry.getValue() instanceof Yaml.Scalar) ||
@@ -90,13 +77,13 @@ public class AutoCancelInProgressWorkflow extends Recipe {
             public Yaml.Sequence visitSequence(Yaml.Sequence sequence, ExecutionContext ctx) {
                 Yaml.Sequence s = super.visitSequence(sequence, ctx);
                 if (jobSteps.matches(getCursor()) && Boolean.TRUE.equals(getCursor().getMessage("ADD_STEP"))) {
-                    Yaml.Documents documents = new YamlParser().parse(ctx, StringUtils.isNullOrEmpty(accessToken) ? defaultAccessTokenTemplate : userProvidedAccessTokenTemplate).get(0);
+                    Yaml.Documents documents = new YamlParser().parse(ctx, StringUtils.isNullOrEmpty(accessToken) ? defaultAccessTokenTemplate : userProvidedAccessTokenTemplate).findFirst().get();
                     Yaml.Sequence.Entry cancelWorkflowAction = ((Yaml.Sequence) documents.getDocuments().get(0).getBlock()).getEntries().get(0);
                     cancelWorkflowAction = autoFormat(cancelWorkflowAction.withPrefix("\n"), ctx, getCursor());
                     return s.withEntries(ListUtils.concat(cancelWorkflowAction, s.getEntries()));
                 }
                 return s;
             }
-        };
+        });
     }
 }

@@ -18,10 +18,8 @@ package org.openrewrite.github;
 import org.openrewrite.*;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
-import org.openrewrite.yaml.YamlVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Set;
 
@@ -42,23 +40,13 @@ public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
-
-    @Override
     public Set<String> getTags() {
         return Collections.singleton("security");
     }
 
     @Override
-    protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new HasSourcePath<>(".github/workflows/*.yml");
-    }
-
-    @Override
-    protected YamlVisitor<ExecutionContext> getVisitor() {
-        return new ActionsSetupJavaAdoptOpenJDKToTemurinVisitor();
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new ActionsSetupJavaAdoptOpenJDKToTemurinVisitor());
     }
 
     private static class ActionsSetupJavaAdoptOpenJDKToTemurinVisitor extends YamlIsoVisitor<ExecutionContext> {
