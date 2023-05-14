@@ -25,7 +25,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Set;
 
-public class ActionsSetupJavaAdoptOpenj9ToIBMSemeru extends Recipe {
+public class SetupJavaAdoptOpenj9ToSemeru extends Recipe {
 
     @Override
     public String getDisplayName() {
@@ -56,7 +56,7 @@ public class ActionsSetupJavaAdoptOpenj9ToIBMSemeru extends Recipe {
 
     @Override
     protected YamlVisitor<ExecutionContext> getVisitor() {
-        return new ActionsSetupJavaAdoptOpenJDKToTemurin.SetupJavaDistributionReplacerVisitor(Collections.singletonList("adopt-openj9"),"semeru");
+        return new SetupJavaDistributionReplacerVisitor(Collections.singletonList("adopt-openj9"),"semeru");
     }
 
 }

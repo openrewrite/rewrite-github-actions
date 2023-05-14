@@ -16,20 +16,15 @@
 package org.openrewrite.github;
 
 import org.openrewrite.*;
-import org.openrewrite.yaml.JsonPathMatcher;
-import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.YamlVisitor;
-import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Set;
 import java.util.Arrays;
-import java.util.List;
 
-public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
+public class SetupJavaAdoptOpenJDKToTemurin extends Recipe {
 
-    static final JsonPathMatcher DISTRIBUTION_MATCHER = new JsonPathMatcher("..steps[?(@.uses =~ 'actions/setup-java@v[23].*')].with.distribution");
 
     @Override
     public String getDisplayName() {
@@ -60,25 +55,7 @@ public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
 
     @Override
     protected YamlVisitor<ExecutionContext> getVisitor() {
-        return new SetupJavaDistributionReplacerVisitor(Arrays.asList("adopt","adopt-hotspot"),"temurin");
+        return new SetupJavaDistributionReplacerVisitor(Arrays.asList("adopt", "adopt-hotspot"), "temurin");
     }
 
-    static class SetupJavaDistributionReplacerVisitor extends YamlIsoVisitor<ExecutionContext> {
-
-        private final List<String> originalDistributions;
-        private final String newDistribution;
-
-        public SetupJavaDistributionReplacerVisitor(List<String> originalDistributions, String newDistribution) {
-            this.originalDistributions = originalDistributions;
-            this.newDistribution = newDistribution;
-        }
-
-        @Override
-        public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            if (DISTRIBUTION_MATCHER.matches(getCursor()) && this.originalDistributions.contains(((Yaml.Scalar) entry.getValue()).getValue())) {
-                return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue(this.newDistribution)), ctx);
-            }
-            return super.visitMappingEntry(entry, ctx);
-        }
-    }
 }

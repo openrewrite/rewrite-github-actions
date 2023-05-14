@@ -21,10 +21,10 @@ import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
-class ActionsSetupJavaAdoptOpenJDKToTemurinTest implements RewriteTest {
+class SetupJavaAdoptOpenJDKToTemurinTest implements RewriteTest {
 
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new ActionsSetupJavaAdoptOpenJDKToTemurin());
+        spec.recipe(new SetupJavaAdoptOpenJDKToTemurin());
     }
 
     @Test

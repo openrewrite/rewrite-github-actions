@@ -21,10 +21,10 @@ import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
-class ActionsSetupJavaAdoptOpenj9ToSemeruTest implements RewriteTest {
+class SetupJavaAdoptOpenj9ToSemeruTest implements RewriteTest {
 
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new ActionsSetupJavaAdoptOpenj9ToIBMSemeru());
+        spec.recipe(new SetupJavaAdoptOpenj9ToSemeru());
     }
 
     @Test
