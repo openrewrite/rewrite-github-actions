@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static org.openrewrite.github.ActionsSetupJavaAdoptOpenJDKToTemurin.DISTRIBUTION_MATCHER;
+import static org.openrewrite.github.SetupJavaDistributionReplacerVisitor.DISTRIBUTION_MATCHER;
 
 public class PreferTemurinDistributions extends Recipe {
     @Override
