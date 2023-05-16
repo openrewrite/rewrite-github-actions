@@ -16,17 +16,19 @@
 package org.openrewrite.github;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
-class ActionsSetupJavaAdoptOpenJDKToTemurinTest implements RewriteTest {
+class SetupJavaAdoptOpenJDKToTemurinTest implements RewriteTest {
 
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new ActionsSetupJavaAdoptOpenJDKToTemurin());
+        spec.recipe(new SetupJavaAdoptOpenJDKToTemurin());
     }
 
+    @DocumentExample
     @Test
     void actionsSetupJavaAdoptOpenJDKToTemurin() {
         rewriteRun(
@@ -77,7 +79,7 @@ class ActionsSetupJavaAdoptOpenJDKToTemurinTest implements RewriteTest {
                     - name: set-up-jdk-2
                       uses: actions/setup-java@v2.3.0
                       with:
-                        distribution: "temurin"
+                        distribution: "adopt-openj9"
                         java-version: "11"
                     - name: build
                       run: ./gradlew build test

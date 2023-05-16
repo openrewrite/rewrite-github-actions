@@ -16,6 +16,7 @@
 package org.openrewrite.github;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RewriteTest;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import static org.openrewrite.yaml.Assertions.yaml;
 
 class ReplaceRunnersTest implements RewriteTest {
 
+    @DocumentExample
     @Test
     void replaceRunners() {
         rewriteRun(

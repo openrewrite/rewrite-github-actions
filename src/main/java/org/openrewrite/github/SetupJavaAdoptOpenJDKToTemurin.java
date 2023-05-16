@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2023 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@ import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.Arrays;
 
-public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
+public class SetupJavaAdoptOpenJDKToTemurin extends Recipe {
 
-    static final JsonPathMatcher DISTRIBUTION_MATCHER = new JsonPathMatcher("..steps[?(@.uses =~ 'actions/setup-java@v[23].*')].with.distribution");
 
     @Override
     public String getDisplayName() {
@@ -46,17 +46,7 @@ public class ActionsSetupJavaAdoptOpenJDKToTemurin extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new ActionsSetupJavaAdoptOpenJDKToTemurinVisitor());
+        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new SetupJavaDistributionReplacerVisitor(Arrays.asList("adopt", "adopt-hotspot"), "temurin"));
     }
 
-    private static class ActionsSetupJavaAdoptOpenJDKToTemurinVisitor extends YamlIsoVisitor<ExecutionContext> {
-
-        @Override
-        public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            if (DISTRIBUTION_MATCHER.matches(getCursor()) && ((Yaml.Scalar) entry.getValue()).getValue().contains("adopt")) {
-                return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue("temurin")), ctx);
-            }
-            return super.visitMappingEntry(entry, ctx);
-        }
-    }
 }

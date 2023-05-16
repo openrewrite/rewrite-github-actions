@@ -16,6 +16,7 @@
 package org.openrewrite.github;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -27,6 +28,7 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
         spec.recipe(new SetupJavaUpgradeJavaVersion(17));
     }
 
+    @DocumentExample
     @Test
     void updatesOldMajorVersion() {
         rewriteRun(
