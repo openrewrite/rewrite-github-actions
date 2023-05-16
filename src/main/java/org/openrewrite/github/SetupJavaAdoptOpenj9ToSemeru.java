@@ -15,11 +15,7 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.HasSourcePath;
-import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
-import org.openrewrite.yaml.YamlVisitor;
+import org.openrewrite.*;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -50,13 +46,9 @@ public class SetupJavaAdoptOpenj9ToSemeru extends Recipe {
     }
 
     @Override
-    protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new HasSourcePath<>(".github/workflows/*.yml");
-    }
-
-    @Override
-    protected YamlVisitor<ExecutionContext> getVisitor() {
-        return new SetupJavaDistributionReplacerVisitor(Collections.singletonList("adopt-openj9"),"semeru");
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"),
+                new SetupJavaDistributionReplacerVisitor(Collections.singletonList("adopt-openj9"),"semeru"));
     }
 
 }
