@@ -34,7 +34,7 @@ import java.time.Duration;
 @SuppressWarnings("ConcatenationWithEmptyString")
 public class AutoCancelInProgressWorkflow extends Recipe {
     @Option(displayName = "Optional access token",
-            description = "Optionally provide the key name of a repository or organization secret that contains a Github personal access token with permission to cancel workflows.",
+            description = "Optionally provide the key name of a repository or organization secret that contains a GitHub personal access token with permission to cancel workflows.",
             required = false,
             example = "WORKFLOWS_ACCESS_TOKEN")
     @Nullable
