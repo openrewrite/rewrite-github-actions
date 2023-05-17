@@ -15,6 +15,6 @@
 #
 ---
 type: specs.openrewrite.org/v1beta/category
-name: Github Actions
+name: GitHub Actions
 packageName: org.openrewrite.github
-description: 'Recipes to perform [Github Actions](https://docs.github.com/en/actions) hygiene and migration tasks.'
+description: 'Recipes to perform [GitHub Actions](https://docs.github.com/en/actions) hygiene and migration tasks.'
