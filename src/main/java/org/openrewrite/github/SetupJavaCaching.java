@@ -30,7 +30,7 @@ public class SetupJavaCaching extends Recipe {
 
     @Override
     public String getDescription() {
-        return "Github actions supports dependency caching on Maven and Gradle projects. See the [blog post](https://github.blog/changelog/2021-08-30-github-actions-setup-java-now-supports-dependency-caching/).";
+        return "GitHub actions supports dependency caching on Maven and Gradle projects. See the [blog post](https://github.blog/changelog/2021-08-30-github-actions-setup-java-now-supports-dependency-caching/).";
     }
 
     @Override

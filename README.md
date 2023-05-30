@@ -1,5 +1,5 @@
 ![Logo](https://github.com/openrewrite/rewrite/raw/main/doc/logo-oss.png)
-### Migrate Github Actions. Automatically.
+### Migrate GitHub Actions. Automatically.
 
 [![ci](https://github.com/openrewrite/rewrite-github-actions/actions/workflows/ci.yml/badge.svg)](https://github.com/openrewrite/rewrite-github-actions/actions/workflows/ci.yml)
 [![Apache 2.0](https://img.shields.io/github/license/openrewrite/rewrite-github-actions.svg)](https://www.apache.org/licenses/LICENSE-2.0)
@@ -8,4 +8,4 @@
 
 ### What is this?
 
-This project implements [Rewrite recipes](https://github.com/openrewrite/rewrite) to perform Github Actions hygiene and migration tasks.
+This project implements [Rewrite recipes](https://github.com/openrewrite/rewrite) to perform GitHub Actions hygiene and migration tasks.
