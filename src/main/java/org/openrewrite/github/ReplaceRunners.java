@@ -49,15 +49,8 @@ public class ReplaceRunners extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new TreeVisitor<Tree, ExecutionContext>() {
-            @Override
-            public Tree preVisit(Tree tree, ExecutionContext ctx) {
-                stopAfterPreVisit();
-                doAfterVisit(new ChangeValue(
-                        String.format("$.jobs.%s.runs-on", jobName),
-                        Arrays.toString(runners.toArray())));
-                return tree;
-            }
-        });
+        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"),
+                new ChangeValue(String.format("$.jobs.%s.runs-on", jobName), Arrays.toString(runners.toArray()))
+                        .getVisitor());
     }
 }

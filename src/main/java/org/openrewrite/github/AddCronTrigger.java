@@ -100,19 +100,13 @@ public class AddCronTrigger extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new HasSourcePath<>(workflowFileMatcher), new YamlVisitor<ExecutionContext>() {
-            @Override
-            public Yaml preVisit(Yaml tree, ExecutionContext ctx) {
-                stopAfterPreVisit();
-                doAfterVisit(new MergeYaml(
-                        "$.on",
-                        String.format("schedule:%n" +
-                                "  - cron: \"%s\"", cron),
-                        true,
-                        null));
-                return tree;
-            }
-        });
+        return Preconditions.check(new HasSourcePath<>(workflowFileMatcher), new MergeYaml(
+                "$.on",
+                String.format(
+                        "schedule:%n" +
+                        "  - cron: \"%s\"", cron),
+                true,
+                null).getVisitor());
     }
 
     static class RandomCronExpression {

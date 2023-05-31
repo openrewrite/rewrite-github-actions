@@ -38,25 +38,26 @@ public class SetupJavaCaching extends Recipe {
         return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new YamlVisitor<ExecutionContext>() {
             @Override
             public Yaml visitDocuments(Yaml.Documents documents, ExecutionContext ctx) {
+                Yaml.Documents d = documents;
                 if (!FindKey.find(documents, "$.jobs.build.steps[?(@.run =~ '.*gradle.*')]").isEmpty()) {
-                    doAfterVisit(new MergeYaml("$.jobs.build.steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
+                    d = (Yaml.Documents) new MergeYaml("$.jobs.build.steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
                             "" +
                                     "with:\n" +
-                                    "  cache: 'gradle'", true, null));
-                    deleteCacheAction();
+                                    "  cache: 'gradle'", true, null)
+                            .getVisitor().visitNonNull(d, ctx);
                 }
                 if (!FindKey.find(documents, "$.jobs.build.steps[?(@.run =~ '.*mvn.*')]").isEmpty()) {
-                    doAfterVisit(new MergeYaml("$.jobs.build.steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
+                    d = (Yaml.Documents) new MergeYaml("$.jobs.build.steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
                             "" +
                                     "with:\n" +
-                                    "  cache: 'maven'", true, null));
-                    deleteCacheAction();
+                                    "  cache: 'maven'", true, null)
+                            .getVisitor().visitNonNull(d, ctx);
                 }
-                return documents;
-            }
-
-            private void deleteCacheAction() {
-                doAfterVisit(new DeleteKey("$.jobs.build.steps[?(@.uses =~ 'actions/cache(?:@v.+)?')]"));
+                if(d != documents) {
+                    d = (Yaml.Documents) new DeleteKey("$.jobs.build.steps[?(@.uses =~ 'actions/cache(?:@v.+)?')]")
+                            .getVisitor().visitNonNull(d, ctx);
+                }
+                return d;
             }
         });
     }

@@ -41,13 +41,7 @@ public class RemoveAllCronTriggers extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new YamlIsoVisitor<ExecutionContext>() {
-            @Override
-            public Yaml preVisit(Yaml tree, ExecutionContext ctx) {
-                stopAfterPreVisit();
-                doAfterVisit(new DeleteKey("$.on.schedule"));
-                return tree;
-            }
-        });
+        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"),
+                new DeleteKey("$.on.schedule").getVisitor());
     }
 }
