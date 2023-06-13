@@ -77,7 +77,11 @@ public class AutoCancelInProgressWorkflow extends Recipe {
             public Yaml.Sequence visitSequence(Yaml.Sequence sequence, ExecutionContext ctx) {
                 Yaml.Sequence s = super.visitSequence(sequence, ctx);
                 if (jobSteps.matches(getCursor()) && Boolean.TRUE.equals(getCursor().getMessage("ADD_STEP"))) {
-                    Yaml.Documents documents = new YamlParser().parse(ctx, StringUtils.isNullOrEmpty(accessToken) ? defaultAccessTokenTemplate : userProvidedAccessTokenTemplate).findFirst().get();
+                    Yaml.Documents documents = new YamlParser()
+                            .parse(ctx, StringUtils.isNullOrEmpty(accessToken) ? defaultAccessTokenTemplate : userProvidedAccessTokenTemplate)
+                            .map(Yaml.Documents.class::cast)
+                            .findFirst()
+                            .get();
                     Yaml.Sequence.Entry cancelWorkflowAction = ((Yaml.Sequence) documents.getDocuments().get(0).getBlock()).getEntries().get(0);
                     cancelWorkflowAction = autoFormat(cancelWorkflowAction.withPrefix("\n"), ctx, getCursor());
                     return s.withEntries(ListUtils.concat(cancelWorkflowAction, s.getEntries()));
