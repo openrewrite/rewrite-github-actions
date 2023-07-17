@@ -51,7 +51,7 @@ public class AddCronTrigger extends Recipe {
     @VisibleForTesting
     AddCronTrigger(String cron, @Nullable String workflowFileMatcher, Random random) {
         this.random = random;
-        this.cron = parseExpression(cron);
+        this.cron = cron;
 
         if (StringUtils.isBlank(workflowFileMatcher)) {
             this.workflowFileMatcher = ".github/workflows/*.yml";
@@ -100,11 +100,12 @@ public class AddCronTrigger extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
+        String parsedCron = parseExpression(cron);
         return Preconditions.check(new HasSourcePath<>(workflowFileMatcher), new MergeYaml(
                 "$.on",
                 String.format(
                         "schedule:%n" +
-                        "  - cron: \"%s\"", cron),
+                        "  - cron: \"%s\"", parsedCron),
                 true,
                 null).getVisitor());
     }

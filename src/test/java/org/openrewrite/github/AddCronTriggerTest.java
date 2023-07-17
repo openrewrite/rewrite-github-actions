@@ -21,6 +21,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.openrewrite.Recipe;
+import org.openrewrite.internal.RecipeIntrospectionUtils;
 import org.openrewrite.test.RewriteTest;
 
 import java.util.Random;
@@ -175,5 +177,10 @@ class AddCronTriggerTest implements RewriteTest {
             spec -> spec.path(".github/workflows/ci.yml")
           )
         );
+    }
+
+    @Test
+    void constructRecipeWithRecipeIntrospectionUtilsShouldNotFail() {
+        RecipeIntrospectionUtils.constructRecipe(AddCronTrigger.class);
     }
 }
