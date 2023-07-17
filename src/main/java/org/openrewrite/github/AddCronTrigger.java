@@ -22,8 +22,6 @@ import org.openrewrite.*;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.yaml.MergeYaml;
-import org.openrewrite.yaml.YamlVisitor;
-import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.Arrays;
 import java.util.List;
@@ -43,6 +41,7 @@ public class AddCronTrigger extends Recipe {
             description = "Matches one or more workflows to update. Defaults to `*.yml`",
             required = false,
             example = "build.yml")
+    @Nullable
     private final String workflowFileMatcher;
 
     @VisibleForTesting
@@ -51,13 +50,8 @@ public class AddCronTrigger extends Recipe {
     @VisibleForTesting
     AddCronTrigger(String cron, @Nullable String workflowFileMatcher, Random random) {
         this.random = random;
-        this.cron = parseExpression(cron);
-
-        if (StringUtils.isBlank(workflowFileMatcher)) {
-            this.workflowFileMatcher = ".github/workflows/*.yml";
-        } else {
-            this.workflowFileMatcher = ".github/workflows/" + workflowFileMatcher;
-        }
+        this.cron = cron;
+        this.workflowFileMatcher = workflowFileMatcher;
     }
 
     public AddCronTrigger(String cron, @Nullable String fileMatcher) {
@@ -100,11 +94,13 @@ public class AddCronTrigger extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new HasSourcePath<>(workflowFileMatcher), new MergeYaml(
+        String expression = parseExpression(cron);
+        String path = StringUtils.isBlank(workflowFileMatcher) ? ".github/workflows/*.yml" : ".github/workflows/" + workflowFileMatcher;
+        return Preconditions.check(new HasSourcePath<>(path), new MergeYaml(
                 "$.on",
                 String.format(
                         "schedule:%n" +
-                        "  - cron: \"%s\"", cron),
+                        "  - cron: \"%s\"", expression),
                 true,
                 null).getVisitor());
     }
