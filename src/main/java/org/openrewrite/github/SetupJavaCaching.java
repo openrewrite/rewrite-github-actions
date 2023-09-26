@@ -53,7 +53,7 @@ public class SetupJavaCaching extends Recipe {
                                     "  cache: 'maven'", true, null)
                             .getVisitor().visitNonNull(d, ctx);
                 }
-                if(d != documents) {
+                if (d != documents) {
                     d = (Yaml.Documents) new DeleteKey("$.jobs.build.steps[?(@.uses =~ 'actions/cache(?:@v.+)?')]")
                             .getVisitor().visitNonNull(d, ctx);
                 }

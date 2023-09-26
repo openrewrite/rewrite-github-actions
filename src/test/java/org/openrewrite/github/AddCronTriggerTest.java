@@ -36,7 +36,7 @@ class AddCronTriggerTest implements RewriteTest {
     })
     void cronTrigger(String cron) {
         rewriteRun(
-          spec -> spec.recipe(new AddCronTrigger(cron,null)),
+          spec -> spec.recipe(new AddCronTrigger(cron, null)),
           //language=yml
           yaml(
             """
@@ -66,7 +66,7 @@ class AddCronTriggerTest implements RewriteTest {
     })
     void makesChangesForMatchingWorkflow(String workflow) {
         rewriteRun(
-          spec -> spec.recipe(new AddCronTrigger( "0 18 * * *",workflow)),
+          spec -> spec.recipe(new AddCronTrigger( "0 18 * * *", workflow)),
           //language=yml
           yaml(
             """
@@ -91,7 +91,7 @@ class AddCronTriggerTest implements RewriteTest {
     @Test
     void invalidFileMatcherShouldNotMakeChanges() {
         rewriteRun(
-          spec -> spec.recipe(new AddCronTrigger("0 17 * 1 2","someOtherFile.yml")),
+          spec -> spec.recipe(new AddCronTrigger("0 17 * 1 2", "someOtherFile.yml")),
           //language=yml
           yaml(
             """
@@ -113,7 +113,7 @@ class AddCronTriggerTest implements RewriteTest {
     })
     void missingFileMatcher(String fileMatcher) {
         rewriteRun(
-          spec -> spec.recipe(new AddCronTrigger("0 18 * * *",fileMatcher)),
+          spec -> spec.recipe(new AddCronTrigger("0 18 * * *", fileMatcher)),
           //language=yml
           yaml(
             """
@@ -155,7 +155,7 @@ class AddCronTriggerTest implements RewriteTest {
       """)
     void cronTriggerRandom(String cronExpression, String actualCronValue) {
         rewriteRun(
-          spec -> spec.recipe(new AddCronTrigger(cronExpression, "" ,new StaticThreadLocalRandom())),
+          spec -> spec.recipe(new AddCronTrigger(cronExpression, "", new StaticThreadLocalRandom())),
           //language=yml
           yaml(
             """
