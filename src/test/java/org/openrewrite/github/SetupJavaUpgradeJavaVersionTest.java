@@ -25,7 +25,7 @@ import static org.openrewrite.yaml.Assertions.yaml;
 class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
 
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new SetupJavaUpgradeJavaVersion(17));
+        spec.recipe(new SetupJavaUpgradeJavaVersion(21));
     }
 
     @DocumentExample
@@ -58,7 +58,7 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
                     - name: set-up-jdk
                       uses: actions/setup-java@v2.3.0
                       with:
-                        java-version: "17"
+                        java-version: "21"
                     - name: build
                       run: ./gradlew build test
               """,
@@ -96,7 +96,7 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
                     - name: set-up-jdk
                       uses: actions/setup-java@v2.3.0
                       with:
-                        java-version: "17"
+                        java-version: "21"
                     - name: build
                       run: ./gradlew build test
               """,
@@ -134,7 +134,7 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
                     - name: set-up-jdk
                       uses: actions/setup-java@v2.3.0
                       with:
-                        java-version: "17"
+                        java-version: "21"
                     - name: build
                       run: ./gradlew build test
               """,
@@ -158,7 +158,7 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
                     - name: set-up-jdk
                       uses: actions/setup-java@v2.3.0
                       with:
-                        java-version: "17.0.0"
+                        java-version: "21.0.0"
                     - name: build
                       run: ./gradlew build test
               """,
@@ -182,7 +182,7 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
                     - name: set-up-jdk
                       uses: actions/setup-java@v2.3.0
                       with:
-                        java-version: "18.0.0"
+                        java-version: "22.0.0"
                     - name: build
                       run: ./gradlew build test
               """,
