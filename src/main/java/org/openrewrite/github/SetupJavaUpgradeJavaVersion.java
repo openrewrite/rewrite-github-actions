@@ -31,8 +31,8 @@ import java.util.regex.Pattern;
 @EqualsAndHashCode(callSuper = true)
 public class SetupJavaUpgradeJavaVersion extends Recipe {
 
-    @Option(displayName = "Minimum major Java version (defaults to 17)",
-            example = "17",
+    @Option(displayName = "Minimum major Java version (defaults to 21)",
+            example = "21",
             required = false)
     @Nullable
     Integer minimumJavaMajorVersion;
@@ -50,7 +50,7 @@ public class SetupJavaUpgradeJavaVersion extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new UpgradeJavaVersionVisitor(
-                minimumJavaMajorVersion == null ? 17 : minimumJavaMajorVersion
+                minimumJavaMajorVersion == null ? 21 : minimumJavaMajorVersion
         ));
     }
 
