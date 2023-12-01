@@ -35,7 +35,7 @@ public class SetupJavaCaching extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new HasSourcePath<>(".github/workflows/*.yml"), new YamlVisitor<ExecutionContext>() {
+        return Preconditions.check(new HasSourcePath(".github/workflows/*.yml"), new YamlVisitor<ExecutionContext>() {
             @Override
             public Yaml visitDocuments(Yaml.Documents documents, ExecutionContext ctx) {
                 Yaml.Documents d = documents;

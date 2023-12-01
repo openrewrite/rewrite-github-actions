@@ -96,7 +96,7 @@ public class AddCronTrigger extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         String expression = parseExpression(cron);
         String path = StringUtils.isBlank(workflowFileMatcher) ? ".github/workflows/*.yml" : ".github/workflows/" + workflowFileMatcher;
-        return Preconditions.check(new HasSourcePath<>(path), new MergeYaml(
+        return Preconditions.check(new HasSourcePath(path), new MergeYaml(
                 "$.on",
                 String.format(
                         "schedule:%n" +
