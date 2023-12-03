@@ -45,7 +45,7 @@ public class PreferTemurinDistributions extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new HasSourcePath(".github/workflows/*.yml"), new UseTemurinVisitor());
+        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new UseTemurinVisitor());
     }
 
     private static List<String> runsOn = new ArrayList<>();
