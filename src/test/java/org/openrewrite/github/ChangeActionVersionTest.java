@@ -47,4 +47,40 @@ class ChangeActionVersionTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void updateActionVersionYaml() {
+        rewriteRun(
+          spec -> spec.recipeFromYaml("""
+            type: specs.openrewrite.org/v1beta/recipe
+            name: org.example.SetupJavaV4
+            displayName: Exammple
+            description: Fix all the things.
+            recipeList:
+              - org.openrewrite.github.ChangeActionVersion:
+                  action: actions/setup-java
+                  version: v4
+            """, "org.example.SetupJavaV4"),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v2
+                    - uses: actions/setup-java@main
+              """,
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v2
+                    - uses: actions/setup-java@v4
+              """,
+            source -> source.path(".github/workflows/ci.yml")
+          )
+        );
+    }
 }

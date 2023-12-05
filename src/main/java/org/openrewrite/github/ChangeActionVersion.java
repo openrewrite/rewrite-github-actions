@@ -15,21 +15,23 @@
  */
 package org.openrewrite.github;
 
-import lombok.RequiredArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.yaml.ChangeValue;
 
-@RequiredArgsConstructor
+@Value
+@EqualsAndHashCode(callSuper = true)
 public class ChangeActionVersion extends Recipe {
     @Option(displayName = "Action",
             description = "Name of the action to update.",
             example = "actions/setup-java")
-    private final String action;
+    String action;
 
     @Option(displayName = "Version",
             description = "Version to use.",
             example = "v4")
-    private final String version;
+    String version;
 
     @Override
     public String getDisplayName() {
