@@ -27,7 +27,7 @@ import org.openrewrite.yaml.YamlParser;
 import org.openrewrite.yaml.tree.Yaml;
 
 @Value
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @SuppressWarnings("ConcatenationWithEmptyString")
 public class AutoCancelInProgressWorkflow extends Recipe {
     @Option(displayName = "Optional access token",

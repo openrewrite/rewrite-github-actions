@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Value
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 public class ChangeDependabotScheduleInterval extends Recipe {
     @Option(displayName = "Package ecosystem",
             description = "The package-ecosystem to make updates on.",

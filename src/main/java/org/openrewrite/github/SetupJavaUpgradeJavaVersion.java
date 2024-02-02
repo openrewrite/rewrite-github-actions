@@ -28,7 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Value
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 public class SetupJavaUpgradeJavaVersion extends Recipe {
 
     @Option(displayName = "Minimum major Java version (defaults to 21)",

@@ -21,7 +21,7 @@ import org.openrewrite.*;
 import org.openrewrite.yaml.ChangeValue;
 
 @Value
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 public class ChangeActionVersion extends Recipe {
     @Option(displayName = "Action",
             description = "Name of the action to update.",
