@@ -20,9 +20,9 @@ import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
-import java.util.Arrays;
 
 public class SetupJavaAdoptOpenJDKToTemurin extends Recipe {
 
