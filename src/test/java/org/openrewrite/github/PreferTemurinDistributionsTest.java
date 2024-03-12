@@ -26,6 +26,7 @@ import static org.openrewrite.yaml.Assertions.yaml;
 
 class PreferTemurinDistributionsTest implements RewriteTest {
 
+    @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new PreferTemurinDistributions());
     }

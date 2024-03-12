@@ -24,6 +24,7 @@ import static org.openrewrite.yaml.Assertions.yaml;
 
 class SetupJavaAdoptOpenj9ToSemeruTest implements RewriteTest {
 
+    @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new SetupJavaAdoptOpenj9ToSemeru());
     }
