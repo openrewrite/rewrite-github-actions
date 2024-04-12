@@ -73,6 +73,16 @@ class PreferTemurinDistributionsTest implements RewriteTest {
                       with:
                         distribution: "zulu"
                         java-version: "8"
+                    - name: set-up-java v3
+                      uses: actions/setup-java@v3
+                      with:
+                        distribution: "zulu"
+                        java-version: "8"
+                    - name: set-up-java v4
+                      uses: actions/setup-java@v4
+                      with:
+                        distribution: "zulu"
+                        java-version: "8"
                     - name: build
                       run: ./gradlew build test
               """.formatted(runner),
@@ -96,6 +106,16 @@ class PreferTemurinDistributionsTest implements RewriteTest {
                         java-version: "17"
                     - name: set-up-jdk-2
                       uses: actions/setup-java@v2.3.0
+                      with:
+                        distribution: "temurin"
+                        java-version: "8"
+                    - name: set-up-java v3
+                      uses: actions/setup-java@v3
+                      with:
+                        distribution: "temurin"
+                        java-version: "8"
+                    - name: set-up-java v4
+                      uses: actions/setup-java@v4
                       with:
                         distribution: "temurin"
                         java-version: "8"

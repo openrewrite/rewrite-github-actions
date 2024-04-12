@@ -26,7 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 class SetupJavaDistributionReplacerVisitor extends YamlIsoVisitor<ExecutionContext> {
 
-    static final JsonPathMatcher DISTRIBUTION_MATCHER = new JsonPathMatcher("..steps[?(@.uses =~ 'actions/setup-java@v[23].*')].with.distribution");
+    static final JsonPathMatcher DISTRIBUTION_MATCHER = new JsonPathMatcher("..steps[?(@.uses =~ 'actions/setup-java@v[234].*')].with.distribution");
 
     private final List<String> originalDistributions;
     private final String newDistribution;
