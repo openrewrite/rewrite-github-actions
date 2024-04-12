@@ -42,10 +42,16 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
                     - uses: actions/checkout@v2
                       with:
                         fetch-depth: 0
-                    - name: set-up-jdk
+                    - name: set-up-temurin-jdk
                       uses: actions/setup-java@v2.3.0
                       with:
                         java-version: "11"
+                        distribution: temurin
+                    - name: set-up-zulu-jdk
+                      uses: actions/setup-java@v3
+                      with:
+                        java-version: "19"
+                        distribution: zulu
                     - name: build
                       run: ./gradlew build test
               """,
@@ -56,10 +62,16 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
                     - uses: actions/checkout@v2
                       with:
                         fetch-depth: 0
-                    - name: set-up-jdk
+                    - name: set-up-temurin-jdk
                       uses: actions/setup-java@v2.3.0
                       with:
                         java-version: "21"
+                        distribution: temurin
+                    - name: set-up-zulu-jdk
+                      uses: actions/setup-java@v3
+                      with:
+                        java-version: "21"
+                        distribution: zulu
                     - name: build
                       run: ./gradlew build test
               """,
