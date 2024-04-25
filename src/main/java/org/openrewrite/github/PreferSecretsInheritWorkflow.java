@@ -15,6 +15,7 @@
  */
 package org.openrewrite.github;
 
+import java.util.regex.Pattern;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
@@ -23,7 +24,7 @@ import static org.openrewrite.yaml.tree.Yaml.Scalar.Style.PLAIN;
 import org.openrewrite.Tree;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.yaml.JsonPathMatcher;
-import org.openrewrite.yaml.YamlVisitor;
+import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 import org.openrewrite.yaml.tree.Yaml.Scalar;
 
@@ -46,29 +47,32 @@ public class PreferSecretsInheritWorkflow extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         final JsonPathMatcher secrets = new JsonPathMatcher("$.jobs..secrets");
 
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new YamlVisitor<ExecutionContext>() {
+        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new YamlIsoVisitor<ExecutionContext>() {
 
             private static final String USE_INHERIT = "USE_INHERIT";
 
             @Override
-            public Yaml visitMapping(final Yaml.Mapping mapping, final ExecutionContext ctx) {
+            public Yaml.Mapping visitMapping(final Yaml.Mapping mapping, final ExecutionContext ctx) {
                 Cursor parentEntry = getCursor().getParent();
 
-                if (parentEntry != null && secrets.matches(parentEntry) &&
-                    mapping.getEntries().stream().allMatch(this::isUntransformedSecret)) {
-                    getCursor().putMessageOnFirstEnclosing(Yaml.Mapping.Entry.class, USE_INHERIT, true);
+                if (parentEntry != null && secrets.matches(parentEntry)) {
+                    boolean allUntransformed = mapping.getEntries().stream().allMatch(this::isUntransformedSecret);
+
+                    if (allUntransformed) {
+                        getCursor().putMessageOnFirstEnclosing(Yaml.Mapping.Entry.class, USE_INHERIT, true);
+                    }
                 }
 
                 return super.visitMapping(mapping, ctx);
             }
 
             @Override
-            public Yaml visitMappingEntry(final Yaml.Mapping.Entry entry, final ExecutionContext executionContext) {
-                Yaml e = super.visitMappingEntry(entry, executionContext);
+            public Yaml.Mapping.Entry visitMappingEntry(final Yaml.Mapping.Entry entry, final ExecutionContext executionContext) {
+                Yaml.Mapping.Entry e = super.visitMappingEntry(entry, executionContext);
 
                 if (getCursor().getMessage(USE_INHERIT, false)) {
                     Scalar inheritValue = new Scalar(Tree.randomId(), " ", EMPTY, PLAIN, null, "inherit");
-                    return entry.withValue(inheritValue);
+                    return e.withValue(inheritValue);
                 }
 
                 return e;
@@ -76,10 +80,10 @@ public class PreferSecretsInheritWorkflow extends Recipe {
 
             private boolean isUntransformedSecret(final Yaml.Mapping.Entry entry) {
                 String key = entry.getKey().getValue();
-                String secretReferenceRegex = "\\$\\{\\{\\s*secrets." + key + "\\s*}}";
+                Pattern secretPattern = Pattern.compile("\\$\\{\\{\\s*secrets." + key + "\\s*}}");
 
                 Yaml.Block value = entry.getValue();
-                return (value instanceof Scalar && ((Scalar) value).getValue().matches(secretReferenceRegex));
+                return (value instanceof Scalar && secretPattern.matcher(((Scalar) value).getValue()).matches());
             }
         });
     }

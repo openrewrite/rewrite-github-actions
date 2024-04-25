@@ -73,6 +73,34 @@ class PreferSecretsInheritWorkflowTest implements RewriteTest {
     }
 
     @Test
+    void transformFromOtherWorkflowFile() {
+        rewriteRun(
+          spec -> spec.recipe(new PreferSecretsInheritWorkflow()),
+          //language=yaml
+          yaml(
+            """
+                    jobs:
+                      call-workflow-passing-data:
+                        uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
+                        with:
+                          config-path: .github/labeler.yml
+                        secrets:
+                          envPAT: ${{ secrets.envPAT }}
+                  """,
+            """
+                jobs:
+                  call-workflow-passing-data:
+                    uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
+                    with:
+                      config-path: .github/labeler.yml
+                    secrets: inherit
+              """,
+            spec -> spec.path(".github/workflows/some-workflow.yml")
+          )
+        );
+    }
+
+    @Test
     void handleAdditionalSpacesInSecretsReference() {
         rewriteRun(
           spec -> spec.recipe(new PreferSecretsInheritWorkflow()),
