@@ -15,9 +15,6 @@
  */
 package org.openrewrite.github;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import org.jetbrains.annotations.VisibleForTesting;
 import org.openrewrite.*;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.Nullable;
@@ -27,6 +24,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import org.jetbrains.annotations.VisibleForTesting;
 
 @EqualsAndHashCode(callSuper = false)
 @Getter
