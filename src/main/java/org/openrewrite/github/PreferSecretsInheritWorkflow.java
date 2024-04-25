@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2024 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,18 @@
  */
 package org.openrewrite.github;
 
-import java.util.regex.Pattern;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
 import org.openrewrite.*;
-import static org.openrewrite.marker.Markers.EMPTY;
-import static org.openrewrite.yaml.tree.Yaml.Scalar.Style.PLAIN;
-import org.openrewrite.Tree;
-import org.openrewrite.TreeVisitor;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 import org.openrewrite.yaml.tree.Yaml.Scalar;
+
+import java.util.regex.Pattern;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+
+import static org.openrewrite.marker.Markers.EMPTY;
+import static org.openrewrite.yaml.tree.Yaml.Scalar.Style.PLAIN;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
