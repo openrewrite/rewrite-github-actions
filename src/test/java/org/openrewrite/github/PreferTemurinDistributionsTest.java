@@ -15,12 +15,13 @@
  */
 package org.openrewrite.github;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
@@ -324,7 +325,7 @@ class PreferTemurinDistributionsTest implements RewriteTest {
                         distribution: "zulu"
                         java-version: "8"
                     - name: build
-                      run: ./gradlew build test        
+                      run: ./gradlew build test
               """,
             """
               jobs:
@@ -373,7 +374,7 @@ class PreferTemurinDistributionsTest implements RewriteTest {
                         distribution: "zulu"
                         java-version: "8"
                     - name: build
-                      run: ./gradlew build test        
+                      run: ./gradlew build test
               """,
             spec -> spec.path(".github/workflows/ci.yml")
           )
@@ -432,7 +433,7 @@ class PreferTemurinDistributionsTest implements RewriteTest {
                         distribution: "zulu"
                         java-version: "8"
                     - name: build
-                      run: ./gradlew build test        
+                      run: ./gradlew build test
               """,
             """
               jobs:
@@ -481,7 +482,7 @@ class PreferTemurinDistributionsTest implements RewriteTest {
                         distribution: "temurin"
                         java-version: "8"
                     - name: build
-                      run: ./gradlew build test        
+                      run: ./gradlew build test
               """,
             spec -> spec.path(".github/workflows/ci.yml")
           )

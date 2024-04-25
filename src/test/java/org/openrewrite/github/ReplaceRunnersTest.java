@@ -15,11 +15,11 @@
  */
 package org.openrewrite.github;
 
-import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RewriteTest;
 
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
