@@ -15,11 +15,10 @@
  */
 package org.openrewrite.github;
 
+import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
-
-import org.junit.jupiter.api.Test;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
@@ -37,21 +36,21 @@ class PreferSecretsInheritWorkflowTest implements RewriteTest {
           //language=yaml
           yaml(
             """
-                jobs:
-                  call-workflow-passing-data:
-                    uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
-                    with:
-                      config-path: .github/labeler.yml
-                    secrets:
-                      envPAT: ${{ secrets.envPAT }}
+              jobs:
+                call-workflow-passing-data:
+                  uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
+                  with:
+                    config-path: .github/labeler.yml
+                  secrets:
+                    envPAT: ${{ secrets.envPAT }}
               """,
             """
-                jobs:
-                  call-workflow-passing-data:
-                    uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
-                    with:
-                      config-path: .github/labeler.yml
-                    secrets: inherit
+              jobs:
+                call-workflow-passing-data:
+                  uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
+                  with:
+                    config-path: .github/labeler.yml
+                  secrets: inherit
               """,
             spec -> spec.path(".github/workflows/ci.yml")
           )
@@ -64,15 +63,15 @@ class PreferSecretsInheritWorkflowTest implements RewriteTest {
           //language=yaml
           yaml(
             """
-                jobs:
-                  call-workflow-passing-data:
-                    uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
-                    with:
-                      config-path: .github/labeler.yml
-                    secrets:
-                      envPAT: ${{ secrets.envPAT }}
-                      some_secret: ${{ secrets.SOME_SECRET }}
-                """,
+              jobs:
+                call-workflow-passing-data:
+                  uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
+                  with:
+                    config-path: .github/labeler.yml
+                  secrets:
+                    envPAT: ${{ secrets.envPAT }}
+                    some_secret: ${{ secrets.SOME_SECRET }}
+              """,
             spec -> spec.path(".github/workflows/ci.yml")
           )
         );
@@ -84,21 +83,21 @@ class PreferSecretsInheritWorkflowTest implements RewriteTest {
           //language=yaml
           yaml(
             """
-                    jobs:
-                      call-workflow-passing-data:
-                        uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
-                        with:
-                          config-path: .github/labeler.yml
-                        secrets:
-                          envPAT: ${{ secrets.envPAT }}
-                  """,
+              jobs:
+                call-workflow-passing-data:
+                  uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
+                  with:
+                    config-path: .github/labeler.yml
+                  secrets:
+                    envPAT: ${{ secrets.envPAT }}
+              """,
             """
-                jobs:
-                  call-workflow-passing-data:
-                    uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
-                    with:
-                      config-path: .github/labeler.yml
-                    secrets: inherit
+              jobs:
+                call-workflow-passing-data:
+                  uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
+                  with:
+                    config-path: .github/labeler.yml
+                  secrets: inherit
               """,
             spec -> spec.path(".github/workflows/some-workflow.yml")
           )
@@ -111,21 +110,21 @@ class PreferSecretsInheritWorkflowTest implements RewriteTest {
           //language=yaml
           yaml(
             """
-                jobs:
-                  call-workflow-passing-data:
-                    uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
-                    with:
-                      config-path: .github/labeler.yml
-                    secrets:
-                      envPAT: ${{        secrets.envPAT}}
+              jobs:
+                call-workflow-passing-data:
+                  uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
+                  with:
+                    config-path: .github/labeler.yml
+                  secrets:
+                    envPAT: ${{        secrets.envPAT}}
               """,
             """
-                jobs:
-                  call-workflow-passing-data:
-                    uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
-                    with:
-                      config-path: .github/labeler.yml
-                    secrets: inherit
+              jobs:
+                call-workflow-passing-data:
+                  uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
+                  with:
+                    config-path: .github/labeler.yml
+                  secrets: inherit
               """,
             spec -> spec.path(".github/workflows/ci.yml")
           )
