@@ -48,44 +48,43 @@ public class PreferSecretsInheritWorkflow extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         final JsonPathMatcher secrets = new JsonPathMatcher("$.jobs..secrets");
 
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(
+                new FindSourceFiles(".github/workflows/*.yml").getVisitor(),
+                new YamlIsoVisitor<ExecutionContext>() {
+                    private static final String USE_INHERIT = "USE_INHERIT";
 
-            private static final String USE_INHERIT = "USE_INHERIT";
+                    @Override
+                    public Yaml.Mapping visitMapping(final Yaml.Mapping mapping, final ExecutionContext ctx) {
+                        Cursor parentEntry = getCursor().getParent();
+                        if (parentEntry != null && secrets.matches(parentEntry)) {
+                            boolean allUntransformed = mapping.getEntries().stream().allMatch(this::isUntransformedSecret);
+                            if (allUntransformed) {
+                                getCursor().putMessageOnFirstEnclosing(Yaml.Mapping.Entry.class, USE_INHERIT, true);
+                            }
+                        }
 
-            @Override
-            public Yaml.Mapping visitMapping(final Yaml.Mapping mapping, final ExecutionContext ctx) {
-                Cursor parentEntry = getCursor().getParent();
-
-                if (parentEntry != null && secrets.matches(parentEntry)) {
-                    boolean allUntransformed = mapping.getEntries().stream().allMatch(this::isUntransformedSecret);
-
-                    if (allUntransformed) {
-                        getCursor().putMessageOnFirstEnclosing(Yaml.Mapping.Entry.class, USE_INHERIT, true);
+                        return super.visitMapping(mapping, ctx);
                     }
-                }
 
-                return super.visitMapping(mapping, ctx);
-            }
+                    @Override
+                    public Yaml.Mapping.Entry visitMappingEntry(final Yaml.Mapping.Entry entry, final ExecutionContext ctx) {
+                        Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
 
-            @Override
-            public Yaml.Mapping.Entry visitMappingEntry(final Yaml.Mapping.Entry entry, final ExecutionContext ctx) {
-                Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
+                        if (getCursor().getMessage(USE_INHERIT, false)) {
+                            Scalar inheritValue = new Scalar(Tree.randomId(), " ", EMPTY, PLAIN, null, "inherit");
+                            return e.withValue(inheritValue);
+                        }
 
-                if (getCursor().getMessage(USE_INHERIT, false)) {
-                    Scalar inheritValue = new Scalar(Tree.randomId(), " ", EMPTY, PLAIN, null, "inherit");
-                    return e.withValue(inheritValue);
-                }
+                        return e;
+                    }
 
-                return e;
-            }
+                    private boolean isUntransformedSecret(final Yaml.Mapping.Entry entry) {
+                        String key = entry.getKey().getValue();
+                        Pattern secretPattern = Pattern.compile("\\$\\{\\{\\s*secrets." + key + "\\s*}}");
 
-            private boolean isUntransformedSecret(final Yaml.Mapping.Entry entry) {
-                String key = entry.getKey().getValue();
-                Pattern secretPattern = Pattern.compile("\\$\\{\\{\\s*secrets." + key + "\\s*}}");
-
-                Yaml.Block value = entry.getValue();
-                return (value instanceof Scalar && secretPattern.matcher(((Scalar) value).getValue()).matches());
-            }
-        });
+                        Yaml.Block value = entry.getValue();
+                        return (value instanceof Scalar && secretPattern.matcher(((Scalar) value).getValue()).matches());
+                    }
+                });
     }
 }
