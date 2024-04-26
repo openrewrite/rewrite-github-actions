@@ -16,6 +16,7 @@
 package org.openrewrite.github;
 
 import org.openrewrite.DocumentExample;
+import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
 import org.junit.jupiter.api.Test;
@@ -24,11 +25,15 @@ import static org.openrewrite.yaml.Assertions.yaml;
 
 class PreferSecretsInheritWorkflowTest implements RewriteTest {
 
+    @Override
+    public void defaults(RecipeSpec spec) {
+        spec.recipe(new PreferSecretsInheritWorkflow());
+    }
+
     @DocumentExample
     @Test
     void replaceIdenticalSecretsWithInherit() {
         rewriteRun(
-          spec -> spec.recipe(new PreferSecretsInheritWorkflow()),
           //language=yaml
           yaml(
             """
@@ -56,7 +61,6 @@ class PreferSecretsInheritWorkflowTest implements RewriteTest {
     @Test
     void leaveModifiedSecrets() {
         rewriteRun(
-          spec -> spec.recipe(new PreferSecretsInheritWorkflow()),
           //language=yaml
           yaml(
             """
@@ -77,7 +81,6 @@ class PreferSecretsInheritWorkflowTest implements RewriteTest {
     @Test
     void transformFromOtherWorkflowFile() {
         rewriteRun(
-          spec -> spec.recipe(new PreferSecretsInheritWorkflow()),
           //language=yaml
           yaml(
             """
@@ -105,7 +108,6 @@ class PreferSecretsInheritWorkflowTest implements RewriteTest {
     @Test
     void handleAdditionalSpacesInSecretsReference() {
         rewriteRun(
-          spec -> spec.recipe(new PreferSecretsInheritWorkflow()),
           //language=yaml
           yaml(
             """
