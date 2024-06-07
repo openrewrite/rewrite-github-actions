@@ -15,13 +15,13 @@
  */
 package org.openrewrite.github;
 
-import lombok.RequiredArgsConstructor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 class SetupJavaDistributionReplacerVisitor extends YamlIsoVisitor<ExecutionContext> {
