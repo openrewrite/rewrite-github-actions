@@ -54,7 +54,7 @@ public class SetupJavaCaching extends Recipe {
                             .getVisitor().visitNonNull(d, ctx);
                 }
                 if (d != documents) {
-                    d = (Yaml.Documents) new DeleteKey("$.jobs.build.steps[?(@.uses =~ 'actions/cache(?:@v.+)?')]")
+                    d = (Yaml.Documents) new DeleteKey("$.jobs.build.steps[?(@.uses =~ 'actions/cache(?:@v.+)?')]", null)
                             .getVisitor().visitNonNull(d, ctx);
                 }
                 return d;
