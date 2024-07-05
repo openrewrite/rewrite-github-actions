@@ -50,6 +50,6 @@ public class ChangeActionVersion extends Recipe {
                 new FindSourceFiles(".github/workflows/*.yml"),
                 new ChangeValue(
                         "$.jobs..steps[?(@.uses =~ '" + action + "(?:@.+)?')].uses",
-                        action + '@' + version).getVisitor());
+                        action + '@' + version, null).getVisitor());
     }
 }
