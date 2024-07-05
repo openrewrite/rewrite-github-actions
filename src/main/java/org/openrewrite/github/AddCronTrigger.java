@@ -102,7 +102,7 @@ public class AddCronTrigger extends Recipe {
                         "schedule:%n" +
                         "  - cron: \"%s\"", expression),
                 true,
-                null).getVisitor());
+                null, null).getVisitor());
     }
 
     static class RandomCronExpression {
