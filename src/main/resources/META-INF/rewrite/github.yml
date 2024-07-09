@@ -55,3 +55,14 @@ recipeList:
   - org.openrewrite.github.ChangeDependabotScheduleInterval:
       packageEcosystem: github-actions
       interval: weekly
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.github.FindGitHubActionSecretReferences
+displayName: Find GitHub action secret references
+description: Help identify and inventory your GitHub secrets that are being used in GitHub actions.
+recipeList:
+  - org.openrewrite.text.Find:
+      find: secrets\.\w*
+      regex: "True"
+      caseSensitive: "False"
+      filePattern: "**/.github/workflows/**/*.yml;**/.github/workflows/**/*.yaml"
