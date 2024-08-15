@@ -17,7 +17,6 @@ package org.openrewrite.github;
 
 import org.openrewrite.*;
 import org.openrewrite.internal.StringUtils;
-import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.yaml.MergeYaml;
 
 import java.util.Arrays;
@@ -27,6 +26,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.jspecify.annotations.Nullable;
 
 @EqualsAndHashCode(callSuper = false)
 @Getter
