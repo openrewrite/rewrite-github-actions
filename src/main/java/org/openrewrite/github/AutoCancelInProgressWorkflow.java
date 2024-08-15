@@ -18,7 +18,6 @@ package org.openrewrite.github;
 import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.internal.StringUtils;
-import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.YamlParser;
@@ -26,6 +25,7 @@ import org.openrewrite.yaml.tree.Yaml;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jspecify.annotations.Nullable;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
