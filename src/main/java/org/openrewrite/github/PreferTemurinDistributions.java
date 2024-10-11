@@ -35,7 +35,7 @@ public class PreferTemurinDistributions extends Recipe {
     @Override
     public String getDescription() {
         return "[Host runners](https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources/) include Temurin by default as part of the (hosted tool cache)(https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#hosted-tool-cache)." +
-                "Using Temurin speeds up builds as there is no need to download and configure the Java SDK with every build.";
+               "Using Temurin speeds up builds as there is no need to download and configure the Java SDK with every build.";
     }
 
     @Override
@@ -48,41 +48,32 @@ public class PreferTemurinDistributions extends Recipe {
         return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new UseTemurinVisitor());
     }
 
-    private static List<String> runsOn = new ArrayList<>();
-
     private static final Pattern pattern = Pattern.compile("^(windows|ubuntu|macos)-(latest|\\d+(\\.\\d+)?)$");
 
     private static class UseTemurinVisitor extends YamlIsoVisitor<ExecutionContext> {
+
+        private List<String> runsOn = new ArrayList<>();
+
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-
             if ("runs-on".equals(entry.getKey().getValue())) {
-
                 runsOn = new ArrayList<>();
-
                 if (entry.getValue() instanceof Yaml.Sequence) {
-
                     Yaml.Sequence sequence = (Yaml.Sequence) entry.getValue();
-
                     for (Yaml.Sequence.Entry e : sequence.getEntries()) {
                         runsOn.add(((Yaml.Scalar) e.getBlock()).getValue());
                     }
-
-
                 } else if (entry.getValue() instanceof Yaml.Scalar) {
                     runsOn.add(((Yaml.Scalar) entry.getValue()).getValue());
                 }
-
                 return super.visitMappingEntry(entry, ctx);
             }
 
-            final int hostedRunnersCount = Math.toIntExact(runsOn.stream().filter(e -> pattern.matcher(e).matches()).count());
-
+            int hostedRunnersCount = Math.toIntExact(runsOn.stream().filter(e -> pattern.matcher(e).matches()).count());
             if (hostedRunnersCount == runsOn.size() && DISTRIBUTION_MATCHER.matches(getCursor()) && !"temurin".equals(((Yaml.Scalar) entry.getValue()).getValue())) {
                 return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue("temurin")), ctx);
             }
             return super.visitMappingEntry(entry, ctx);
         }
     }
-
 }
