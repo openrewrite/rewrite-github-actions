@@ -51,8 +51,8 @@ public class AutoCancelInProgressWorkflow extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        JsonPathMatcher firstStep = new JsonPathMatcher("$.jobs.build.steps[:1].uses");
-        JsonPathMatcher jobSteps = new JsonPathMatcher("$.jobs.build.steps.*");
+        JsonPathMatcher firstStep = new JsonPathMatcher("$.jobs..steps[:1].uses");
+        JsonPathMatcher jobSteps = new JsonPathMatcher("$.jobs..steps.*");
 
         String userProvidedAccessTokenTemplate = "" +
                 "- uses: styfle/cancel-workflow-action@0.9.1\n" +

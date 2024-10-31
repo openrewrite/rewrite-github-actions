@@ -39,22 +39,22 @@ public class SetupJavaCaching extends Recipe {
             @Override
             public Yaml visitDocuments(Yaml.Documents documents, ExecutionContext ctx) {
                 Yaml.Documents d = documents;
-                if (!FindKey.find(documents, "$.jobs.build.steps[?(@.run =~ '.*gradle.*')]").isEmpty()) {
-                    d = (Yaml.Documents) new MergeYaml("$.jobs.build.steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
+                if (!FindKey.find(documents, "$.jobs..steps[?(@.run =~ '.*gradle.*')]").isEmpty()) {
+                    d = (Yaml.Documents) new MergeYaml("$.jobs..steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
                             "" +
                                     "with:\n" +
                                     "  cache: 'gradle'", true, null, null)
                             .getVisitor().visitNonNull(d, ctx);
                 }
-                if (!FindKey.find(documents, "$.jobs.build.steps[?(@.run =~ '.*mvn.*')]").isEmpty()) {
-                    d = (Yaml.Documents) new MergeYaml("$.jobs.build.steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
+                if (!FindKey.find(documents, "$.jobs..steps[?(@.run =~ '.*mvn.*')]").isEmpty()) {
+                    d = (Yaml.Documents) new MergeYaml("$.jobs..steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
                             "" +
                                     "with:\n" +
                                     "  cache: 'maven'", true, null, null)
                             .getVisitor().visitNonNull(d, ctx);
                 }
                 if (d != documents) {
-                    d = (Yaml.Documents) new DeleteKey("$.jobs.build.steps[?(@.uses =~ 'actions/cache(?:@v.+)?')]", null)
+                    d = (Yaml.Documents) new DeleteKey("$.jobs..steps[?(@.uses =~ 'actions/cache(?:@v.+)?')]", null)
                             .getVisitor().visitNonNull(d, ctx);
                 }
                 return d;
