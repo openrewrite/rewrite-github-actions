@@ -46,8 +46,8 @@ public class UseGradleWrapper extends Recipe {
                     private Optional<String> newExecutable = Optional.empty();
 
                     @Override
-                    public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext executionContext) {
-                        Yaml.Mapping.Entry ret = super.visitMappingEntry(entry, executionContext);
+                    public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
+                        Yaml.Mapping.Entry ret = super.visitMappingEntry(entry, ctx);
                         if (runsOn.matches(getCursor())) {
                             if (ret.getValue() instanceof Yaml.Scalar) {
                                 String runsOn = ((Yaml.Scalar) ret.getValue()).getValue();
