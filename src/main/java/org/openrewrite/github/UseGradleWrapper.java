@@ -15,16 +15,20 @@
  */
 package org.openrewrite.github;
 
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class UseGradleWrapper extends Recipe {
+// We don't use the atomicity of AtomicBoolean, just the mutability
+public class UseGradleWrapper extends ScanningRecipe<AtomicBoolean> {
     @Override
     public String getDisplayName() {
         return "Use Gradle Wrapper instead of Gradle binary directly";
@@ -36,7 +40,28 @@ public class UseGradleWrapper extends Recipe {
     }
 
     @Override
-    public TreeVisitor<?, ExecutionContext> getVisitor() {
+    public AtomicBoolean getInitialValue(ExecutionContext ctx) {
+        return new AtomicBoolean(false);
+    }
+
+    @Override
+    public TreeVisitor<?, ExecutionContext> getScanner(AtomicBoolean acc) {
+        return new TreeVisitor<Tree, ExecutionContext>() {
+            @Override
+            public Tree visit(Tree tree, ExecutionContext ctx, Cursor parent) {
+                acc.set(Paths.get("gradlew").toFile().exists());
+                return tree;
+            }
+        } ;
+    }
+
+    @Override
+    public TreeVisitor<?, ExecutionContext> getVisitor(AtomicBoolean acc) {
+        boolean wrapperExists = acc.get();
+        return wrapperExists ? changingVisitor() : super.getVisitor(acc);
+    }
+
+    private TreeVisitor<?, ExecutionContext> changingVisitor() {
         final JsonPathMatcher run = new JsonPathMatcher("$.jobs..run");
         final JsonPathMatcher runsOn = new JsonPathMatcher("$.jobs..runs-on");
 
