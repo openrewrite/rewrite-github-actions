@@ -10,3 +10,12 @@ dependencies {
     implementation("org.openrewrite:rewrite-yaml:${rewriteVersion}")
     runtimeOnly("com.fasterxml.jackson.core:jackson-core")
 }
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+tasks.named<JavaCompile>("compileJava") {
+    options.release.set(8)
+}
