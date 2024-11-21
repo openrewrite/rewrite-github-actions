@@ -41,6 +41,9 @@ import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.Objects;
 import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
