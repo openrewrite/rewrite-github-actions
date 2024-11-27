@@ -78,8 +78,8 @@ public class UpgradeSlackNotificationVersion2 extends Recipe {
                     "  method: chat.postMessage\n" +
                     "  token: " + slackToken + "\n" +
                     "  payload: |\n" +
-                    "            channel: \"" + channelName + "\"\n" +
-                    "            text: \"" + messageText + "\"\n",
+                    "    channel: \"" + channelName + "\"\n" +
+                    "    text: \"" + messageText + "\"\n",
                     false, null, null)
                     .getVisitor().visitNonNull(d, ctx);
 
