@@ -9,4 +9,5 @@ val rewriteVersion = rewriteRecipe.rewriteVersion.get()
 dependencies {
     implementation("org.openrewrite:rewrite-yaml:${rewriteVersion}")
     runtimeOnly("com.fasterxml.jackson.core:jackson-core")
+    testImplementation("org.openrewrite:rewrite-test:${rewriteVersion}")
 }
