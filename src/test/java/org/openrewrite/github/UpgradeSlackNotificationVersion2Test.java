@@ -60,8 +60,8 @@ class UpgradeSlackNotificationVersion2Test implements RewriteTest {
                         method: chat.postMessage
                         token: ${{ secrets.SLACK_MORTY_BOT_TOKEN }}
                         payload: |
-                                      channel: "##foo-alerts"
-                                      text: ":boom: Unable run dependency check on: <${{ steps.get_failed_check_link.outputs.failed-check-link }}|${{ inputs.organization }}/${{ inputs.repository }}>"
+                          channel: "##foo-alerts"
+                          text: ":boom: Unable run dependency check on: <${{ steps.get_failed_check_link.outputs.failed-check-link }}|${{ inputs.organization }}/${{ inputs.repository }}>"
               """,
             spec -> spec.path(".github/workflows/ci.yml")));
     }
