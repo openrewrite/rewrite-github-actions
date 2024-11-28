@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 // We don't use the atomicity of AtomicBoolean, just the mutability
-public class UseGradleWrapper extends ScanningRecipe<AtomicBoolean> {
+public class UseGradleWrapper extends ScanningRecipe<UseGradleWrapperAccumulator> {
     @Override
     public String getDisplayName() {
         return "Use Gradle Wrapper instead of Gradle binary directly";
@@ -40,56 +40,65 @@ public class UseGradleWrapper extends ScanningRecipe<AtomicBoolean> {
     }
 
     @Override
-    public AtomicBoolean getInitialValue(ExecutionContext ctx) {
-        return new AtomicBoolean(false);
+    public UseGradleWrapperAccumulator getInitialValue(ExecutionContext ctx) {
+        return new UseGradleWrapperAccumulator();
     }
 
     @Override
-    public TreeVisitor<?, ExecutionContext> getScanner(AtomicBoolean acc) {
-        return new TreeVisitor<Tree, ExecutionContext>() {
+    public TreeVisitor<?, ExecutionContext> getScanner(UseGradleWrapperAccumulator acc) {
+        return new YamlIsoVisitor<ExecutionContext>() {
+            final JsonPathMatcher runsOn = new JsonPathMatcher("$.jobs..runs-on");
+
             @Override
-            public Tree visit(Tree tree, ExecutionContext ctx, Cursor parent) {
-                acc.set(Paths.get("gradlew").toFile().exists());
-                return tree;
+            public Yaml.Document visitDocument(Yaml.Document document, ExecutionContext ctx) {
+                Yaml.Document ret = super.visitDocument(document, ctx);
+                // TODO fix the check for gradlew not to use file operations
+                acc.gradlewExists = Paths.get("gradlew").toFile().exists();
+                return ret;
+            }
+
+            @Override
+            public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
+                Yaml.Mapping.Entry ret = super.visitMappingEntry(entry, ctx);
+                if (runsOn.matches(getCursor())) {
+                    if (ret.getValue() instanceof Yaml.Scalar) {
+                        String runsOn = ((Yaml.Scalar) ret.getValue()).getValue();
+                        if (runsOn.startsWith("ubuntu-") || runsOn.startsWith("macos-")) {
+                            acc.newExecutableName = Optional.of("./gradlew ");
+                        } else if (runsOn.startsWith("windows-")) {
+                            acc.newExecutableName = Optional.of("gradlew ");
+                        }
+                    }
+                }
+                return ret;
             }
         } ;
     }
 
     @Override
-    public TreeVisitor<?, ExecutionContext> getVisitor(AtomicBoolean acc) {
-        boolean wrapperExists = acc.get();
-        return wrapperExists ? changingVisitor() : super.getVisitor(acc);
+    public TreeVisitor<?, ExecutionContext> getVisitor(UseGradleWrapperAccumulator acc) {
+        boolean wrapperExists = acc.gradlewExists != null && acc.gradlewExists;
+        boolean newExecutableDecided = acc.newExecutableName.isPresent();
+        return (wrapperExists && newExecutableDecided) ? changingVisitor(acc) : super.getVisitor(acc);
     }
 
-    private TreeVisitor<?, ExecutionContext> changingVisitor() {
-        final JsonPathMatcher run = new JsonPathMatcher("$.jobs..run");
-        final JsonPathMatcher runsOn = new JsonPathMatcher("$.jobs..runs-on");
+    private TreeVisitor<?, ExecutionContext> changingVisitor(UseGradleWrapperAccumulator acc) {
 
         return Preconditions.check(
                 new FindSourceFiles(".github/workflows/*.yml"),
                 new YamlIsoVisitor<ExecutionContext>() {
-                    private Optional<String> newExecutable = Optional.empty();
+                    final JsonPathMatcher run = new JsonPathMatcher("$.jobs..run");
 
                     @Override
                     public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                         Yaml.Mapping.Entry ret = super.visitMappingEntry(entry, ctx);
-                        if (runsOn.matches(getCursor())) {
-                            if (ret.getValue() instanceof Yaml.Scalar) {
-                                String runsOn = ((Yaml.Scalar) ret.getValue()).getValue();
-                                if (runsOn.startsWith("ubuntu-") || runsOn.startsWith("macos-")) {
-                                    newExecutable = Optional.of("./gradlew ");
-                                } else if (runsOn.startsWith("windows-")) {
-                                    newExecutable = Optional.of("gradlew ");
-                                }
-                            }
-                        }
-                        if (newExecutable.isPresent() && run.matches(getCursor())) {
+                        if (run.matches(getCursor())) {
                             if (ret.getValue() instanceof Yaml.Scalar) {
                                 Yaml.Scalar scalar = (Yaml.Scalar) ret.getValue();
                                 String replaced = Arrays.stream(scalar.getValue().split("\n"))
                                         .map(line -> {
                                             if (line.startsWith("gradle ")) {
-                                                return line.replaceAll("^gradle ", newExecutable.get());
+                                                return line.replaceAll("^gradle ", acc.newExecutableName.get());
                                             } else {
                                                 return line;
                                             }
