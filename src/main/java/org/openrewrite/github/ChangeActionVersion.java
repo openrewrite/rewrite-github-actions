@@ -37,7 +37,7 @@ public class ChangeActionVersion extends Recipe {
         return Preconditions.check(
                 new FindSourceFiles(".github/workflows/*.yml"),
                 new ChangeValue(
-                        "$.jobs..steps[?(@.uses =~ '" + action + "(?:@.+)?')].uses",
+                        "$.jobs..[?(@.uses =~ '" + action + "(?:@.+)?')].uses",
                         action + '@' + version, null).getVisitor());
     }
 }

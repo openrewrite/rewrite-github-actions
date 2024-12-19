@@ -42,7 +42,7 @@ public class ChangeAction extends Recipe {
         return Preconditions.check(
                 new FindSourceFiles(".github/workflows/*.yml"),
                 new ChangeValue(
-                        "$.jobs..steps[?(@.uses =~ '" + oldAction + "(?:@.+)?')].uses",
+                        "$.jobs..[?(@.uses =~ '" + oldAction + "(?:@.+)?')].uses",
                         newAction + '@' + newVersion, null).getVisitor());
     }
 }

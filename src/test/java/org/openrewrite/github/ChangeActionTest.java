@@ -13,7 +13,7 @@ import static org.openrewrite.yaml.Assertions.yaml;
 class ChangeActionTest implements RewriteTest {
     @DocumentExample
     @Test
-    void updateActionVersion() {
+    void changeActionInSteps() {
         rewriteRun(
           spec -> spec.recipe(new ChangeAction(
             "gradle/wrapper-validation-action",
@@ -40,6 +40,32 @@ class ChangeActionTest implements RewriteTest {
                       uses: actions/checkout@v4
                     - name: Validate wrapper
                       uses: gradle/actions/wrapper-validation@v3
+              """,
+            source -> source.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void changeActionInJob() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeAction(
+            "gradle/wrapper-validation-action",
+            "gradle/actions/wrapper-validation",
+            "main")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  uses: gradle/wrapper-validation-action@v2
+              """,
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  uses: gradle/actions/wrapper-validation@main
               """,
             source -> source.path(".github/workflows/ci.yml")
           )
