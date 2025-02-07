@@ -80,7 +80,7 @@ public class UpgradeSlackNotificationVersion2 extends Recipe {
                     "  payload: |\n" +
                     "    channel: \"" + channelName + "\"\n" +
                     "    text: \"" + messageText + "\"\n",
-                    false, null, null)
+                    false, null, null, null)
                     .getVisitor().visitNonNull(d, ctx);
 
             d = (Yaml.Documents) new DeleteKey(jsonPath + ".with.channel-id", null)
