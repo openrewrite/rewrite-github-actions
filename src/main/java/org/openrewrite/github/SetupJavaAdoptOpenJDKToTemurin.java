@@ -16,9 +16,6 @@
 package org.openrewrite.github;
 
 import org.openrewrite.*;
-import org.openrewrite.yaml.JsonPathMatcher;
-import org.openrewrite.yaml.YamlIsoVisitor;
-import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.Arrays;
 import java.util.Collections;
