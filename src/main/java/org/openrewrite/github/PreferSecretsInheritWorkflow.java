@@ -71,7 +71,7 @@ public class PreferSecretsInheritWorkflow extends Recipe {
                         Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
 
                         if (getCursor().getMessage(USE_INHERIT, false)) {
-                            Scalar inheritValue = new Scalar(Tree.randomId(), " ", EMPTY, PLAIN, null, "inherit");
+                            Scalar inheritValue = new Scalar(Tree.randomId(), " ", EMPTY, PLAIN, null, null, "inherit");
                             return e.withValue(inheritValue);
                         }
 
