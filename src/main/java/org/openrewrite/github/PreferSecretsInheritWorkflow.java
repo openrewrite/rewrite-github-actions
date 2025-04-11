@@ -40,8 +40,8 @@ public class PreferSecretsInheritWorkflow extends Recipe {
     public String getDescription() {
         return "Pass all secrets to a reusable workflow using `secrets: inherit`. See " +
                "[Simplify using secrets with reusable workflows]" +
-               "(https://github.blog/changelog/2022-05-03-github-actions-simplify-using-secrets-with-reusable-workflows/)" +
-               " for details.";
+               "(https://github.blog/changelog/2022-05-03-github-actions-simplify-using-secrets-with-reusable-workflows/) " +
+               "for details.";
     }
 
     @Override
