@@ -1,0 +1,485 @@
+# Copyright 2025 the original author or authors.
+# <p>
+# Licensed under the Moderne Source Available License (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# <p>
+# https://docs.moderne.io/licensing/moderne-source-available-license
+# <p>
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.AddManualTrigger
+examples:
+- description: ''
+  sources:
+  - before: |
+      on:
+        push:
+          branches:
+            - main
+      env:
+        TEST: 'value'
+    after: |
+      on:
+        push:
+          branches:
+            - main
+        workflow_dispatch:
+      env:
+        TEST: 'value'
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.AutoCancelInProgressWorkflow
+examples:
+- description: ''
+  parameters:
+  - 'null'
+  sources:
+  - before: |
+      jobs:
+        build:
+          runs-on: linux
+          steps:
+            - uses: actions/checkout@v2
+    after: |
+      jobs:
+        build:
+          runs-on: linux
+          steps:
+            - uses: styfle/cancel-workflow-action@0.9.1
+              with:
+                access_token: ${{ github.token }}
+            - uses: actions/checkout@v2
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.ChangeAction
+examples:
+- description: ''
+  parameters:
+  - gradle/wrapper-validation-action
+  - gradle/actions/wrapper-validation
+  - v3
+  sources:
+  - before: |
+      jobs:
+        deploy:
+          runs-on: ubuntu-latest
+          steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Validate wrapper
+              uses: gradle/wrapper-validation-action@v2
+    after: |
+      jobs:
+        deploy:
+          runs-on: ubuntu-latest
+          steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Validate wrapper
+              uses: gradle/actions/wrapper-validation@v3
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.ChangeActionVersion
+examples:
+- description: ''
+  parameters:
+  - actions/setup-java
+  - v4
+  sources:
+  - before: |
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-java@main
+    after: |
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-java@v4
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.ChangeDependabotScheduleInterval
+examples:
+- description: ''
+  parameters:
+  - github-actions
+  - weekly
+  sources:
+  - before: |
+      version: 2
+      updates:
+        - package-ecosystem: github-actions
+          directory: /
+          schedule:
+            interval: daily
+        - package-ecosystem: maven
+          directory: /
+          schedule:
+            interval: weekly
+        - package-ecosystem: gradle
+          directory: /
+          schedule:
+            interval: monthly
+    after: |
+      version: 2
+      updates:
+        - package-ecosystem: github-actions
+          directory: /
+          schedule:
+            interval: weekly
+        - package-ecosystem: maven
+          directory: /
+          schedule:
+            interval: weekly
+        - package-ecosystem: gradle
+          directory: /
+          schedule:
+            interval: monthly
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.FindMissingTimeout
+examples:
+- description: ''
+  sources:
+  - before: |
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v2
+            - name: Run a one-line script
+              run: echo Hello, world!
+    after: |
+      jobs:
+        ~~(missing: $.jobs.*.timeout-minutes)~~>build:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v2
+            - name: Run a one-line script
+              run: echo Hello, world!
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.PreferSecretsInheritWorkflow
+examples:
+- description: ''
+  sources:
+  - before: |
+      jobs:
+        call-workflow-passing-data:
+          uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
+          with:
+            config-path: .github/labeler.yml
+          secrets:
+            envPAT: ${{ secrets.envPAT }}
+    after: |
+      jobs:
+        call-workflow-passing-data:
+          uses: octo-org/example-repo/.github/workflows/reusable-workflow.yml@main
+          with:
+            config-path: .github/labeler.yml
+          secrets: inherit
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.PreferTemurinDistributions
+examples:
+- description: ''
+  sources:
+  - before: |
+      jobs:
+        build:
+          runs-on: [ubuntu-latest,macos-latest]
+          steps:
+            - uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
+            - name: set-up-jdk-0
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "zulu"
+                java-version: "11"
+            - name: set-up-jdk-1
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "adopt"
+                java-version: "17"
+            - name: set-up-jdk-2
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "zulu"
+                java-version: "8"
+            - name: build
+              run: ./gradlew build test
+    after: |
+      jobs:
+        build:
+          runs-on: [ubuntu-latest,macos-latest]
+          steps:
+            - uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
+            - name: set-up-jdk-0
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "temurin"
+                java-version: "11"
+            - name: set-up-jdk-1
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "temurin"
+                java-version: "17"
+            - name: set-up-jdk-2
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "temurin"
+                java-version: "8"
+            - name: build
+              run: ./gradlew build test
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.RemoveAllCronTriggers
+examples:
+- description: ''
+  sources:
+  - before: |
+      on:
+        push:
+          branches:
+            - main
+        schedule:
+          - cron: "0 18 * * *"
+          - cron: "0 11 * * *"
+    after: |
+      on:
+        push:
+          branches:
+            - main
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.ReplaceRunners
+examples:
+- description: ''
+  parameters:
+  - build
+  - List.of("ubuntu-latest", "MyRunner")
+  sources:
+  - before: |
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+        other:
+          runs-on: ubuntu-latest
+    after: |
+      jobs:
+        build:
+          runs-on: [ubuntu-latest, MyRunner]
+        other:
+          runs-on: ubuntu-latest
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.SetupJavaAdoptOpenJDKToTemurin
+examples:
+- description: ''
+  sources:
+  - before: |
+      jobs:
+        build:
+          steps:
+            - uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
+            - name: set-up-jdk-0
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "adopt"
+                java-version: "11"
+            - name: set-up-jdk-1
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "adopt-hotspot"
+                java-version: "11"
+            - name: set-up-jdk-2
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "adopt-openj9"
+                java-version: "11"
+            - name: build
+              run: ./gradlew build test
+    after: |
+      jobs:
+        build:
+          steps:
+            - uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
+            - name: set-up-jdk-0
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "temurin"
+                java-version: "11"
+            - name: set-up-jdk-1
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "temurin"
+                java-version: "11"
+            - name: set-up-jdk-2
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "adopt-openj9"
+                java-version: "11"
+            - name: build
+              run: ./gradlew build test
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.SetupJavaAdoptOpenj9ToSemeru
+examples:
+- description: ''
+  sources:
+  - before: |
+      jobs:
+        build:
+          steps:
+            - uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
+            - name: set-up-jdk-0
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "adopt"
+                java-version: "11"
+            - name: set-up-jdk-1
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "adopt-hotspot"
+                java-version: "11"
+            - name: set-up-jdk-2
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "adopt-openj9"
+                java-version: "11"
+            - name: build
+              run: ./gradlew build test
+    after: |
+      jobs:
+        build:
+          steps:
+            - uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
+            - name: set-up-jdk-0
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "adopt"
+                java-version: "11"
+            - name: set-up-jdk-1
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "adopt-hotspot"
+                java-version: "11"
+            - name: set-up-jdk-2
+              uses: actions/setup-java@v2.3.0
+              with:
+                distribution: "semeru"
+                java-version: "11"
+            - name: build
+              run: ./gradlew build test
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.SetupJavaUpgradeJavaVersion
+examples:
+- description: ''
+  parameters:
+  - '21'
+  sources:
+  - before: |
+      jobs:
+        build:
+          steps:
+            - uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
+            - name: set-up-temurin-jdk
+              uses: actions/setup-java@v2.3.0
+              with:
+                java-version: "11"
+                distribution: temurin
+            - name: set-up-zulu-jdk
+              uses: actions/setup-java@v3
+              with:
+                java-version: "19"
+                distribution: zulu
+            - name: build
+              run: ./gradlew build test
+    after: |
+      jobs:
+        build:
+          steps:
+            - uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
+            - name: set-up-temurin-jdk
+              uses: actions/setup-java@v2.3.0
+              with:
+                java-version: "21"
+                distribution: temurin
+            - name: set-up-zulu-jdk
+              uses: actions/setup-java@v3
+              with:
+                java-version: "21"
+                distribution: zulu
+            - name: build
+              run: ./gradlew build test
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.UpgradeSlackNotificationVersion2
+examples:
+- description: ''
+  sources:
+  - before: |
+      jobs:
+        build:
+          steps:
+            - name: Send notification on error
+              if: failure() && inputs.send-notification
+              uses: slackapi/slack-github-action@v1.27.0
+              with:
+                channel-id: "##foo-alerts"
+                slack-message: ":boom: Unable run dependency check on: <${{ steps.get_failed_check_link.outputs.failed-check-link }}|${{ inputs.organization }}/${{ inputs.repository }}>"
+              env:
+                SLACK_BOT_TOKEN: ${{ secrets.SLACK_MORTY_BOT_TOKEN }}
+    after: |
+      jobs:
+        build:
+          steps:
+            - name: Send notification on error
+              if: failure() && inputs.send-notification
+              uses: slackapi/slack-github-action@v2.0.0
+              with:
+                method: chat.postMessage
+                token: ${{ secrets.SLACK_MORTY_BOT_TOKEN }}
+                payload: |
+                  channel: "##foo-alerts"
+                  text: ":boom: Unable run dependency check on: <${{ steps.get_failed_check_link.outputs.failed-check-link }}|${{ inputs.organization }}/${{ inputs.repository }}>"
+    language: yaml
