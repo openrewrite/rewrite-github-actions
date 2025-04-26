@@ -32,6 +32,70 @@ class PreferTemurinDistributionsTest implements RewriteTest {
         spec.recipe(new PreferTemurinDistributions());
     }
 
+
+    @DocumentExample
+    @Test
+    void changesWhenAllAreHosted() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on: [ubuntu-latest,macos-latest]
+                  steps:
+                    - uses: actions/checkout@v2
+                      with:
+                        fetch-depth: 0
+                    - name: set-up-jdk-0
+                      uses: actions/setup-java@v2.3.0
+                      with:
+                        distribution: "zulu"
+                        java-version: "11"
+                    - name: set-up-jdk-1
+                      uses: actions/setup-java@v2.3.0
+                      with:
+                        distribution: "adopt"
+                        java-version: "17"
+                    - name: set-up-jdk-2
+                      uses: actions/setup-java@v2.3.0
+                      with:
+                        distribution: "zulu"
+                        java-version: "8"
+                    - name: build
+                      run: ./gradlew build test
+              """,
+            """
+              jobs:
+                build:
+                  runs-on: [ubuntu-latest,macos-latest]
+                  steps:
+                    - uses: actions/checkout@v2
+                      with:
+                        fetch-depth: 0
+                    - name: set-up-jdk-0
+                      uses: actions/setup-java@v2.3.0
+                      with:
+                        distribution: "temurin"
+                        java-version: "11"
+                    - name: set-up-jdk-1
+                      uses: actions/setup-java@v2.3.0
+                      with:
+                        distribution: "temurin"
+                        java-version: "17"
+                    - name: set-up-jdk-2
+                      uses: actions/setup-java@v2.3.0
+                      with:
+                        distribution: "temurin"
+                        java-version: "8"
+                    - name: build
+                      run: ./gradlew build test
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
     @ParameterizedTest
     // from https://github.com/actions/runner-images
     @ValueSource(strings = {
@@ -202,70 +266,6 @@ class PreferTemurinDistributionsTest implements RewriteTest {
                       with:
                         distribution: "temurin"
                         java-version: "11"
-              """,
-            spec -> spec.path(".github/workflows/ci.yml")
-          )
-        );
-    }
-
-
-    @DocumentExample
-    @Test
-    void changesWhenAllAreHosted() {
-        rewriteRun(
-          //language=yaml
-          yaml(
-            """
-              jobs:
-                build:
-                  runs-on: [ubuntu-latest,macos-latest]
-                  steps:
-                    - uses: actions/checkout@v2
-                      with:
-                        fetch-depth: 0
-                    - name: set-up-jdk-0
-                      uses: actions/setup-java@v2.3.0
-                      with:
-                        distribution: "zulu"
-                        java-version: "11"
-                    - name: set-up-jdk-1
-                      uses: actions/setup-java@v2.3.0
-                      with:
-                        distribution: "adopt"
-                        java-version: "17"
-                    - name: set-up-jdk-2
-                      uses: actions/setup-java@v2.3.0
-                      with:
-                        distribution: "zulu"
-                        java-version: "8"
-                    - name: build
-                      run: ./gradlew build test
-              """,
-            """
-              jobs:
-                build:
-                  runs-on: [ubuntu-latest,macos-latest]
-                  steps:
-                    - uses: actions/checkout@v2
-                      with:
-                        fetch-depth: 0
-                    - name: set-up-jdk-0
-                      uses: actions/setup-java@v2.3.0
-                      with:
-                        distribution: "temurin"
-                        java-version: "11"
-                    - name: set-up-jdk-1
-                      uses: actions/setup-java@v2.3.0
-                      with:
-                        distribution: "temurin"
-                        java-version: "17"
-                    - name: set-up-jdk-2
-                      uses: actions/setup-java@v2.3.0
-                      with:
-                        distribution: "temurin"
-                        java-version: "8"
-                    - name: build
-                      run: ./gradlew build test
               """,
             spec -> spec.path(".github/workflows/ci.yml")
           )
