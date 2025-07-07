@@ -21,8 +21,8 @@ import org.openrewrite.yaml.ChangeValue;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
-@Value
 @EqualsAndHashCode(callSuper = false)
+@Value
 public class ChangeActionVersion extends Recipe {
     @Option(displayName = "Action",
             description = "Name of the action to update.",

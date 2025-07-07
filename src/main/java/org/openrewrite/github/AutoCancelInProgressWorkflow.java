@@ -27,9 +27,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
 
-@Value
 @EqualsAndHashCode(callSuper = false)
 @SuppressWarnings("ConcatenationWithEmptyString")
+@Value
 public class AutoCancelInProgressWorkflow extends Recipe {
     @Option(displayName = "Optional access token",
             description = "Optionally provide the key name of a repository or organization secret that contains a GitHub personal access token with permission to cancel workflows.",

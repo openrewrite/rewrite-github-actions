@@ -28,8 +28,8 @@ import lombok.Value;
 import static org.openrewrite.marker.Markers.EMPTY;
 import static org.openrewrite.yaml.tree.Yaml.Scalar.Style.PLAIN;
 
-@Value
 @EqualsAndHashCode(callSuper = false)
+@Value
 public class PreferSecretsInheritWorkflow extends Recipe {
     @Override
     public String getDisplayName() {

@@ -23,8 +23,8 @@ import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
-@Value
 @EqualsAndHashCode(callSuper = false)
+@Value
 public class ReplaceRunners extends Recipe {
     @Option(displayName = "Job Name",
             description = "The name of the job to update",

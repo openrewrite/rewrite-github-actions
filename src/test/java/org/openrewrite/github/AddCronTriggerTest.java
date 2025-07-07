@@ -105,9 +105,9 @@ class AddCronTriggerTest implements RewriteTest {
         );
     }
 
-    @ParameterizedTest
     @DisplayName("Missing or null defaults to .github/workflows/ci.yml")
     @NullSource
+    @ParameterizedTest
     @ValueSource(strings = {
       ""
     })
@@ -143,7 +143,6 @@ class AddCronTriggerTest implements RewriteTest {
 
     }
 
-    @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
       @daily    |     1 1 * * *
       @weekly   |     1 1 * * tue
@@ -153,6 +152,7 @@ class AddCronTriggerTest implements RewriteTest {
       @weekdays |     1 1 * * 1-5
       @weekends |     1 1 * * sat,sun
       """)
+    @ParameterizedTest
     void cronTriggerRandom(String cronExpression, String actualCronValue) {
         rewriteRun(
           spec -> spec.recipe(new AddCronTrigger(cronExpression, "", new StaticThreadLocalRandom())),

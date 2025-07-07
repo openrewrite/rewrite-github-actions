@@ -27,8 +27,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
 
-@Value
 @EqualsAndHashCode(callSuper = false)
+@Value
 public class SetupJavaUpgradeJavaVersion extends Recipe {
 
     @Option(displayName = "Minimum major Java version (defaults to 21)",

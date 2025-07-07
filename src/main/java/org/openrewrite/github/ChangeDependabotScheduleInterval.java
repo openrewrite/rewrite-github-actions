@@ -25,8 +25,8 @@ import java.util.Set;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
-@Value
 @EqualsAndHashCode(callSuper = false)
+@Value
 public class ChangeDependabotScheduleInterval extends Recipe {
     @Option(displayName = "Package ecosystem",
             description = "The package-ecosystem to make updates on.",

@@ -29,8 +29,8 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
-@Value
 @EqualsAndHashCode(callSuper = false)
+@Value
 public class UpgradeSlackNotificationVersion2 extends Recipe {
     @Override
     public String getDisplayName() {
