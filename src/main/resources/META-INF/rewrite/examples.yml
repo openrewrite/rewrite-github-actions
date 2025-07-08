@@ -296,6 +296,39 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.ReplaceSecrets
+examples:
+- description: ''
+  parameters:
+  - OSSRH_S01_USERNAME
+  - SONATYPE_USERNAME
+  - 'null'
+  sources:
+  - before: |
+      name: Publish
+      jobs:
+        build:
+          secrets:
+            ossrh_username: ${{ secrets.OSSRH_S01_USERNAME }}
+            ossrh_token: ${{ secrets.OSSRH_S01_TOKEN }}
+          steps:
+            - name: Publish to Maven Central
+              env:
+                MAVEN_USERNAME: ${{ secrets.OSSRH_S01_USERNAME }}
+    after: |
+      name: Publish
+      jobs:
+        build:
+          secrets:
+            ossrh_username: ${{ secrets.SONATYPE_USERNAME }}
+            ossrh_token: ${{ secrets.OSSRH_S01_TOKEN }}
+          steps:
+            - name: Publish to Maven Central
+              env:
+                MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.SetupJavaAdoptOpenJDKToTemurin
 examples:
 - description: ''
