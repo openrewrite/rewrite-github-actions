@@ -18,8 +18,9 @@ package org.openrewrite.github;
 import org.openrewrite.*;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Set;
+
+import static java.util.Collections.singleton;
 
 public class SetupJavaAdoptOpenJDKToTemurin extends Recipe {
 
@@ -38,7 +39,7 @@ public class SetupJavaAdoptOpenJDKToTemurin extends Recipe {
 
     @Override
     public Set<String> getTags() {
-        return Collections.singleton("security");
+        return singleton("security");
     }
 
     @Override

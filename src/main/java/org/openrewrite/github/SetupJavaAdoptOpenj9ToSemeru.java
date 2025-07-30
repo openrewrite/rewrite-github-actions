@@ -18,8 +18,10 @@ package org.openrewrite.github;
 import org.openrewrite.*;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Set;
+
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 
 public class SetupJavaAdoptOpenj9ToSemeru extends Recipe {
 
@@ -42,13 +44,13 @@ public class SetupJavaAdoptOpenj9ToSemeru extends Recipe {
 
     @Override
     public Set<String> getTags() {
-        return Collections.singleton("security");
+        return singleton("security");
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"),
-                new SetupJavaDistributionReplacerVisitor(Collections.singletonList("adopt-openj9"), "semeru"));
+                new SetupJavaDistributionReplacerVisitor(singletonList("adopt-openj9"), "semeru"));
     }
 
 }
