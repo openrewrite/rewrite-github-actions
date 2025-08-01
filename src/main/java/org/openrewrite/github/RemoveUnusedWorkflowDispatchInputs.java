@@ -34,7 +34,7 @@ import static org.openrewrite.Tree.randomId;
 
 public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
 
-    private static final Pattern INPUT_USAGE_PATTERN = Pattern.compile("github[.]event[.]inputs[.](\\w+)");
+    private static final Pattern INPUT_USAGE_PATTERN = Pattern.compile("(?:github *[.] *event *[.] *inputs *[.] *(\\w+)|inputs *[.] *(\\w+))");
     private static final JsonPathMatcher WORKFLOW_DISPATCH_INPUTS_MATCHER = new JsonPathMatcher("$.on.workflow_dispatch.inputs");
 
     @Override
@@ -86,7 +86,10 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                         // and no harm is done in such a case.
                         Matcher matcher = INPUT_USAGE_PATTERN.matcher(value);
                         while (matcher.find()) {
-                            usedInputs.add(matcher.group(1));
+                            String inputName = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+                            if (inputName != null) {
+                                usedInputs.add(inputName);
+                            }
                         }
 
                         return super.visitScalar(scalar, ctx);
