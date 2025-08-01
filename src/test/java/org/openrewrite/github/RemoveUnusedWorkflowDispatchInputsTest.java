@@ -199,4 +199,18 @@ class RemoveUnusedWorkflowDispatchInputsTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void doNothingWhenWorkflowDispatchIsEmpty() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              on:
+                workflow_dispatch:
+              """,
+            spec -> spec.path(".github/workflows/stub.yml")
+          )
+        );
+    }
 }
