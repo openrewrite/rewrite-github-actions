@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 
 public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
 
-    private static final Pattern INPUT_REFERENCE_PATTERN = Pattern.compile("[$][{][{]\\s*github[.]event[.]inputs[.](\\w+)\\s*[}][}]");
+    private static final Pattern INPUT_USAGE_PATTERN = Pattern.compile("github[.]event[.]inputs[.](\\w+)");
     private static final JsonPathMatcher WORKFLOW_DISPATCH_INPUTS_MATCHER = new JsonPathMatcher("$.on.workflow_dispatch.inputs");
 
     @Override
@@ -81,10 +81,14 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                     @Override
                     public Yaml.Scalar visitScalar(Yaml.Scalar scalar, ExecutionContext ctx) {
                         String value = scalar.getValue();
-                        Matcher matcher = INPUT_REFERENCE_PATTERN.matcher(value);
+
+                        // This might have some false negatives as one can use a string like this, but this should be rare
+                        // and no harm is done in such a case.
+                        Matcher matcher = INPUT_USAGE_PATTERN.matcher(value);
                         while (matcher.find()) {
                             usedInputs.add(matcher.group(1));
                         }
+
                         return super.visitScalar(scalar, ctx);
                     }
                 }.visit(document, ctx);
