@@ -27,6 +27,8 @@ import java.util.regex.Pattern;
 
 public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
 
+    private static final Pattern INPUT_REFERENCE_PATTERN = Pattern.compile("[$][{][{]\\s*github[.]event[.]inputs[.](\\w+)\\s*[}][}]");
+
     @Override
     public String getDisplayName() {
         return "Remove unused workflow dispatch inputs";
@@ -47,7 +49,6 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
         return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new YamlIsoVisitor<ExecutionContext>() {
             @Override
             public Yaml.Document visitDocument(Yaml.Document document, ExecutionContext ctx) {
-                // First pass: collect all defined inputs
                 Set<String> definedInputs = new HashSet<>();
                 Set<String> usedInputs = new HashSet<>();
 
@@ -62,7 +63,7 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                                 Yaml.Mapping inputs = (Yaml.Mapping) value;
                                 for (Yaml.Mapping.Entry inputEntry : inputs.getEntries()) {
                                     if (inputEntry.getKey() instanceof Yaml.Scalar) {
-                                        definedInputs.add(((Yaml.Scalar) inputEntry.getKey()).getValue());
+                                        definedInputs.add((inputEntry.getKey()).getValue());
                                     }
                                 }
                             }
@@ -72,12 +73,11 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                 }.visit(document, ctx);
 
                 // Second pass: find all input references
-                Pattern inputPattern = Pattern.compile("\\$\\{\\{\\s*github\\.event\\.inputs\\.(\\w+)\\s*\\}\\}");
                 new YamlIsoVisitor<ExecutionContext>() {
                     @Override
                     public Yaml.Scalar visitScalar(Yaml.Scalar scalar, ExecutionContext ctx) {
                         String value = scalar.getValue();
-                        Matcher matcher = inputPattern.matcher(value);
+                        Matcher matcher = INPUT_REFERENCE_PATTERN.matcher(value);
                         while (matcher.find()) {
                             usedInputs.add(matcher.group(1));
                         }
@@ -103,9 +103,8 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                         }
 
                         if (currentInputsMapping != null && entry.getKey() instanceof Yaml.Scalar) {
-                            String inputName = ((Yaml.Scalar) entry.getKey()).getValue();
+                            String inputName = (entry.getKey()).getValue();
                             if (definedInputs.contains(inputName) && !usedInputs.contains(inputName)) {
-                                // This input is defined but not used, remove it
                                 return null;
                             }
                         }
@@ -119,7 +118,7 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                 if (!(entry.getKey() instanceof Yaml.Scalar)) {
                     return false;
                 }
-                String key = ((Yaml.Scalar) entry.getKey()).getValue();
+                String key = (entry.getKey()).getValue();
                 if (!"inputs".equals(key)) {
                     return false;
                 }
