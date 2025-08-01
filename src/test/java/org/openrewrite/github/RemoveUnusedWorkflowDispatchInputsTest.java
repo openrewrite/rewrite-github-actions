@@ -186,8 +186,7 @@ class RemoveUnusedWorkflowDispatchInputsTest implements RewriteTest {
               """,
             """
               on:
-                workflow_dispatch:
-                  inputs:
+                workflow_dispatch: {}
 
               jobs:
                 test:

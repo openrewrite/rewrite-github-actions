@@ -17,16 +17,20 @@ package org.openrewrite.github;
 
 import org.openrewrite.*;
 import org.openrewrite.internal.lang.Nullable;
+import org.openrewrite.marker.Markers;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.openrewrite.Tree.randomId;
 
 public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
 
@@ -105,6 +109,31 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                             }
                         }
                         return super.visitMappingEntry(entry, ctx);
+                    }
+
+                    @Override
+                    public @Nullable Yaml postVisit(Yaml tree, ExecutionContext ctx) {
+                        if (tree instanceof Yaml.Mapping.Entry) {
+                            Yaml.Mapping.Entry entry = (Yaml.Mapping.Entry) tree;
+                            if ("workflow_dispatch".equals(entry.getKey().getValue())) {
+                                Yaml.Mapping inputs = (Yaml.Mapping) entry.getValue();
+                                if (inputs.getEntries().size() == 1) {
+                                    Yaml.Mapping.Entry inputsEntry = inputs.getEntries().get(0);
+                                    if (inputsEntry.getValue() instanceof Yaml.Mapping && ((Yaml.Mapping) inputsEntry.getValue()).getEntries().isEmpty()) {
+                                        return entry.withValue(new Yaml.Mapping(
+                                                randomId(),
+                                                Markers.EMPTY,
+                                                " ",
+                                                Collections.emptyList(),
+                                                "",
+                                                null,
+                                                null
+                                        ));
+                                    }
+                                }
+                            }
+                        }
+                        return super.postVisit(tree, ctx);
                     }
                 }.visit(document, ctx));
             }
