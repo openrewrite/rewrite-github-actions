@@ -62,7 +62,7 @@ class RemoveUnusedWorkflowDispatchInputsTest implements RewriteTest {
                     - name: Another step
                       run: echo "Just a step without input reference"
                     - name: Step 3
-                      if: github.event.inputs.usedInGithubActionSyntax == 'true'
+                      if: inputs . usedInGithubActionSyntax == 'true'
                       run: echo "Conditional step"
               """,
             """
@@ -85,7 +85,7 @@ class RemoveUnusedWorkflowDispatchInputsTest implements RewriteTest {
                     - name: Another step
                       run: echo "Just a step without input reference"
                     - name: Step 3
-                      if: github.event.inputs.usedInGithubActionSyntax == 'true'
+                      if: inputs . usedInGithubActionSyntax == 'true'
                       run: echo "Conditional step"
               """,
             spec -> spec.path(".github/workflows/test.yml")
