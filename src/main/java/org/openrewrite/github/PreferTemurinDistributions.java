@@ -34,7 +34,7 @@ public class PreferTemurinDistributions extends Recipe {
 
     @Override
     public String getDescription() {
-        return "[Host runners](https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources/) include Temurin by default as part of the (hosted tool cache)(https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#hosted-tool-cache). " +
+        return "[Host runners](https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources/) include Temurin by default as part of the [hosted tool cache](https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#hosted-tool-cache). " +
                "Using Temurin speeds up builds as there is no need to download and configure the Java SDK with every build.";
     }
 
