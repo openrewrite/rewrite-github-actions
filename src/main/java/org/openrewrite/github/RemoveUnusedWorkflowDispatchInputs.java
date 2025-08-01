@@ -96,7 +96,7 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                     }
                 }.visit(document, ctx);
 
-                if (definedInputs.size() == usedInputs.size()) {
+                if (definedInputs.size() == usedInputs.size() || definedInputs.isEmpty()) {
                     return document;
                 }
 
@@ -119,7 +119,7 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                     public @Nullable Yaml postVisit(Yaml tree, ExecutionContext ctx) {
                         if (tree instanceof Yaml.Mapping.Entry) {
                             Yaml.Mapping.Entry entry = (Yaml.Mapping.Entry) tree;
-                            if ("workflow_dispatch".equals(entry.getKey().getValue())) {
+                            if ("workflow_dispatch".equals(entry.getKey().getValue()) && entry.getValue() instanceof Yaml.Mapping) {
                                 Yaml.Mapping inputs = (Yaml.Mapping) entry.getValue();
                                 if (inputs.getEntries().size() == 1) {
                                     Yaml.Mapping.Entry inputsEntry = inputs.getEntries().get(0);
