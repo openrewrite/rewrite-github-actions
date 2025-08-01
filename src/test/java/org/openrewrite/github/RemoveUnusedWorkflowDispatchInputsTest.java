@@ -49,6 +49,8 @@ class RemoveUnusedWorkflowDispatchInputsTest implements RewriteTest {
                     anotherUnusedInput:
                       description: 'Also not used'
                       default: 'default-value'
+                    usedInGithubActionSyntax:
+                      description: 'Used in Github Action syntax'
 
               jobs:
                 test-job:
@@ -58,6 +60,9 @@ class RemoveUnusedWorkflowDispatchInputsTest implements RewriteTest {
                       run: echo "Used input - ${{ github.event.inputs.usedInput }}"
                     - name: Another step
                       run: echo "Just a step without input reference"
+                    - name: Step 3
+                      if: github.event.inputs.usedInGithubActionSyntax == 'true'
+                      run: echo "Conditional step"
               """,
             """
               name: Test Workflow
@@ -67,6 +72,8 @@ class RemoveUnusedWorkflowDispatchInputsTest implements RewriteTest {
                     usedInput:
                       description: 'This input is used'
                       required: true
+                    usedInGithubActionSyntax:
+                      description: 'Used in Github Action syntax'
 
               jobs:
                 test-job:
@@ -76,41 +83,11 @@ class RemoveUnusedWorkflowDispatchInputsTest implements RewriteTest {
                       run: echo "Used input - ${{ github.event.inputs.usedInput }}"
                     - name: Another step
                       run: echo "Just a step without input reference"
-              """,
-            spec -> spec.path(".github/workflows/test.yml")
-          )
-        );
-    }
-
-    @Test
-    void preserveAllUsedInputs() {
-        rewriteRun(
-          //language=yaml
-          yaml(
-            """
-              on:
-                workflow_dispatch:
-                  inputs:
-                    input1:
-                      description: 'Used in job'
-                    input2:
-                      description: 'Used in step'
-                    input3:
-                      description: 'Used in condition'
-
-              jobs:
-                job1:
-                  runs-on: ubuntu-latest
-                  env:
-                    VAR1: ${{ github.event.inputs.input1 }}
-                  steps:
-                    - name: Step 1
-                      run: echo "${{ github.event.inputs.input2 }}"
-                    - name: Step 2
-                      if: github.event.inputs.input3 == 'true'
+                    - name: Step 3
+                      if: github.event.inputs.usedInGithubActionSyntax == 'true'
                       run: echo "Conditional step"
               """,
-            spec -> spec.path(".github/workflows/ci.yml")
+            spec -> spec.path(".github/workflows/test.yml")
           )
         );
     }
