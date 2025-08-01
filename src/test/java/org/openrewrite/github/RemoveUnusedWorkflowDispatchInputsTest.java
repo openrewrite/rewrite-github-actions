@@ -103,6 +103,8 @@ class RemoveUnusedWorkflowDispatchInputsTest implements RewriteTest {
                   inputs:
                     usedInScript:
                       description: 'Used in multiline script'
+                    alsoUsedInScript:
+                      description: 'Also used in multiline script'
                     unusedInput:
                       description: 'Not referenced'
 
@@ -113,6 +115,7 @@ class RemoveUnusedWorkflowDispatchInputsTest implements RewriteTest {
                     - run: |
                         echo "Starting deployment"
                         echo "Input value: ${{ github.event.inputs.usedInScript }}"
+                        echo "Another input value: ${{ github.event.inputs.alsoUsedInScript }}"
                         echo "Done"
               """,
             """
@@ -121,6 +124,8 @@ class RemoveUnusedWorkflowDispatchInputsTest implements RewriteTest {
                   inputs:
                     usedInScript:
                       description: 'Used in multiline script'
+                    alsoUsedInScript:
+                      description: 'Also used in multiline script'
 
               jobs:
                 test:
@@ -129,6 +134,7 @@ class RemoveUnusedWorkflowDispatchInputsTest implements RewriteTest {
                     - run: |
                         echo "Starting deployment"
                         echo "Input value: ${{ github.event.inputs.usedInScript }}"
+                        echo "Another input value: ${{ github.event.inputs.alsoUsedInScript }}"
                         echo "Done"
               """,
             spec -> spec.path(".github/workflows/deploy.yml")
