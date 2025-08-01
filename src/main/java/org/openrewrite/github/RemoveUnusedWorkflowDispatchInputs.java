@@ -16,7 +16,6 @@
 package org.openrewrite.github;
 
 import org.openrewrite.*;
-import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.marker.Markers;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
@@ -29,6 +28,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 
 import static org.openrewrite.Tree.randomId;
 
@@ -98,8 +98,9 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                 }
 
                 return (Yaml.Document) Objects.requireNonNull(new YamlIsoVisitor<ExecutionContext>() {
+
                     @Override
-                    public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
+                    public Yaml.Mapping.@Nullable Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                         if (WORKFLOW_DISPATCH_INPUTS_MATCHER.matches(getCursor().getParent().getParent())) {
                             if (entry.getKey() instanceof Yaml.Scalar) {
                                 String inputName = (entry.getKey()).getValue();
