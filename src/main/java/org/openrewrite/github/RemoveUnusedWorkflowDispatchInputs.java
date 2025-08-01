@@ -17,17 +17,20 @@ package org.openrewrite.github;
 
 import org.openrewrite.*;
 import org.openrewrite.internal.lang.Nullable;
+import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
 
     private static final Pattern INPUT_REFERENCE_PATTERN = Pattern.compile("[$][{][{]\\s*github[.]event[.]inputs[.](\\w+)\\s*[}][}]");
+    private static final JsonPathMatcher WORKFLOW_DISPATCH_INPUTS_MATCHER = new JsonPathMatcher("$.on.workflow_dispatch.inputs");
 
     @Override
     public String getDisplayName() {
@@ -57,7 +60,7 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                     @Override
                     public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                         Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
-                        if (isWorkflowDispatchInputsEntry(e)) {
+                        if (WORKFLOW_DISPATCH_INPUTS_MATCHER.matches(getCursor())) {
                             Yaml.Block value = e.getValue();
                             if (value instanceof Yaml.Mapping) {
                                 Yaml.Mapping inputs = (Yaml.Mapping) value;
@@ -92,7 +95,7 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
 
                     @Override
                     public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-                        if (isWorkflowDispatchInputsEntry(entry)) {
+                        if (WORKFLOW_DISPATCH_INPUTS_MATCHER.matches(getCursor())) {
                             Yaml.Block value = entry.getValue();
                             if (value instanceof Yaml.Mapping) {
                                 currentInputsMapping = (Yaml.Mapping) value;
@@ -112,43 +115,6 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                         return super.visitMappingEntry(entry, ctx);
                     }
                 }.visit(document, ctx);
-            }
-
-            private boolean isWorkflowDispatchInputsEntry(Yaml.Mapping.Entry entry) {
-                if (!(entry.getKey() instanceof Yaml.Scalar)) {
-                    return false;
-                }
-                String key = (entry.getKey()).getValue();
-                if (!"inputs".equals(key)) {
-                    return false;
-                }
-
-                // Check if this is under on.workflow_dispatch
-                Cursor parent = getCursor().getParent();
-                while (parent != null && parent.getValue() instanceof Yaml) {
-                    if (parent.getValue() instanceof Yaml.Mapping.Entry) {
-                        Yaml.Mapping.Entry parentEntry = parent.getValue();
-                        if (parentEntry.getKey() instanceof Yaml.Scalar) {
-                            String parentKey = ((Yaml.Scalar) parentEntry.getKey()).getValue();
-                            if ("workflow_dispatch".equals(parentKey)) {
-                                // Check if grandparent is "on"
-                                Cursor grandParent = parent.getParent();
-                                if (grandParent != null && grandParent.getValue() instanceof Yaml.Mapping) {
-                                    grandParent = grandParent.getParent();
-                                    if (grandParent != null && grandParent.getValue() instanceof Yaml.Mapping.Entry) {
-                                        Yaml.Mapping.Entry grandParentEntry = grandParent.getValue();
-                                        if (grandParentEntry.getKey() instanceof Yaml.Scalar) {
-                                            String grandParentKey = ((Yaml.Scalar) grandParentEntry.getKey()).getValue();
-                                            return "on".equals(grandParentKey);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    parent = parent.getParent();
-                }
-                return false;
             }
         });
     }
