@@ -23,6 +23,7 @@ import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -89,32 +90,20 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                 }.visit(document, ctx);
 
                 // Third pass: remove unused inputs
-                return (Yaml.Document) new YamlIsoVisitor<ExecutionContext>() {
-                    @Nullable
-                    private Yaml.Mapping currentInputsMapping;
-
+                return (Yaml.Document) Objects.requireNonNull(new YamlIsoVisitor<ExecutionContext>() {
                     @Override
                     public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-                        if (WORKFLOW_DISPATCH_INPUTS_MATCHER.matches(getCursor())) {
-                            Yaml.Block value = entry.getValue();
-                            if (value instanceof Yaml.Mapping) {
-                                currentInputsMapping = (Yaml.Mapping) value;
-                                Yaml.Mapping.Entry result = super.visitMappingEntry(entry, ctx);
-                                currentInputsMapping = null;
-                                return result;
+                        if (WORKFLOW_DISPATCH_INPUTS_MATCHER.matches(getCursor().getParent().getParent())) {
+                            if (entry.getKey() instanceof Yaml.Scalar) {
+                                String inputName = (entry.getKey()).getValue();
+                                if (definedInputs.contains(inputName) && !usedInputs.contains(inputName)) {
+                                    return null;
+                                }
                             }
                         }
-
-                        if (currentInputsMapping != null && entry.getKey() instanceof Yaml.Scalar) {
-                            String inputName = (entry.getKey()).getValue();
-                            if (definedInputs.contains(inputName) && !usedInputs.contains(inputName)) {
-                                return null;
-                            }
-                        }
-
                         return super.visitMappingEntry(entry, ctx);
                     }
-                }.visit(document, ctx);
+                }.visit(document, ctx));
             }
         });
     }
