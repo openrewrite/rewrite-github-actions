@@ -56,7 +56,6 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                 Set<String> definedInputs = new HashSet<>();
                 Set<String> usedInputs = new HashSet<>();
 
-                // Find workflow_dispatch inputs
                 new YamlIsoVisitor<ExecutionContext>() {
                     @Override
                     public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
@@ -74,10 +73,7 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                         }
                         return e;
                     }
-                }.visit(document, ctx);
 
-                // Second pass: find all input references
-                new YamlIsoVisitor<ExecutionContext>() {
                     @Override
                     public Yaml.Scalar visitScalar(Yaml.Scalar scalar, ExecutionContext ctx) {
                         String value = scalar.getValue();
@@ -93,7 +89,10 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                     }
                 }.visit(document, ctx);
 
-                // Third pass: remove unused inputs
+                if (definedInputs.size() == usedInputs.size()) {
+                    return document;
+                }
+
                 return (Yaml.Document) Objects.requireNonNull(new YamlIsoVisitor<ExecutionContext>() {
                     @Override
                     public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
