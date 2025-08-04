@@ -18,10 +18,14 @@ package org.openrewrite.github;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
+import org.openrewrite.internal.ListUtils;
+import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
@@ -59,65 +63,63 @@ public class RemoveWorkflowInputArgument extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
+        JsonPathMatcher jobsMatcher = new JsonPathMatcher("$.jobs.*");
+        String expectedReference = workflowReference + "@" + version;
+
         return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new YamlIsoVisitor<ExecutionContext>() {
-            @Override
-            public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-                Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
-
-                // Check if this is a "uses" entry
-                if (e.getKey() instanceof Yaml.Scalar && "uses".equals((e.getKey()).getValue())) {
-                    if (e.getValue() instanceof Yaml.Scalar) {
-                        String usesValue = ((Yaml.Scalar) e.getValue()).getValue();
-
-                        // Check if this matches our workflow reference and version
-                        String expectedReference = workflowReference + "@" + version;
-                        if (usesValue.equals(expectedReference)) {
-                            // We found a matching workflow call
-                            // Now we need to remove the input argument from the "with" section
-                            getCursor().putMessage("REMOVE_INPUT", true);
-                        }
-                    }
-                }
-
-                // Check if this is a "with" entry and we're in a matching workflow call
-                if (e.getKey() instanceof Yaml.Scalar && "with".equals((e.getKey()).getValue())) {
-                    Boolean shouldRemoveInput = getCursor().getNearestMessage("REMOVE_INPUT");
-                    if (Boolean.TRUE.equals(shouldRemoveInput)) {
-                        if (e.getValue() instanceof Yaml.Mapping) {
-                            Yaml.Mapping withMapping = (Yaml.Mapping) e.getValue();
-                            Yaml.Mapping newMapping = withMapping;
-
-                            // Remove the specific input argument
-                            for (Yaml.Mapping.Entry withEntry : withMapping.getEntries()) {
-                                if (withEntry.getKey() instanceof Yaml.Scalar && inputArgumentName.equals((withEntry.getKey()).getValue())) {
-                                    newMapping = newMapping.withEntries(
-                                        withMapping.getEntries().stream()
-                                            .filter(we -> we != withEntry)
-                                            .collect(java.util.stream.Collectors.toList())
-                                    );
-                                    break;
-                                }
-                            }
-
-                            if (newMapping != withMapping) {
-                                return e.withValue(newMapping);
-                            }
-                        }
-                    }
-                }
-
-                return e;
-            }
-
             @Override
             public Yaml.Mapping visitMapping(Yaml.Mapping mapping, ExecutionContext ctx) {
                 Yaml.Mapping m = super.visitMapping(mapping, ctx);
 
-                // Clear the message after processing the job or step containing the workflow call
-                getCursor().pollNearestMessage("REMOVE_INPUT");
+                boolean matchingWorkflow = false;
+                boolean argumentIsUsed = false;
+                if (jobsMatcher.matches(getCursor().getParent().getParent())) {
+                    Optional<Yaml.Mapping.Entry> usesEntry = m.getEntries()
+                            .stream()
+                            .filter(e -> e.getKey() instanceof Yaml.Scalar && "uses".equals((e.getKey().getValue())))
+                            .findAny();
+                    if (usesEntry.isPresent()) {
+                        Yaml.Block usesValue = usesEntry.get().getValue();
+                        if (usesValue instanceof Yaml.Scalar) {
+                            if (((Yaml.Scalar) usesValue).getValue().equals(expectedReference)) {
+                                matchingWorkflow = true;
+                            }
+                        }
+                    }
+                    Optional<Yaml.Mapping.Entry> withEntry = m.getEntries()
+                            .stream()
+                            .filter(e -> e.getKey() instanceof Yaml.Scalar && "with".equals((e.getKey().getValue())))
+                            .findAny();
+                    if (withEntry.isPresent()) {
+                        Yaml.Block withValue = withEntry.get().getValue();
+                        if (withValue instanceof Yaml.Mapping) {
+                            Yaml.Mapping withMapping = (Yaml.Mapping) withValue;
+                            argumentIsUsed = withMapping.getEntries()
+                                    .stream()
+                                    .anyMatch(e -> e.getKey() instanceof Yaml.Scalar && inputArgumentName.equals(e.getKey().getValue()));
+                        }
+                    }
+                }
+                if (matchingWorkflow && argumentIsUsed) {
+                    return m.withEntries(ListUtils.map(m.getEntries(), entry -> {
+                        if (entry.getKey() instanceof Yaml.Scalar && "with".equals(entry.getKey().getValue())) {
+                            if (entry.getValue() instanceof Yaml.Mapping) {
+                                Yaml.Mapping withMapping = (Yaml.Mapping) entry.getValue();
+                                Yaml.Mapping newMapping = withMapping.withEntries(
+                                    withMapping.getEntries().stream()
+                                        .filter(e -> !(e.getKey() instanceof Yaml.Scalar && inputArgumentName.equals(e.getKey().getValue())))
+                                        .collect(Collectors.toList())
+                                );
+                                return entry.withValue(newMapping);
+                            }
+                        }
+                        return entry;
+                    }));
+                }
 
                 return m;
             }
+
         });
     }
 }

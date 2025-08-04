@@ -39,12 +39,9 @@ class RemoveWorkflowInputArgumentTest implements RewriteTest {
         rewriteRun(
           //language=yaml
           yaml(
-            """
-              name: Caller Workflow
-              on:
-                push:
-                  branches: [main]
-
+        """
+              name: My workflow
+              on: workflow_dispatch
               jobs:
                 call-workflow:
                   uses: org/repo/.github/workflows/myWorkflow.yml@v1.2.3
@@ -54,11 +51,8 @@ class RemoveWorkflowInputArgumentTest implements RewriteTest {
                     anotherInput: "also keep this"
               """,
             """
-              name: Caller Workflow
-              on:
-                push:
-                  branches: [main]
-
+              name: My workflow
+              on: workflow_dispatch
               jobs:
                 call-workflow:
                   uses: org/repo/.github/workflows/myWorkflow.yml@v1.2.3
