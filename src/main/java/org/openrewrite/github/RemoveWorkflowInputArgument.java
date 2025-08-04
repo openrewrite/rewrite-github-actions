@@ -110,6 +110,9 @@ public class RemoveWorkflowInputArgument extends Recipe {
                                         .filter(e -> !(e.getKey() instanceof Yaml.Scalar && inputArgumentName.equals(e.getKey().getValue())))
                                         .collect(Collectors.toList())
                                 );
+                                if (newMapping.getEntries().isEmpty()) {
+                                    return null;
+                                }
                                 return entry.withValue(newMapping);
                             }
                         }
