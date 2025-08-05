@@ -22,7 +22,6 @@ import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -30,6 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 
+import static java.util.Collections.emptyList;
 import static org.openrewrite.Tree.randomId;
 
 public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
@@ -128,7 +128,7 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                                                 randomId(),
                                                 Markers.EMPTY,
                                                 " ",
-                                                Collections.emptyList(),
+                                                emptyList(),
                                                 "",
                                                 null,
                                                 null
