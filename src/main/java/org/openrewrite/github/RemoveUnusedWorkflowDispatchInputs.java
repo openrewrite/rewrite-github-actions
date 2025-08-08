@@ -22,7 +22,6 @@ import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -30,11 +29,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 
+import static java.util.Collections.emptyList;
 import static org.openrewrite.Tree.randomId;
 
 public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
 
-    private static final Pattern INPUT_USAGE_PATTERN = Pattern.compile("(?:github *[.] *event *[.] *inputs *[.] *(\\w+)|inputs *[.] *(\\w+))");
+    private static final Pattern INPUT_USAGE_PATTERN = Pattern.compile("(?:github *[.] *event *[.] *inputs *[.] *([A-Za-z_][A-Za-z0-9_-]*)|inputs *[.] *([A-Za-z_][A-Za-z0-9_-]*))");
     private static final JsonPathMatcher WORKFLOW_DISPATCH_INPUTS_MATCHER = new JsonPathMatcher("$.on.workflow_dispatch.inputs");
 
     @Override
@@ -128,7 +128,7 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                                                 randomId(),
                                                 Markers.EMPTY,
                                                 " ",
-                                                Collections.emptyList(),
+                                                emptyList(),
                                                 "",
                                                 null,
                                                 null

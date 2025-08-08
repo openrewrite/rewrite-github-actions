@@ -274,6 +274,63 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.RemoveUnusedWorkflowDispatchInputs
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Test Workflow
+      on:
+        workflow_dispatch:
+          inputs:
+            usedInput:
+              description: 'This input is used'
+              required: true
+            unusedInput:
+              description: 'This input is not used anywhere'
+              required: false
+            anotherUnusedInput:
+              description: 'Also not used'
+              default: 'default-value'
+            usedInGithubActionSyntax:
+              description: 'Used in Github Action syntax'
+
+      jobs:
+        test-job:
+          runs-on: ubuntu-latest
+          steps:
+            - name: Use input
+              run: echo "Used input - ${{ github.event.inputs.usedInput }}"
+            - name: Another step
+              run: echo "Just a step without input reference"
+            - name: Step 3
+              if: inputs . usedInGithubActionSyntax == 'true'
+              run: echo "Conditional step"
+    after: |
+      name: Test Workflow
+      on:
+        workflow_dispatch:
+          inputs:
+            usedInput:
+              description: 'This input is used'
+              required: true
+            usedInGithubActionSyntax:
+              description: 'Used in Github Action syntax'
+
+      jobs:
+        test-job:
+          runs-on: ubuntu-latest
+          steps:
+            - name: Use input
+              run: echo "Used input - ${{ github.event.inputs.usedInput }}"
+            - name: Another step
+              run: echo "Just a step without input reference"
+            - name: Step 3
+              if: inputs . usedInGithubActionSyntax == 'true'
+              run: echo "Conditional step"
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.ReplaceRunners
 examples:
 - description: ''
