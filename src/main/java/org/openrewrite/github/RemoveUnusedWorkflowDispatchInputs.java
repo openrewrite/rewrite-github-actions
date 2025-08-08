@@ -34,7 +34,7 @@ import static org.openrewrite.Tree.randomId;
 
 public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
 
-    private static final Pattern INPUT_USAGE_PATTERN = Pattern.compile("(?:github *[.] *event *[.] *inputs *[.] *(\\w+)|inputs *[.] *(\\w+))");
+    private static final Pattern INPUT_USAGE_PATTERN = Pattern.compile("(?:github *[.] *event *[.] *inputs *[.] *([A-Za-z_][A-Za-z0-9_-]*)|inputs *[.] *([A-Za-z_][A-Za-z0-9_-]*))");
     private static final JsonPathMatcher WORKFLOW_DISPATCH_INPUTS_MATCHER = new JsonPathMatcher("$.on.workflow_dispatch.inputs");
 
     @Override
