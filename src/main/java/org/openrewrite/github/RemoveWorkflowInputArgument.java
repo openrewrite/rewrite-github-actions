@@ -23,9 +23,10 @@ import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+
+import static java.util.stream.Collectors.toList;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
@@ -108,7 +109,7 @@ public class RemoveWorkflowInputArgument extends Recipe {
                                 Yaml.Mapping newMapping = withMapping.withEntries(
                                     withMapping.getEntries().stream()
                                         .filter(e -> !(e.getKey() instanceof Yaml.Scalar && inputArgumentName.equals(e.getKey().getValue())))
-                                        .collect(Collectors.toList())
+                                        .collect(toList())
                                 );
                                 if (newMapping.getEntries().isEmpty()) {
                                     return null;

@@ -283,10 +283,10 @@ examples:
       on:
         workflow_dispatch:
           inputs:
-            usedInput:
+            used-input:
               description: 'This input is used'
               required: true
-            unusedInput:
+            unused_input:
               description: 'This input is not used anywhere'
               required: false
             anotherUnusedInput:
@@ -300,7 +300,7 @@ examples:
           runs-on: ubuntu-latest
           steps:
             - name: Use input
-              run: echo "Used input - ${{ github.event.inputs.usedInput }}"
+              run: echo "Used input - ${{ github.event.inputs.used-input }}"
             - name: Another step
               run: echo "Just a step without input reference"
             - name: Step 3
@@ -311,7 +311,7 @@ examples:
       on:
         workflow_dispatch:
           inputs:
-            usedInput:
+            used-input:
               description: 'This input is used'
               required: true
             usedInGithubActionSyntax:
@@ -322,12 +322,42 @@ examples:
           runs-on: ubuntu-latest
           steps:
             - name: Use input
-              run: echo "Used input - ${{ github.event.inputs.usedInput }}"
+              run: echo "Used input - ${{ github.event.inputs.used-input }}"
             - name: Another step
               run: echo "Just a step without input reference"
             - name: Step 3
               if: inputs . usedInGithubActionSyntax == 'true'
               run: echo "Conditional step"
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.RemoveWorkflowInputArgument
+examples:
+- description: ''
+  parameters:
+  - org/repo/.github/workflows/myWorkflow.yml
+  - v1.2.3
+  - myInputToRemove
+  sources:
+  - before: |
+      name: My workflow
+      on: workflow_dispatch
+      jobs:
+        call-workflow:
+          uses: org/repo/.github/workflows/myWorkflow.yml@v1.2.3
+          with:
+            myInputToRemove: "value to remove"
+            keepThisInput: "keep this value"
+            anotherInput: "also keep this"
+    after: |
+      name: My workflow
+      on: workflow_dispatch
+      jobs:
+        call-workflow:
+          uses: org/repo/.github/workflows/myWorkflow.yml@v1.2.3
+          with:
+            keepThisInput: "keep this value"
+            anotherInput: "also keep this"
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
