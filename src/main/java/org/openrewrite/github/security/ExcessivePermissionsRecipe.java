@@ -42,12 +42,12 @@ public class ExcessivePermissionsRecipe extends Recipe {
 
     @Override
     public String getDisplayName() {
-        return "Remove excessive permissions";
+        return "Find excessive permissions";
     }
 
     @Override
     public String getDescription() {
-        return "Remove overly broad permissions from GitHub Actions workflows. " +
+        return "Find overly broad permissions in GitHub Actions workflows. " +
                "Flags 'write-all' permissions and excessive write permissions that " +
                "could be scoped more narrowly for security. " +
                "Based on [zizmor's excessive-permissions audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/excessive_permissions.rs).";
