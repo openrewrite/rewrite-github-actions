@@ -36,16 +36,16 @@ public class SelfHostedRunnerRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Find workflows that use `self-hosted` runners, which may have security implications in public repositories " +
-               "due to potential persistence between workflow runs and lack of isolation. Self-hosted runners should be " +
-               "properly secured and ideally ephemeral. " +
-               "Based on [zizmor's `self-hosted-runner` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/self_hosted_runner.rs).";
+                "due to potential persistence between workflow runs and lack of isolation. Self-hosted runners should be " +
+                "properly secured and ideally ephemeral. " +
+                "Based on [zizmor's `self-hosted-runner` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/self_hosted_runner.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new SelfHostedRunnerVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new SelfHostedRunnerVisitor()
         );
     }
 
@@ -63,7 +63,9 @@ public class SelfHostedRunnerRecipe extends Recipe {
         }
 
         private boolean isRunsOnEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "runs-on".equals(key.getValue()) && isInsideJob();
         }
@@ -91,7 +93,8 @@ public class SelfHostedRunnerRecipe extends Recipe {
             if (entry.getValue() instanceof Yaml.Scalar) {
                 String runsOnValue = ((Yaml.Scalar) entry.getValue()).getValue();
                 return checkScalarRunsOn(entry, runsOnValue);
-            } else if (entry.getValue() instanceof Yaml.Sequence) {
+            }
+            if (entry.getValue() instanceof Yaml.Sequence) {
                 return checkSequenceRunsOn(entry, (Yaml.Sequence) entry.getValue());
             }
 
@@ -101,11 +104,12 @@ public class SelfHostedRunnerRecipe extends Recipe {
         private Yaml.Mapping.Entry checkScalarRunsOn(Yaml.Mapping.Entry entry, String runsOnValue) {
             if ("self-hosted".equals(runsOnValue)) {
                 return SearchResult.found(entry,
-                    "Uses self-hosted runner which may have security implications in public repositories. " +
-                    "Ensure runners are ephemeral and properly isolated.");
-            } else if (runsOnValue.contains("${{") && containsSelfHostedInMatrix(runsOnValue)) {
+                        "Uses self-hosted runner which may have security implications in public repositories. " +
+                                "Ensure runners are ephemeral and properly isolated.");
+            }
+            if (runsOnValue.contains("${{") && containsSelfHostedInMatrix(runsOnValue)) {
                 return SearchResult.found(entry,
-                    "Expression may expand to self-hosted runner. Verify that self-hosted runners are properly secured.");
+                        "Expression may expand to self-hosted runner. Verify that self-hosted runners are properly secured.");
             }
 
             return entry;
@@ -117,8 +121,8 @@ public class SelfHostedRunnerRecipe extends Recipe {
                 Yaml.Scalar firstLabel = (Yaml.Scalar) entries.get(0).getBlock();
                 if ("self-hosted".equals(firstLabel.getValue())) {
                     return SearchResult.found(entry,
-                        "Uses self-hosted runner which may have security implications in public repositories. " +
-                        "Ensure runners are ephemeral and properly isolated.");
+                            "Uses self-hosted runner which may have security implications in public repositories. " +
+                                    "Ensure runners are ephemeral and properly isolated.");
                 }
             }
 
@@ -128,7 +132,9 @@ public class SelfHostedRunnerRecipe extends Recipe {
         private boolean containsSelfHostedInMatrix(String expression) {
             // Simple check for matrix expressions that might expand to self-hosted
             // Look for matrix.* expressions and check if there's a matrix with self-hosted
-            if (!expression.contains("matrix.")) return false;
+            if (!expression.contains("matrix.")) {
+                return false;
+            }
 
             // Walk up to find the job and look for strategy.matrix
             Cursor current = getCursor();

@@ -29,217 +29,217 @@ class ExcessivePermissionsRecipeTest implements RewriteTest {
         spec.recipe(new ExcessivePermissionsRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagWriteAllPermissions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                permissions: write-all
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                ~~(Uses 'write-all' permissions which grants excessive access. Consider using specific permissions instead.)~~>permissions: write-all
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              permissions: write-all
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              ~~(Uses 'write-all' permissions which grants excessive access. Consider using specific permissions instead.)~~>permissions: write-all
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagReadAllPermissions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                permissions: read-all
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                ~~(Uses 'read-all' permissions. Consider using specific permissions if only certain resources need to be accessed.)~~>permissions: read-all
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              permissions: read-all
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              ~~(Uses 'read-all' permissions. Consider using specific permissions if only certain resources need to be accessed.)~~>permissions: read-all
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagHighRiskWritePermissions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                permissions:
-                  contents: write
-                  packages: write
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                ~~(Contains potentially excessive write permissions: contents: write (high risk), packages: write (high risk). Consider whether these permissions are necessary and if they can be scoped more narrowly.)~~>permissions:
-                  contents: write
-                  packages: write
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              permissions:
+                contents: write
+                packages: write
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              ~~(Contains potentially excessive write permissions: contents: write (high risk), packages: write (high risk). Consider whether these permissions are necessary and if they can be scoped more narrowly.)~~>permissions:
+                contents: write
+                packages: write
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagMediumRiskWritePermissions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                permissions:
-                  checks: write
-                  discussions: write
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                ~~(Contains potentially excessive write permissions: checks: write (medium risk), discussions: write (medium risk). Consider whether these permissions are necessary and if they can be scoped more narrowly.)~~>permissions:
-                  checks: write
-                  discussions: write
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              permissions:
+                checks: write
+                discussions: write
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              ~~(Contains potentially excessive write permissions: checks: write (medium risk), discussions: write (medium risk). Consider whether these permissions are necessary and if they can be scoped more narrowly.)~~>permissions:
+                checks: write
+                discussions: write
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagJobLevelPermissions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    permissions: write-all
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    ~~(Uses 'write-all' permissions which grants excessive access. Consider using specific permissions instead.)~~>permissions: write-all
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  permissions: write-all
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  ~~(Uses 'write-all' permissions which grants excessive access. Consider using specific permissions instead.)~~>permissions: write-all
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagReadPermissions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                permissions:
-                  contents: read
-                  packages: read
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              permissions:
+                contents: read
+                packages: read
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagLowRiskWritePermissions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                permissions:
-                  statuses: write
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              permissions:
+                statuses: write
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagEmptyPermissions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                permissions: {}
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              permissions: {}
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 }

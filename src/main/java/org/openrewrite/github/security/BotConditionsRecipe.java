@@ -33,30 +33,30 @@ public class BotConditionsRecipe extends Recipe {
 
     // Known bot actor IDs that should be compared numerically, not as strings
     private static final Set<String> KNOWN_BOT_ACTOR_IDS = new HashSet<>(Arrays.asList(
-        "29110",    // dependabot[bot]'s integration ID
-        "49699333", // dependabot[bot]
-        "27856297", // dependabot-preview[bot]
-        "29139614"  // renovate[bot]
+            "29110",    // dependabot[bot]'s integration ID
+            "49699333", // dependabot[bot]
+            "27856297", // dependabot-preview[bot]
+            "29139614"  // renovate[bot]
     ));
 
     // Patterns to detect spoofable actor name contexts
     private static final Pattern[] SPOOFABLE_ACTOR_NAME_PATTERNS = {
-        Pattern.compile("github\\.actor\\s*==\\s*['\"][^'\"]*\\[bot\\]['\"]"),
-        Pattern.compile("github\\.triggering_actor\\s*==\\s*['\"][^'\"]*\\[bot\\]['\"]"),
-        Pattern.compile("github\\.event\\.pull_request\\.sender\\.login\\s*==\\s*['\"][^'\"]*\\[bot\\]['\"]"),
-        Pattern.compile("github\\.actor\\s*==\\s*['\"]dependabot\\[bot\\]['\"]"),
-        Pattern.compile("github\\.actor\\s*==\\s*['\"]renovate\\[bot\\]['\"]"),
-        Pattern.compile("github\\.actor\\s*==\\s*['\"][^'\"]*bot[^'\"]*['\"]")
+            Pattern.compile("github\\.actor\\s*==\\s*['\"][^'\"]*\\[bot\\]['\"]"),
+            Pattern.compile("github\\.triggering_actor\\s*==\\s*['\"][^'\"]*\\[bot\\]['\"]"),
+            Pattern.compile("github\\.event\\.pull_request\\.sender\\.login\\s*==\\s*['\"][^'\"]*\\[bot\\]['\"]"),
+            Pattern.compile("github\\.actor\\s*==\\s*['\"]dependabot\\[bot\\]['\"]"),
+            Pattern.compile("github\\.actor\\s*==\\s*['\"]renovate\\[bot\\]['\"]"),
+            Pattern.compile("github\\.actor\\s*==\\s*['\"][^'\"]*bot[^'\"]*['\"]")
     };
 
     // Pattern to detect contains() checks which are unreliable
     private static final Pattern CONTAINS_BOT_PATTERN = Pattern.compile(
-        "contains\\s*\\(\\s*github\\.[^,]+,\\s*['\"]bot['\"]\\s*\\)"
+            "contains\\s*\\(\\s*github\\.[^,]+,\\s*['\"]bot['\"]\\s*\\)"
     );
 
     // Pattern to detect actor_id string comparisons
     private static final Pattern ACTOR_ID_STRING_PATTERN = Pattern.compile(
-        "github\\.(actor_id|event\\.pull_request\\.sender\\.id)\\s*==\\s*['\"]\\d+['\"]"
+            "github\\.(actor_id|event\\.pull_request\\.sender\\.id)\\s*==\\s*['\"]\\d+['\"]"
     );
 
     @Override
@@ -67,16 +67,16 @@ public class BotConditionsRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Find workflow conditions that check for bot actors in ways that can be spoofed. " +
-               "Bot actor names (like `dependabot[bot]`) can be easily spoofed by creating accounts with similar names. " +
-               "Use `actor_id` with numeric comparison instead for secure bot validation. " +
-               "Based on [zizmor's `bot-conditions` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/bot_conditions.rs).";
+                "Bot actor names (like `dependabot[bot]`) can be easily spoofed by creating accounts with similar names. " +
+                "Use `actor_id` with numeric comparison instead for secure bot validation. " +
+                "Based on [zizmor's `bot-conditions` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/bot_conditions.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new BotConditionsVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new BotConditionsVisitor()
         );
     }
 
@@ -94,13 +94,17 @@ public class BotConditionsRecipe extends Recipe {
         }
 
         private boolean isIfEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "if".equals(key.getValue());
         }
 
         private Yaml.Mapping.Entry checkIfCondition(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String condition = ((Yaml.Scalar) entry.getValue()).getValue();
 
@@ -108,14 +112,14 @@ public class BotConditionsRecipe extends Recipe {
             for (Pattern pattern : SPOOFABLE_ACTOR_NAME_PATTERNS) {
                 if (pattern.matcher(condition).find()) {
                     return SearchResult.found(entry,
-                        "Bot actor name check is spoofable. Consider using actor_id instead for more secure bot validation.");
+                            "Bot actor name check is spoofable. Consider using actor_id instead for more secure bot validation.");
                 }
             }
 
             // Check for unreliable contains() checks
             if (CONTAINS_BOT_PATTERN.matcher(condition).find()) {
                 return SearchResult.found(entry,
-                    "Bot actor check using contains() is unreliable and spoofable. Use exact actor_id comparison instead.");
+                        "Bot actor check using contains() is unreliable and spoofable. Use exact actor_id comparison instead.");
             }
 
             // Check for actor_id string comparisons
@@ -124,7 +128,7 @@ public class BotConditionsRecipe extends Recipe {
                 for (String botId : KNOWN_BOT_ACTOR_IDS) {
                     if (condition.contains("'" + botId + "'") || condition.contains("\"" + botId + "\"")) {
                         return SearchResult.found(entry,
-                            "Using string comparison for actor_id. Consider using numeric comparison for better reliability.");
+                                "Using string comparison for actor_id. Consider using numeric comparison for better reliability.");
                     }
                 }
             }

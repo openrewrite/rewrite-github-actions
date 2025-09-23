@@ -15,11 +15,10 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.*;
-import org.openrewrite.yaml.ChangeValue;
-
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.openrewrite.*;
+import org.openrewrite.yaml.ChangeValue;
 
 @EqualsAndHashCode(callSuper = false)
 @Value

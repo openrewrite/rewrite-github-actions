@@ -32,26 +32,26 @@ public class ArtifactSecurityRecipe extends Recipe {
 
     // Dangerous paths that may contain credentials or sensitive information
     private static final Set<String> DANGEROUS_PATHS = new HashSet<>(Arrays.asList(
-        "~/.ssh/", "~/.ssh", ".ssh/", ".ssh",
-        "~/.aws/", "~/.aws", ".aws/", ".aws",
-        "~/.docker/", "~/.docker", ".docker/", ".docker",
-        "~/.kube/", "~/.kube", ".kube/", ".kube",
-        "~/.config/", "~/.config",
-        "~/.gitconfig", ".gitconfig",
-        "~/.npmrc", ".npmrc",
-        "~/.pypirc", ".pypirc",
-        "/etc/passwd", "/etc/shadow", "/etc/hosts",
-        "/var/log/", "/var/log",
-        "/tmp/", "/tmp",
-        "/root/", "/root",
-        "~/.bash_history", ".bash_history",
-        "~/.zsh_history", ".zsh_history",
-        "/home/", "/home"
+            "~/.ssh/", "~/.ssh", ".ssh/", ".ssh",
+            "~/.aws/", "~/.aws", ".aws/", ".aws",
+            "~/.docker/", "~/.docker", ".docker/", ".docker",
+            "~/.kube/", "~/.kube", ".kube/", ".kube",
+            "~/.config/", "~/.config",
+            "~/.gitconfig", ".gitconfig",
+            "~/.npmrc", ".npmrc",
+            "~/.pypirc", ".pypirc",
+            "/etc/passwd", "/etc/shadow", "/etc/hosts",
+            "/var/log/", "/var/log",
+            "/tmp/", "/tmp",
+            "/root/", "/root",
+            "~/.bash_history", ".bash_history",
+            "~/.zsh_history", ".zsh_history",
+            "/home/", "/home"
     ));
 
     // Path patterns that are likely dangerous
     private static final String[] DANGEROUS_PATTERNS = {
-        "config.json", "credentials", "token", "secret", "key", "password", "passwd"
+            "config.json", "credentials", "token", "secret", "key", "password", "passwd"
     };
 
     @Override
@@ -62,16 +62,16 @@ public class ArtifactSecurityRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Find workflows that may persist credentials through artifact uploads. This occurs when checkout " +
-               "actions don't disable credential persistence and upload actions include sensitive paths that may " +
-               "contain credentials, SSH keys, or configuration files. " +
-               "Based on [zizmor's `artipacked` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/artipacked.rs).";
+                "actions don't disable credential persistence and upload actions include sensitive paths that may " +
+                "contain credentials, SSH keys, or configuration files. " +
+                "Based on [zizmor's `artipacked` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/artipacked.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new ArtifactSecurityVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new ArtifactSecurityVisitor()
         );
     }
 
@@ -102,13 +102,17 @@ public class ArtifactSecurityRecipe extends Recipe {
         }
 
         private boolean isUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "uses".equals(key.getValue());
         }
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
 
@@ -128,7 +132,9 @@ public class ArtifactSecurityRecipe extends Recipe {
         private Yaml.Mapping.Entry checkCheckoutAction(Yaml.Mapping.Entry entry) {
             // Look for 'with' section in the parent step
             Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) return entry;
+            if (stepMapping == null) {
+                return entry;
+            }
 
             Yaml.Mapping withMapping = findWithMapping(stepMapping);
 
@@ -136,7 +142,7 @@ public class ArtifactSecurityRecipe extends Recipe {
                 // No 'with' section means default behavior (persist-credentials: true)
                 if (workflowHasArtifactUpload()) {
                     return SearchResult.found(entry,
-                        "Checkout step does not disable credential persistence, which may expose credentials in artifacts.");
+                            "Checkout step does not disable credential persistence, which may expose credentials in artifacts.");
                 }
             } else {
                 // Check persist-credentials setting
@@ -144,7 +150,7 @@ public class ArtifactSecurityRecipe extends Recipe {
                 if ("true".equals(persistCredentials)) {
                     if (workflowHasArtifactUpload()) {
                         return SearchResult.found(entry,
-                            "Checkout step explicitly enables credential persistence, which may expose credentials in artifacts.");
+                                "Checkout step explicitly enables credential persistence, which may expose credentials in artifacts.");
                     }
                 }
             }
@@ -155,15 +161,19 @@ public class ArtifactSecurityRecipe extends Recipe {
         private Yaml.Mapping.Entry checkUploadArtifactAction(Yaml.Mapping.Entry entry) {
             // Look for 'with' section to check the path
             Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) return entry;
+            if (stepMapping == null) {
+                return entry;
+            }
 
             Yaml.Mapping withMapping = findWithMapping(stepMapping);
-            if (withMapping == null) return entry;
+            if (withMapping == null) {
+                return entry;
+            }
 
             String pathValue = getWithValue(withMapping, "path");
             if (pathValue != null && hasDangerousArtifactPaths(pathValue)) {
                 return SearchResult.found(entry,
-                    "Uploading potentially sensitive paths that may contain credentials or configuration files.");
+                        "Uploading potentially sensitive paths that may contain credentials or configuration files.");
             }
 
             return entry;
@@ -189,7 +199,9 @@ public class ArtifactSecurityRecipe extends Recipe {
         }
 
         private boolean containsUploadArtifact(Yaml.Document document) {
-            if (!(document.getBlock() instanceof Yaml.Mapping)) return false;
+            if (!(document.getBlock() instanceof Yaml.Mapping)) {
+                return false;
+            }
 
             // Simple check for upload-artifact in the document content
             String docContent = document.print(getCursor());
@@ -213,7 +225,7 @@ public class ArtifactSecurityRecipe extends Recipe {
             }
 
             // Check for current directory or home directory uploads
-            if (pathValue.trim().equals(".") || pathValue.trim().equals("~") || pathValue.trim().equals("/")) {
+            if (".".equals(pathValue.trim()) || "~".equals(pathValue.trim()) || "/".equals(pathValue.trim())) {
                 return true;
             }
 
@@ -229,13 +241,13 @@ public class ArtifactSecurityRecipe extends Recipe {
                     Yaml.Mapping mapping = (Yaml.Mapping) value;
                     // Check if this mapping has 'uses'
                     boolean hasUses = mapping.getEntries().stream()
-                        .anyMatch(mapEntry -> {
-                            if (mapEntry.getKey() instanceof Yaml.Scalar) {
-                                Yaml.Scalar key = (Yaml.Scalar) mapEntry.getKey();
-                                return "uses".equals(key.getValue());
-                            }
-                            return false;
-                        });
+                            .anyMatch(mapEntry -> {
+                                if (mapEntry.getKey() instanceof Yaml.Scalar) {
+                                    Yaml.Scalar key = (Yaml.Scalar) mapEntry.getKey();
+                                    return "uses".equals(key.getValue());
+                                }
+                                return false;
+                            });
 
                     if (hasUses) {
                         return mapping;

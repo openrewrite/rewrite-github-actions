@@ -29,167 +29,167 @@ class RefVersionMismatchRecipeTest implements RewriteTest {
         spec.recipe(new RefVersionMismatchRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagMismatchedVersionComment() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      # tag=v3
-                      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      # tag=v3
-                      - ~~(Action is pinned to a commit SHA but has a version comment that may not match. Verify the comment reflects the actual pinned version.)~~>uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    # tag=v3
+                    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    # tag=v3
+                    - ~~(Action is pinned to a commit SHA but has a version comment that may not match. Verify the comment reflects the actual pinned version.)~~>uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagVersionCommentPattern() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      # version: v2.8.0
-                      - uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      # version: v2.8.0
-                      - ~~(Action is pinned to a commit SHA but has a version comment that may not match. Verify the comment reflects the actual pinned version.)~~>uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    # version: v2.8.0
+                    - uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    # version: v2.8.0
+                    - ~~(Action is pinned to a commit SHA but has a version comment that may not match. Verify the comment reflects the actual pinned version.)~~>uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagSimpleVersionComment() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      # v4.2.1
-                      - uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      # v4.2.1
-                      - ~~(Action is pinned to a commit SHA but has a version comment that may not match. Verify the comment reflects the actual pinned version.)~~>uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    # v4.2.1
+                    - uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    # v4.2.1
+                    - ~~(Action is pinned to a commit SHA but has a version comment that may not match. Verify the comment reflects the actual pinned version.)~~>uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagActionsWithoutVersionComments() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
-                      - name: Setup Node
-                        uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+                    - name: Setup Node
+                      uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagActionsWithTagVersions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      # This is fine - tag version with comment
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    # This is fine - tag version with comment
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagNonRepositoryActions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      # Local action
-                      - uses: ./local-action
-                      # Docker action
-                      - uses: docker://alpine:latest
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    # Local action
+                    - uses: ./local-action
+                    # Docker action
+                    - uses: docker://alpine:latest
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldIgnoreNonWorkflowFiles() {
         rewriteRun(
-            yaml(
-                """
-                version: '3.8'
-                services:
-                  app:
-                    # tag=v1.0.0
-                    image: myapp@sha256:abc123
-                """,
-                sourceSpecs -> sourceSpecs.path("docker-compose.yml")
-            )
+          yaml(
+            """
+              version: '3.8'
+              services:
+                app:
+                  # tag=v1.0.0
+                  image: myapp@sha256:abc123
+              """,
+            sourceSpecs -> sourceSpecs.path("docker-compose.yml")
+          )
         );
     }
 }

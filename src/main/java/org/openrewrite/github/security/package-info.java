@@ -15,7 +15,7 @@
  */
 @NullMarked
 @NonNullFields
-package org.openrewrite.github;
+package org.openrewrite.github.security;
 
 import org.jspecify.annotations.NullMarked;
 import org.openrewrite.internal.lang.NonNullFields;

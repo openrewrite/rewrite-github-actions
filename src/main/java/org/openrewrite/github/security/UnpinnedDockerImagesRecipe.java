@@ -19,7 +19,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
-import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -30,7 +29,7 @@ import java.util.regex.Pattern;
 public class UnpinnedDockerImagesRecipe extends Recipe {
 
     private static final Pattern DOCKER_IMAGE_PATTERN = Pattern.compile(
-        "^(?:docker://)?([^/:]+(?:\\.[^/:]+)*(?::[0-9]+)?/)?([^/:]+(?:/[^/:]+)*):([^@]+)(?:@(.+))?$"
+            "^(?:docker://)?([^/:]+(?:\\.[^/:]+)*(?::[0-9]+)?/)?([^/:]+(?:/[^/:]+)*):([^@]+)(?:@(.+))?$"
     );
 
     private static final Pattern SHA256_DIGEST_PATTERN = Pattern.compile("^sha256:[a-f0-9]{64}$");
@@ -43,16 +42,16 @@ public class UnpinnedDockerImagesRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Pin Docker images to specific digest hashes for security and reproducibility. " +
-               "Images pinned to tags can be changed by the image author, " +
-               "while digest pins are immutable. " +
-               "Based on [zizmor's unpinned-images audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/unpinned_images.rs).";
+                "Images pinned to tags can be changed by the image author, " +
+                "while digest pins are immutable. " +
+                "Based on [zizmor's unpinned-images audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/unpinned_images.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new UnpinnedDockerImagesVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new UnpinnedDockerImagesVisitor()
         );
     }
 
@@ -66,8 +65,8 @@ public class UnpinnedDockerImagesRecipe extends Recipe {
                 String imageValue = getImageValue(mappingEntry);
                 if (imageValue != null && isUnpinnedDockerImage(imageValue)) {
                     return SearchResult.found(mappingEntry,
-                        "Docker image '" + imageValue + "' is not pinned to a digest. " +
-                        "Consider pinning to a specific digest for security and reproducibility.");
+                            "Docker image '" + imageValue + "' is not pinned to a digest. " +
+                                    "Consider pinning to a specific digest for security and reproducibility.");
                 }
             }
 

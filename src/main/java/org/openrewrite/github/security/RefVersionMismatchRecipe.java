@@ -32,10 +32,10 @@ public class RefVersionMismatchRecipe extends Recipe {
 
     // Version comment patterns - matches various comment formats
     private static final Pattern[] VERSION_COMMENT_PATTERNS = {
-        Pattern.compile("#\\s*tag\\s*=\\s*(v?\\d+(?:\\.\\d+)*(?:\\.\\d+)?)"),
-        Pattern.compile("#\\s*(v?\\d+(?:\\.\\d+)*(?:\\.\\d+)?)\\s*$"),
-        Pattern.compile("#\\s*(?:version|ver)\\s*[:=]\\s*(v?\\d+(?:\\.\\d+)*(?:\\.\\d+)?)"),
-        Pattern.compile("#\\s*tag\\s*=\\s*([vV]?\\d+)"),
+            Pattern.compile("#\\s*tag\\s*=\\s*(v?\\d+(?:\\.\\d+)*(?:\\.\\d+)?)"),
+            Pattern.compile("#\\s*(v?\\d+(?:\\.\\d+)*(?:\\.\\d+)?)\\s*$"),
+            Pattern.compile("#\\s*(?:version|ver)\\s*[:=]\\s*(v?\\d+(?:\\.\\d+)*(?:\\.\\d+)?)"),
+            Pattern.compile("#\\s*tag\\s*=\\s*([vV]?\\d+)"),
     };
 
     @Override
@@ -46,16 +46,16 @@ public class RefVersionMismatchRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Find GitHub Actions that are pinned to commit SHAs but have version comments that may not match the actual pinned version. " +
-               "This can lead to confusion about which version is actually being used and potential security issues if the comment " +
-               "misleads developers about the pinned version. " +
-               "Based on [zizmor's `ref-version-mismatch` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/ref_version_mismatch.rs).";
+                "This can lead to confusion about which version is actually being used and potential security issues if the comment " +
+                "misleads developers about the pinned version. " +
+                "Based on [zizmor's `ref-version-mismatch` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/ref_version_mismatch.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new RefVersionMismatchVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new RefVersionMismatchVisitor()
         );
     }
 
@@ -73,13 +73,17 @@ public class RefVersionMismatchRecipe extends Recipe {
         }
 
         private boolean isUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "uses".equals(key.getValue());
         }
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
 
@@ -102,8 +106,8 @@ public class RefVersionMismatchRecipe extends Recipe {
             // Look for version comments in the surrounding context
             if (hasVersionComment(entry)) {
                 return SearchResult.found(entry,
-                    "Action is pinned to a commit SHA but has a version comment that may not match. " +
-                    "Verify the comment reflects the actual pinned version.");
+                        "Action is pinned to a commit SHA but has a version comment that may not match. " +
+                                "Verify the comment reflects the actual pinned version.");
             }
 
             return entry;

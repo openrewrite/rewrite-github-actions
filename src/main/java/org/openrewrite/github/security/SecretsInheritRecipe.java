@@ -17,9 +17,10 @@ package org.openrewrite.github.security;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 import org.openrewrite.marker.SearchResult;
-import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -35,9 +36,9 @@ public class SecretsInheritRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Detects when reusable workflows unconditionally inherit all parent secrets via `secrets: inherit`. " +
-               "This practice can lead to over-privileged workflows and potential secret exposure to called workflows " +
-               "that may not need access to all secrets. Consider explicitly passing only required secrets. " +
-               "Based on [zizmor's secrets-inherit audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/secrets_inherit.rs).";
+                "This practice can lead to over-privileged workflows and potential secret exposure to called workflows " +
+                "that may not need access to all secrets. Consider explicitly passing only required secrets. " +
+                "Based on [zizmor's secrets-inherit audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/secrets_inherit.rs).";
     }
 
     @Override
@@ -54,9 +55,9 @@ public class SecretsInheritRecipe extends Recipe {
             // Look for "secrets: inherit" - simple pattern matching
             if (isSecretsInheritEntry(mappingEntry)) {
                 return SearchResult.found(mappingEntry,
-                    "This reusable workflow unconditionally inherits all parent secrets. " +
-                    "Consider explicitly passing only the required secrets to follow the principle of least privilege " +
-                    "and reduce the risk of secret exposure to called workflows.");
+                        "This reusable workflow unconditionally inherits all parent secrets. " +
+                                "Consider explicitly passing only the required secrets to follow the principle of least privilege " +
+                                "and reduce the risk of secret exposure to called workflows.");
             }
 
             return mappingEntry;

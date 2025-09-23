@@ -15,13 +15,12 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.*;
-import org.openrewrite.yaml.YamlIsoVisitor;
-import org.openrewrite.yaml.tree.Yaml;
-
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
+import org.openrewrite.*;
+import org.openrewrite.yaml.YamlIsoVisitor;
+import org.openrewrite.yaml.tree.Yaml;
 
 @Value
 @EqualsAndHashCode(callSuper = false)

@@ -15,6 +15,8 @@
  */
 package org.openrewrite.github;
 
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.yaml.JsonPathMatcher;
@@ -23,8 +25,6 @@ import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
 import java.util.Optional;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
 
 import static java.util.stream.Collectors.toList;
 
@@ -107,9 +107,9 @@ public class RemoveWorkflowInputArgument extends Recipe {
                             if (entry.getValue() instanceof Yaml.Mapping) {
                                 Yaml.Mapping withMapping = (Yaml.Mapping) entry.getValue();
                                 Yaml.Mapping newMapping = withMapping.withEntries(
-                                    withMapping.getEntries().stream()
-                                        .filter(e -> !(e.getKey() instanceof Yaml.Scalar && inputArgumentName.equals(e.getKey().getValue())))
-                                        .collect(toList())
+                                        withMapping.getEntries().stream()
+                                                .filter(e -> !(e.getKey() instanceof Yaml.Scalar && inputArgumentName.equals(e.getKey().getValue())))
+                                                .collect(toList())
                                 );
                                 if (newMapping.getEntries().isEmpty()) {
                                     return null;

@@ -33,40 +33,40 @@ public class TemplateInjectionRecipe extends Recipe {
 
     // User-controllable contexts that can lead to injection vulnerabilities
     private static final Set<String> DANGEROUS_CONTEXTS = new HashSet<>(Arrays.asList(
-        "github.event.pull_request.title",
-        "github.event.pull_request.body",
-        "github.event.pull_request.head.ref",
-        "github.event.pull_request.head.label",
-        "github.event.pull_request.head.repo.default_branch",
-        "github.event.pull_request.base.ref",
-        "github.event.issue.title",
-        "github.event.issue.body",
-        "github.event.comment.body",
-        "github.event.review.body",
-        "github.event.pages[0].page_name",
-        "github.event.commits[0].message",
-        "github.event.head_commit.message",
-        "github.event.commits[0].author.name",
-        "github.event.commits[0].author.email",
-        "github.head_ref"
+            "github.event.pull_request.title",
+            "github.event.pull_request.body",
+            "github.event.pull_request.head.ref",
+            "github.event.pull_request.head.label",
+            "github.event.pull_request.head.repo.default_branch",
+            "github.event.pull_request.base.ref",
+            "github.event.issue.title",
+            "github.event.issue.body",
+            "github.event.comment.body",
+            "github.event.review.body",
+            "github.event.pages[0].page_name",
+            "github.event.commits[0].message",
+            "github.event.head_commit.message",
+            "github.event.commits[0].author.name",
+            "github.event.commits[0].author.email",
+            "github.head_ref"
     ));
 
     // Contexts that reference user-controllable step outputs
     private static final Pattern STEPS_OUTPUT_PATTERN = Pattern.compile(
-        "steps\\.[^.]+\\.outputs\\.[^\\s}]+"
+            "steps\\.[^.]+\\.outputs\\.[^\\s}]+"
     );
 
     // Actions known to have code injection sinks
     private static final Set<String> CODE_INJECTION_ACTIONS = new HashSet<>(Arrays.asList(
-        "actions/github-script",
-        "amadevus/pwsh-script",
-        "jannekem/run-python-script-action",
-        "cardinalby/js-eval-action"
+            "actions/github-script",
+            "amadevus/pwsh-script",
+            "jannekem/run-python-script-action",
+            "cardinalby/js-eval-action"
     ));
 
     // Expression pattern to find GitHub Actions expressions
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile(
-        "\\$\\{\\{([^}]+)\\}\\}"
+            "\\$\\{\\{([^}]+)\\}\\}"
     );
 
     @Override
@@ -77,16 +77,16 @@ public class TemplateInjectionRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Find GitHub Actions workflows vulnerable to template injection attacks. These occur when user-controllable " +
-               "input (like pull request titles, issue bodies, or commit messages) is used directly in `run` commands or " +
-               "`script` inputs without proper escaping. Attackers can exploit this to execute arbitrary code. " +
-               "Based on [zizmor's `template-injection` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/template_injection.rs).";
+                "input (like pull request titles, issue bodies, or commit messages) is used directly in `run` commands or " +
+                "`script` inputs without proper escaping. Attackers can exploit this to execute arbitrary code. " +
+                "Based on [zizmor's `template-injection` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/template_injection.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new TemplateInjectionVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new TemplateInjectionVisitor()
         );
     }
 
@@ -115,25 +115,33 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private boolean isRunEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "run".equals(key.getValue());
         }
 
         private boolean isUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "uses".equals(key.getValue());
         }
 
         private boolean isScriptEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "script".equals(key.getValue());
         }
 
         private Yaml.Mapping.Entry checkRunEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String runCommand = ((Yaml.Scalar) entry.getValue()).getValue();
 
@@ -153,7 +161,9 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
 
@@ -163,7 +173,7 @@ public class TemplateInjectionRecipe extends Recipe {
                     // Look for script input in the with section
                     if (hasVulnerableScriptInput()) {
                         return SearchResult.found(entry,
-                            "Potential code injection in script input. User-controlled content in script execution context.");
+                                "Potential code injection in script input. User-controlled content in script execution context.");
                     }
                 }
             }
@@ -172,7 +182,9 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkScriptEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String scriptContent = ((Yaml.Scalar) entry.getValue()).getValue();
 
@@ -181,8 +193,8 @@ public class TemplateInjectionRecipe extends Recipe {
                 String vulnerableContext = findVulnerableContext(scriptContent);
                 if (vulnerableContext != null) {
                     return SearchResult.found(entry,
-                        "Potential code injection in script. User-controlled input '" + vulnerableContext +
-                        "' used in script without proper escaping.");
+                            "Potential code injection in script. User-controlled input '" + vulnerableContext +
+                                    "' used in script without proper escaping.");
                 }
             }
 
@@ -237,10 +249,14 @@ public class TemplateInjectionRecipe extends Recipe {
         private boolean hasVulnerableScriptInput() {
             // Look for script input in the current step's with section
             Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) return false;
+            if (stepMapping == null) {
+                return false;
+            }
 
             Yaml.Mapping withMapping = findWithMapping(stepMapping);
-            if (withMapping == null) return false;
+            if (withMapping == null) {
+                return false;
+            }
 
             // Check the script input for vulnerable contexts
             for (Yaml.Mapping.Entry withEntry : withMapping.getEntries()) {
@@ -259,7 +275,9 @@ public class TemplateInjectionRecipe extends Recipe {
         private boolean isInsideCodeInjectionAction() {
             // Check if the current script entry is within a code injection action
             Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) return false;
+            if (stepMapping == null) {
+                return false;
+            }
 
             // Look for uses entry in the step
             for (Yaml.Mapping.Entry stepEntry : stepMapping.getEntries()) {
@@ -288,13 +306,13 @@ public class TemplateInjectionRecipe extends Recipe {
                     Yaml.Mapping mapping = (Yaml.Mapping) value;
                     // Check if this mapping has 'uses' or 'run' (step indicators)
                     boolean isStep = mapping.getEntries().stream()
-                        .anyMatch(mapEntry -> {
-                            if (mapEntry.getKey() instanceof Yaml.Scalar) {
-                                Yaml.Scalar key = (Yaml.Scalar) mapEntry.getKey();
-                                return "uses".equals(key.getValue()) || "run".equals(key.getValue());
-                            }
-                            return false;
-                        });
+                            .anyMatch(mapEntry -> {
+                                if (mapEntry.getKey() instanceof Yaml.Scalar) {
+                                    Yaml.Scalar key = (Yaml.Scalar) mapEntry.getKey();
+                                    return "uses".equals(key.getValue()) || "run".equals(key.getValue());
+                                }
+                                return false;
+                            });
 
                     if (isStep) {
                         return mapping;

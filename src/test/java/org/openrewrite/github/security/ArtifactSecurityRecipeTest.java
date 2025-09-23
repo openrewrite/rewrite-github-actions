@@ -29,241 +29,241 @@ class ArtifactSecurityRecipeTest implements RewriteTest {
         spec.recipe(new ArtifactSecurityRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagCredentialPersistenceRisk() {
         rewriteRun(
-            yaml(
-                """
-                name: Build and Upload
-                on: push
-                jobs:
-                  build:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                      - uses: actions/upload-artifact@v3
-                        with:
-                          name: build-output
-                          path: |
-                            ~/.ssh/
-                            ~/.gitconfig
-                            ~/.aws/
-                """,
-                """
-                name: Build and Upload
-                on: push
-                jobs:
-                  build:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Checkout step does not disable credential persistence, which may expose credentials in artifacts.)~~>uses: actions/checkout@v4
-                      - ~~(Uploading potentially sensitive paths that may contain credentials or configuration files.)~~>uses: actions/upload-artifact@v3
-                        with:
-                          name: build-output
-                          path: |
-                            ~/.ssh/
-                            ~/.gitconfig
-                            ~/.aws/
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
-            )
+          yaml(
+            """
+              name: Build and Upload
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/upload-artifact@v3
+                      with:
+                        name: build-output
+                        path: |
+                          ~/.ssh/
+                          ~/.gitconfig
+                          ~/.aws/
+              """,
+            """
+              name: Build and Upload
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Checkout step does not disable credential persistence, which may expose credentials in artifacts.)~~>uses: actions/checkout@v4
+                    - ~~(Uploading potentially sensitive paths that may contain credentials or configuration files.)~~>uses: actions/upload-artifact@v3
+                      with:
+                        name: build-output
+                        path: |
+                          ~/.ssh/
+                          ~/.gitconfig
+                          ~/.aws/
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagSecureCheckout() {
         rewriteRun(
-            yaml(
-                """
-                name: Build and Upload
-                on: push
-                jobs:
-                  build:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                        with:
-                          persist-credentials: false
-                      - uses: actions/upload-artifact@v3
-                        with:
-                          name: build-output
-                          path: dist/
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
-            )
+          yaml(
+            """
+              name: Build and Upload
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                      with:
+                        persist-credentials: false
+                    - uses: actions/upload-artifact@v3
+                      with:
+                        name: build-output
+                        path: dist/
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagDangerousArtifactPaths() {
         rewriteRun(
-            yaml(
-                """
-                name: Upload Secrets
-                on: push
-                jobs:
-                  upload:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/upload-artifact@v3
-                        with:
-                          name: sensitive-data
-                          path: /etc/passwd
-                """,
-                """
-                name: Upload Secrets
-                on: push
-                jobs:
-                  upload:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Uploading potentially sensitive paths that may contain credentials or configuration files.)~~>uses: actions/upload-artifact@v3
-                        with:
-                          name: sensitive-data
-                          path: /etc/passwd
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
-            )
+          yaml(
+            """
+              name: Upload Secrets
+              on: push
+              jobs:
+                upload:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/upload-artifact@v3
+                      with:
+                        name: sensitive-data
+                        path: /etc/passwd
+              """,
+            """
+              name: Upload Secrets
+              on: push
+              jobs:
+                upload:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Uploading potentially sensitive paths that may contain credentials or configuration files.)~~>uses: actions/upload-artifact@v3
+                      with:
+                        name: sensitive-data
+                        path: /etc/passwd
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagMultipleDangerousPaths() {
         rewriteRun(
-            yaml(
-                """
-                name: Upload Multiple
-                on: push
-                jobs:
-                  upload:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/upload-artifact@v3
-                        with:
-                          name: logs
-                          path: |
-                            /var/log/
-                            ~/.docker/config.json
-                            dist/
-                """,
-                """
-                name: Upload Multiple
-                on: push
-                jobs:
-                  upload:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Uploading potentially sensitive paths that may contain credentials or configuration files.)~~>uses: actions/upload-artifact@v3
-                        with:
-                          name: logs
-                          path: |
-                            /var/log/
-                            ~/.docker/config.json
-                            dist/
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
-            )
+          yaml(
+            """
+              name: Upload Multiple
+              on: push
+              jobs:
+                upload:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/upload-artifact@v3
+                      with:
+                        name: logs
+                        path: |
+                          /var/log/
+                          ~/.docker/config.json
+                          dist/
+              """,
+            """
+              name: Upload Multiple
+              on: push
+              jobs:
+                upload:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Uploading potentially sensitive paths that may contain credentials or configuration files.)~~>uses: actions/upload-artifact@v3
+                      with:
+                        name: logs
+                        path: |
+                          /var/log/
+                          ~/.docker/config.json
+                          dist/
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagSafePaths() {
         rewriteRun(
-            yaml(
-                """
-                name: Upload Safe Artifacts
-                on: push
-                jobs:
-                  upload:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/upload-artifact@v3
-                        with:
-                          name: build-output
-                          path: |
-                            dist/
-                            target/release/
-                            build/
-                            public/
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
-            )
+          yaml(
+            """
+              name: Upload Safe Artifacts
+              on: push
+              jobs:
+                upload:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/upload-artifact@v3
+                      with:
+                        name: build-output
+                        path: |
+                          dist/
+                          target/release/
+                          build/
+                          public/
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagExplicitCredentialPersistence() {
         rewriteRun(
-            yaml(
-                """
-                name: Explicit Persist
-                on: push
-                jobs:
-                  build:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                        with:
-                          persist-credentials: true
-                      - uses: actions/upload-artifact@v3
-                        with:
-                          name: source
-                          path: .
-                """,
-                """
-                name: Explicit Persist
-                on: push
-                jobs:
-                  build:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Checkout step explicitly enables credential persistence, which may expose credentials in artifacts.)~~>uses: actions/checkout@v4
-                        with:
-                          persist-credentials: true
-                      - ~~(Uploading potentially sensitive paths that may contain credentials or configuration files.)~~>uses: actions/upload-artifact@v3
-                        with:
-                          name: source
-                          path: .
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
-            )
+          yaml(
+            """
+              name: Explicit Persist
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                      with:
+                        persist-credentials: true
+                    - uses: actions/upload-artifact@v3
+                      with:
+                        name: source
+                        path: .
+              """,
+            """
+              name: Explicit Persist
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Checkout step explicitly enables credential persistence, which may expose credentials in artifacts.)~~>uses: actions/checkout@v4
+                      with:
+                        persist-credentials: true
+                    - ~~(Uploading potentially sensitive paths that may contain credentials or configuration files.)~~>uses: actions/upload-artifact@v3
+                      with:
+                        name: source
+                        path: .
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagWithoutArtifactUpload() {
         rewriteRun(
-            yaml(
-                """
-                name: No Upload
-                on: push
-                jobs:
-                  build:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                      - run: echo "Building..."
-                      - run: npm test
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
-            )
+          yaml(
+            """
+              name: No Upload
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - run: echo "Building..."
+                    - run: npm test
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/build.yml")
+          )
         );
     }
 
     @Test
     void shouldIgnoreNonWorkflowFiles() {
         rewriteRun(
-            yaml(
-                """
-                version: '3.8'
-                services:
-                  app:
-                    volumes:
-                      - ~/.ssh:/root/.ssh
-                """,
-                sourceSpecs -> sourceSpecs.path("docker-compose.yml")
-            )
+          yaml(
+            """
+              version: '3.8'
+              services:
+                app:
+                  volumes:
+                    - ~/.ssh:/root/.ssh
+              """,
+            sourceSpecs -> sourceSpecs.path("docker-compose.yml")
+          )
         );
     }
 }

@@ -15,6 +15,10 @@
  */
 package org.openrewrite.github;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.yaml.MergeYaml;
@@ -23,10 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import org.jetbrains.annotations.VisibleForTesting;
-import org.jspecify.annotations.Nullable;
 
 @EqualsAndHashCode(callSuper = false)
 @Getter
@@ -100,7 +100,7 @@ public class AddCronTrigger extends Recipe {
                 "$.on",
                 String.format(
                         "schedule:%n" +
-                        "  - cron: \"%s\"", expression),
+                                "  - cron: \"%s\"", expression),
                 true,
                 null, null, null, null, null).getVisitor());
     }

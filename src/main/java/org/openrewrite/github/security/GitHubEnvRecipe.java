@@ -17,7 +17,9 @@ package org.openrewrite.github.security;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -33,26 +35,26 @@ public class GitHubEnvRecipe extends Recipe {
 
     // Dangerous triggers that make GITHUB_ENV usage risky
     private static final Set<String> DANGEROUS_TRIGGERS = new HashSet<>(Arrays.asList(
-        "pull_request_target",
-        "workflow_run"
+            "pull_request_target",
+            "workflow_run"
     ));
 
     // Pattern to detect GITHUB_ENV and GITHUB_PATH usage in various shells
     private static final Pattern GITHUB_ENV_WRITE_PATTERN = Pattern.compile(
-        "(?i)(>>?\\s*[\"']?\\$\\{?GITHUB_ENV\\}?[\"']?|" +        // bash: >> $GITHUB_ENV
-        ">>?\\s*[\"']?%GITHUB_ENV%[\"']?|" +                     // cmd: >> %GITHUB_ENV%
-        ">>?\\s*[\"']?\\$env:GITHUB_ENV[\"']?|" +                // pwsh: >> $env:GITHUB_ENV
-        "Out-File.*\\$env:GITHUB_ENV|" +                         // pwsh: Out-File
-        "Add-Content.*\\$env:GITHUB_ENV|" +                      // pwsh: Add-Content
-        "Set-Content.*\\$env:GITHUB_ENV|" +                      // pwsh: Set-Content
-        "Tee-Object.*\\$env:GITHUB_ENV|" +                       // pwsh: Tee-Object
-        "\\|\\s*tee\\s+[\"']?\\$\\{?GITHUB_ENV\\}?[\"']?)" +     // bash: | tee $GITHUB_ENV
-        "|GITHUB_PATH"                                            // Any GITHUB_PATH usage
+            "(?i)(>>?\\s*[\"']?\\$\\{?GITHUB_ENV\\}?[\"']?|" +        // bash: >> $GITHUB_ENV
+                    ">>?\\s*[\"']?%GITHUB_ENV%[\"']?|" +                     // cmd: >> %GITHUB_ENV%
+                    ">>?\\s*[\"']?\\$env:GITHUB_ENV[\"']?|" +                // pwsh: >> $env:GITHUB_ENV
+                    "Out-File.*\\$env:GITHUB_ENV|" +                         // pwsh: Out-File
+                    "Add-Content.*\\$env:GITHUB_ENV|" +                      // pwsh: Add-Content
+                    "Set-Content.*\\$env:GITHUB_ENV|" +                      // pwsh: Set-Content
+                    "Tee-Object.*\\$env:GITHUB_ENV|" +                       // pwsh: Tee-Object
+                    "\\|\\s*tee\\s+[\"']?\\$\\{?GITHUB_ENV\\}?[\"']?)" +     // bash: | tee $GITHUB_ENV
+                    "|GITHUB_PATH"                                            // Any GITHUB_PATH usage
     );
 
     // Pattern to detect simple static content (likely safe)
     private static final Pattern STATIC_ECHO_PATTERN = Pattern.compile(
-        "^\\s*echo\\s+[\"']?[^$`]*[\"']?\\s*>>", Pattern.MULTILINE
+            "^\\s*echo\\s+[\"']?[^$`]*[\"']?\\s*>>", Pattern.MULTILINE
     );
 
     @Override
@@ -63,9 +65,9 @@ public class GitHubEnvRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Detects dangerous usage of `GITHUB_ENV` and `GITHUB_PATH` environment files in workflows with " +
-               "risky triggers like `pull_request_target` or `workflow_run`. Writing to these files can " +
-               "allow code injection when the content includes user-controlled data. " +
-               "Based on [zizmor's github-env audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/github_env.rs).";
+                "risky triggers like `pull_request_target` or `workflow_run`. Writing to these files can " +
+                "allow code injection when the content includes user-controlled data. " +
+                "Based on [zizmor's github-env audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/github_env.rs).";
     }
 
     @Override
@@ -110,7 +112,8 @@ public class GitHubEnvRecipe extends Recipe {
             if (onValue instanceof Yaml.Scalar) {
                 String trigger = ((Yaml.Scalar) onValue).getValue();
                 return DANGEROUS_TRIGGERS.contains(trigger);
-            } else if (onValue instanceof Yaml.Sequence) {
+            }
+            if (onValue instanceof Yaml.Sequence) {
                 Yaml.Sequence sequence = (Yaml.Sequence) onValue;
                 for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
                     if (seqEntry.getBlock() instanceof Yaml.Scalar) {
@@ -149,10 +152,10 @@ public class GitHubEnvRecipe extends Recipe {
                 if (runContent != null && usesGitHubEnv(runContent)) {
                     String envVar = getEnvironmentVariable(runContent);
                     return SearchResult.found(mappingEntry,
-                        String.format("Write to %s may allow code execution in a workflow with dangerous triggers. " +
-                        "This can lead to code injection when the written content includes user-controlled data. " +
-                        "Ensure any dynamic content is properly sanitized or avoid writing to environment files " +
-                        "in workflows triggered by untrusted events.", envVar));
+                            String.format("Write to %s may allow code execution in a workflow with dangerous triggers. " +
+                                    "This can lead to code injection when the written content includes user-controlled data. " +
+                                    "Ensure any dynamic content is properly sanitized or avoid writing to environment files " +
+                                    "in workflows triggered by untrusted events.", envVar));
                 }
             }
 
@@ -188,15 +191,16 @@ public class GitHubEnvRecipe extends Recipe {
             // Simple heuristic: if all GITHUB_ENV writes are from static echo commands, consider it safe
             // This is a simplified version of the complex tree-sitter analysis in zizmor
             return STATIC_ECHO_PATTERN.matcher(runContent).find() &&
-                   !runContent.contains("$") &&
-                   !runContent.contains("`") &&
-                   !runContent.contains("$(");
+                    !runContent.contains("$") &&
+                    !runContent.contains("`") &&
+                    !runContent.contains("$(");
         }
 
         private String getEnvironmentVariable(String runContent) {
             if (runContent.toUpperCase().contains("GITHUB_ENV")) {
                 return "GITHUB_ENV";
-            } else if (runContent.toUpperCase().contains("GITHUB_PATH")) {
+            }
+            if (runContent.toUpperCase().contains("GITHUB_PATH")) {
                 return "GITHUB_PATH";
             }
             return "environment file";

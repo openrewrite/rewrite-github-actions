@@ -603,3 +603,518 @@ examples:
                   channel: "##foo-alerts"
                   text: ":boom: Unable run dependency check on: <${{ steps.get_failed_check_link.outputs.failed-check-link }}|${{ inputs.organization }}/${{ inputs.repository }}>"
     language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.AnonymousJobsRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+        build:
+          name: Build application
+          runs-on: ubuntu-latest
+          steps:
+            - run: echo "building"
+    after: |
+      name: Test Workflow
+      on: push
+      jobs:
+        ~~(Job has no name. Add a descriptive name to make it easier to identify in workflow runs.)~~>test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+        build:
+          name: Build application
+          runs-on: ubuntu-latest
+          steps:
+            - run: echo "building"
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.ArtifactSecurityRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Build and Upload
+      on: push
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - uses: actions/upload-artifact@v3
+              with:
+                name: build-output
+                path: |
+                  ~/.ssh/
+                  ~/.gitconfig
+                  ~/.aws/
+    after: |
+      name: Build and Upload
+      on: push
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+            - ~~(Checkout step does not disable credential persistence, which may expose credentials in artifacts.)~~>uses: actions/checkout@v4
+            - ~~(Uploading potentially sensitive paths that may contain credentials or configuration files.)~~>uses: actions/upload-artifact@v3
+              with:
+                name: build-output
+                path: |
+                  ~/.ssh/
+                  ~/.gitconfig
+                  ~/.aws/
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.BotConditionsRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Test Workflow
+      on: pull_request
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          if: github.actor == 'dependabot[bot]'
+          steps:
+            - uses: actions/checkout@v4
+    after: |
+      name: Test Workflow
+      on: pull_request
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          ~~(Bot actor name check is spoofable. Consider using actor_id instead for more secure bot validation.)~~>if: github.actor == 'dependabot[bot]'
+          steps:
+            - uses: actions/checkout@v4
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.CachePoisoningRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      on: release
+      jobs:
+        publish:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - uses: actions/cache@v4
+              with:
+                path: ~/.cargo
+                key: cargo-${{ hashFiles('Cargo.lock') }}
+            - uses: softprops/action-gh-release@v1
+              with:
+                files: dist/*
+    after: |
+      on: release
+      jobs:
+        publish:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - ~~(Action 'actions/cache' uses caching in a workflow that publishes artifacts. This could lead to cache poisoning where malicious content gets cached and included in published artifacts. Consider disabling caching for this step or using read-only cache mode.)~~>uses: actions/cache@v4
+              with:
+                path: ~/.cargo
+                key: cargo-${{ hashFiles('Cargo.lock') }}
+            - uses: softprops/action-gh-release@v1
+              with:
+                files: dist/*
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.DangerousTriggersRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      on: pull_request_target
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - run: echo "test"
+    after: |
+      ~~(The 'pull_request_target' trigger is almost always used insecurely. It runs with write permissions in the context of the target repository, potentially allowing code injection from pull requests. Consider using 'pull_request' instead, or implement proper isolation.)~~>on: pull_request_target
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - run: echo "test"
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.ExcessivePermissionsRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Test Workflow
+      on: push
+      permissions: write-all
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+    after: |
+      name: Test Workflow
+      on: push
+      ~~(Uses 'write-all' permissions which grants excessive access. Consider using specific permissions instead.)~~>permissions: write-all
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.ForbiddenUsesRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v1
+              name: Checkout code
+    after: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - ~~(Action 'actions/checkout@v1' is known to have security vulnerabilities. Consider upgrading to a more recent version or using an alternative.)~~>uses: actions/checkout@v1
+              name: Checkout code
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.GitHubEnvRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      on: pull_request_target
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - name: Set environment
+              run: |
+                echo "BRANCH_NAME=${{ github.head_ref }}" >> $GITHUB_ENV
+                echo "Building branch: $BRANCH_NAME"
+    after: |
+      on: pull_request_target
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - name: Set environment
+              ~~(Write to GITHUB_ENV may allow code execution in a workflow with dangerous triggers. This can lead to code injection when the written content includes user-controlled data. Ensure any dynamic content is properly sanitized or avoid writing to environment files in workflows triggered by untrusted events.)~~>run: |
+                echo "BRANCH_NAME=${{ github.head_ref }}" >> $GITHUB_ENV
+                echo "Building branch: $BRANCH_NAME"
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.HardcodedCredentialsRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          container:
+            image: my-registry/image:latest
+            credentials:
+              username: user
+              password: hardcoded-password
+          steps:
+            - run: echo "test"
+    after: |
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          container:
+            image: my-registry/image:latest
+            credentials:
+              username: user
+              ~~(Container registry password 'hardcoded-password' appears to be hardcoded. Use secrets (e.g., ${{ secrets.REGISTRY_PASSWORD }}) instead.)~~>password: hardcoded-password
+          steps:
+            - run: echo "test"
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.InsecureCommandsRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      on: push
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+        OTHER_VAR: value
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - run: echo "test"
+    after: |
+      on: push
+      env:
+        ~~(Insecure commands are enabled via ACTIONS_ALLOW_UNSECURE_COMMANDS. This allows dangerous workflow commands that can lead to code injection. Remove this environment variable to disable insecure commands.)~~>ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+        OTHER_VAR: value
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - run: echo "test"
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.ObfuscationRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout/./action@v4
+    after: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - ~~(Action reference contains obfuscated path components that may hide the actual action being used.)~~>uses: actions/checkout/./action@v4
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.RefVersionMismatchRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            # tag=v3
+            - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+    after: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            # tag=v3
+            - ~~(Action is pinned to a commit SHA but has a version comment that may not match. Verify the comment reflects the actual pinned version.)~~>uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.SecretsInheritRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      on: push
+      jobs:
+        call-workflow:
+          uses: ./.github/workflows/reusable.yml
+          secrets: inherit
+          with:
+            environment: production
+    after: |
+      on: push
+      jobs:
+        call-workflow:
+          uses: ./.github/workflows/reusable.yml
+          ~~(This reusable workflow unconditionally inherits all parent secrets. Consider explicitly passing only the required secrets to follow the principle of least privilege and reduce the risk of secret exposure to called workflows.)~~>secrets: inherit
+          with:
+            environment: production
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.SelfHostedRunnerRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          runs-on: [self-hosted, linux, x64]
+          steps:
+            - uses: actions/checkout@v4
+    after: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          ~~(Uses self-hosted runner which may have security implications in public repositories. Ensure runners are ephemeral and properly isolated.)~~>runs-on: [self-hosted, linux, x64]
+          steps:
+            - uses: actions/checkout@v4
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.TemplateInjectionRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Test Workflow
+      on: pull_request_target
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - run: 'echo "PR Title: ${{ github.event.pull_request.title }}"'
+    after: |
+      name: Test Workflow
+      on: pull_request_target
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - ~~(Potential template injection vulnerability. User-controlled input 'github.event.pull_request.title' used in run command without proper escaping.)~~>run: 'echo "PR Title: ${{ github.event.pull_request.title }}"'
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.TrustedPublishingRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Publish to PyPI
+      on: push
+      jobs:
+        publish:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: pypa/gh-action-pypi-publish@v1.5.0
+              with:
+                password: ${{ secrets.PYPI_API_TOKEN }}
+                repository-url: https://upload.pypi.org/legacy/
+    after: |
+      name: Publish to PyPI
+      on: push
+      jobs:
+        publish:
+          runs-on: ubuntu-latest
+          steps:
+            - ~~(Uses manual credentials instead of trusted publishing. Consider using OIDC trusted publishing for better security.)~~>uses: pypa/gh-action-pypi-publish@v1.5.0
+              with:
+                ~~(Manual credential used here)~~>password: ${{ secrets.PYPI_API_TOKEN }}
+                repository-url: https://upload.pypi.org/legacy/
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.UndocumentedPermissionsRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Test Workflow
+      on: push
+      permissions:
+        contents: write
+        packages: read
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+    after: |
+      name: Test Workflow
+      on: push
+      ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for workflow.)~~>permissions:
+        contents: write
+        packages: read
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.UnpinnedActionsRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+              name: Checkout code
+    after: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - ~~(Action 'actions/checkout@v4' is not pinned to a commit SHA. Consider pinning to a specific commit for security and reproducibility.)~~>uses: actions/checkout@v4
+              name: Checkout code
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.UnpinnedDockerImagesRecipe
+examples:
+- description: ''
+  sources:
+  - before: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          container:
+            image: node:18
+          steps:
+            - uses: actions/checkout@v4
+    after: |
+      name: Test Workflow
+      on: push
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          container:
+            ~~(Docker image 'node:18' is not pinned to a digest. Consider pinning to a specific digest for security and reproducibility.)~~>image: node:18
+          steps:
+            - uses: actions/checkout@v4
+    language: yaml

@@ -15,6 +15,9 @@
  */
 package org.openrewrite.github;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.yaml.ChangeValue;
 import org.openrewrite.yaml.DeleteKey;
@@ -25,9 +28,6 @@ import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.Objects;
 import java.util.Set;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
 
 @EqualsAndHashCode(callSuper = false)
 @Value
@@ -75,11 +75,11 @@ public class UpgradeSlackNotificationVersion2 extends Recipe {
 
             d = (Yaml.Documents) new MergeYaml(jsonPath,
                     "with:\n" +
-                    "  method: chat.postMessage\n" +
-                    "  token: " + slackToken + "\n" +
-                    "  payload: |\n" +
-                    "    channel: \"" + channelName + "\"\n" +
-                    "    text: \"" + messageText + "\"\n",
+                            "  method: chat.postMessage\n" +
+                            "  token: " + slackToken + "\n" +
+                            "  payload: |\n" +
+                            "    channel: \"" + channelName + "\"\n" +
+                            "    text: \"" + messageText + "\"\n",
                     false, null, null, null, null, null)
                     .getVisitor().visitNonNull(d, ctx);
 

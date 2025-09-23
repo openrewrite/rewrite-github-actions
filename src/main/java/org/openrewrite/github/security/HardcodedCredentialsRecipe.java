@@ -19,7 +19,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
-import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -39,15 +38,15 @@ public class HardcodedCredentialsRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Detects hardcoded credentials in GitHub Actions container configurations. " +
-               "Container registry passwords should use secrets instead of hardcoded values. " +
-               "Based on [zizmor's hardcoded-container-credentials audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/hardcoded_container_credentials.rs).";
+                "Container registry passwords should use secrets instead of hardcoded values. " +
+                "Based on [zizmor's hardcoded-container-credentials audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/hardcoded_container_credentials.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new HardcodedCredentialsVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new HardcodedCredentialsVisitor()
         );
     }
 
@@ -62,8 +61,8 @@ public class HardcodedCredentialsRecipe extends Recipe {
                 String passwordValue = getPasswordValue(mappingEntry);
                 if (passwordValue != null && isHardcodedPassword(passwordValue)) {
                     return SearchResult.found(mappingEntry,
-                        "Container registry password '" + passwordValue + "' appears to be hardcoded. " +
-                        "Use secrets (e.g., ${{ secrets.REGISTRY_PASSWORD }}) instead.");
+                            "Container registry password '" + passwordValue + "' appears to be hardcoded. " +
+                                    "Use secrets (e.g., ${{ secrets.REGISTRY_PASSWORD }}) instead.");
                 }
             }
 

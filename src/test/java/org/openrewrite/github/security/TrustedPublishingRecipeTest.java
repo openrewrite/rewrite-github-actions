@@ -29,240 +29,240 @@ class TrustedPublishingRecipeTest implements RewriteTest {
         spec.recipe(new TrustedPublishingRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagPyPIPublishWithPassword() {
         rewriteRun(
-            yaml(
-                """
-                name: Publish to PyPI
-                on: push
-                jobs:
-                  publish:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: pypa/gh-action-pypi-publish@v1.5.0
-                        with:
-                          password: ${{ secrets.PYPI_API_TOKEN }}
-                          repository-url: https://upload.pypi.org/legacy/
-                """,
-                """
-                name: Publish to PyPI
-                on: push
-                jobs:
-                  publish:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Uses manual credentials instead of trusted publishing. Consider using OIDC trusted publishing for better security.)~~>uses: pypa/gh-action-pypi-publish@v1.5.0
-                        with:
-                          ~~(Manual credential used here)~~>password: ${{ secrets.PYPI_API_TOKEN }}
-                          repository-url: https://upload.pypi.org/legacy/
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
-            )
+          yaml(
+            """
+              name: Publish to PyPI
+              on: push
+              jobs:
+                publish:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: pypa/gh-action-pypi-publish@v1.5.0
+                      with:
+                        password: ${{ secrets.PYPI_API_TOKEN }}
+                        repository-url: https://upload.pypi.org/legacy/
+              """,
+            """
+              name: Publish to PyPI
+              on: push
+              jobs:
+                publish:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Uses manual credentials instead of trusted publishing. Consider using OIDC trusted publishing for better security.)~~>uses: pypa/gh-action-pypi-publish@v1.5.0
+                      with:
+                        ~~(Manual credential used here)~~>password: ${{ secrets.PYPI_API_TOKEN }}
+                        repository-url: https://upload.pypi.org/legacy/
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagRubyGemsWithoutTrustedPublishing() {
         rewriteRun(
-            yaml(
-                """
-                name: Publish to RubyGems
-                on: push
-                jobs:
-                  publish:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: rubygems/release-gem@v1
-                        with:
-                          setup-trusted-publisher: false
-                """,
-                """
-                name: Publish to RubyGems
-                on: push
-                jobs:
-                  publish:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Uses manual credentials instead of trusted publishing. Consider using OIDC trusted publishing for better security.)~~>uses: rubygems/release-gem@v1
-                        with:
-                          ~~(Manual credential used here)~~>setup-trusted-publisher: false
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
-            )
+          yaml(
+            """
+              name: Publish to RubyGems
+              on: push
+              jobs:
+                publish:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: rubygems/release-gem@v1
+                      with:
+                        setup-trusted-publisher: false
+              """,
+            """
+              name: Publish to RubyGems
+              on: push
+              jobs:
+                publish:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Uses manual credentials instead of trusted publishing. Consider using OIDC trusted publishing for better security.)~~>uses: rubygems/release-gem@v1
+                      with:
+                        ~~(Manual credential used here)~~>setup-trusted-publisher: false
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagNpmPublishWithAlwaysAuth() {
         rewriteRun(
-            yaml(
-                """
-                name: Publish to npm
-                on: push
-                jobs:
-                  publish:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/setup-node@v3
-                        with:
-                          registry-url: https://registry.npmjs.org
-                          always-auth: true
-                      - run: npm publish
-                """,
-                """
-                name: Publish to npm
-                on: push
-                jobs:
-                  publish:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Uses manual credentials instead of trusted publishing. Consider using OIDC trusted publishing for better security.)~~>uses: actions/setup-node@v3
-                        with:
-                          registry-url: https://registry.npmjs.org
-                          ~~(Manual credential used here)~~>always-auth: true
-                      - ~~(Manual publishing command detected. Consider using trusted publishing actions instead.)~~>run: npm publish
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
-            )
+          yaml(
+            """
+              name: Publish to npm
+              on: push
+              jobs:
+                publish:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/setup-node@v3
+                      with:
+                        registry-url: https://registry.npmjs.org
+                        always-auth: true
+                    - run: npm publish
+              """,
+            """
+              name: Publish to npm
+              on: push
+              jobs:
+                publish:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Uses manual credentials instead of trusted publishing. Consider using OIDC trusted publishing for better security.)~~>uses: actions/setup-node@v3
+                      with:
+                        registry-url: https://registry.npmjs.org
+                        ~~(Manual credential used here)~~>always-auth: true
+                    - ~~(Manual publishing command detected. Consider using trusted publishing actions instead.)~~>run: npm publish
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagManualPublishCommands() {
         rewriteRun(
-            yaml(
-                """
-                name: Manual Publish
-                on: push
-                jobs:
-                  publish:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: |
-                          pip install twine
-                          twine upload dist/*
-                """,
-                """
-                name: Manual Publish
-                on: push
-                jobs:
-                  publish:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Manual publishing command detected. Consider using trusted publishing actions instead.)~~>run: |
-                          pip install twine
-                          twine upload dist/*
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
-            )
+          yaml(
+            """
+              name: Manual Publish
+              on: push
+              jobs:
+                publish:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: |
+                        pip install twine
+                        twine upload dist/*
+              """,
+            """
+              name: Manual Publish
+              on: push
+              jobs:
+                publish:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Manual publishing command detected. Consider using trusted publishing actions instead.)~~>run: |
+                        pip install twine
+                        twine upload dist/*
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagCargoPublish() {
         rewriteRun(
-            yaml(
-                """
-                name: Publish to crates.io
-                on: push
-                jobs:
-                  publish:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: cargo publish --token ${{ secrets.CARGO_TOKEN }}
-                """,
-                """
-                name: Publish to crates.io
-                on: push
-                jobs:
-                  publish:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Manual publishing command detected. Consider using trusted publishing actions instead.)~~>run: cargo publish --token ${{ secrets.CARGO_TOKEN }}
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
-            )
+          yaml(
+            """
+              name: Publish to crates.io
+              on: push
+              jobs:
+                publish:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: cargo publish --token ${{ secrets.CARGO_TOKEN }}
+              """,
+            """
+              name: Publish to crates.io
+              on: push
+              jobs:
+                publish:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Manual publishing command detected. Consider using trusted publishing actions instead.)~~>run: cargo publish --token ${{ secrets.CARGO_TOKEN }}
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagTrustedPublishingSetup() {
         rewriteRun(
-            yaml(
-                """
-                name: Trusted Publishing
-                on: push
-                permissions:
-                  id-token: write
-                jobs:
-                  publish:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: pypa/gh-action-pypi-publish@v1.5.0
-                        # Uses OIDC trusted publishing, no password needed
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
-            )
+          yaml(
+            """
+              name: Trusted Publishing
+              on: push
+              permissions:
+                id-token: write
+              jobs:
+                publish:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: pypa/gh-action-pypi-publish@v1.5.0
+                      # Uses OIDC trusted publishing, no password needed
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagRubyGemsTrustedPublishing() {
         rewriteRun(
-            yaml(
-                """
-                name: Publish to RubyGems
-                on: push
-                jobs:
-                  publish:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: rubygems/release-gem@v1
-                        with:
-                          setup-trusted-publisher: true
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
-            )
+          yaml(
+            """
+              name: Publish to RubyGems
+              on: push
+              jobs:
+                publish:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: rubygems/release-gem@v1
+                      with:
+                        setup-trusted-publisher: true
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/publish.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagNonPublishingActions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                      - uses: actions/setup-node@v3
-                        with:
-                          node-version: 18
-                      - run: npm test
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v3
+                      with:
+                        node-version: 18
+                    - run: npm test
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldIgnoreNonWorkflowFiles() {
         rewriteRun(
-            yaml(
-                """
-                version: '3.8'
-                services:
-                  app:
-                    image: node:18
-                    command: npm run dev
-                """,
-                sourceSpecs -> sourceSpecs.path("docker-compose.yml")
-            )
+          yaml(
+            """
+              version: '3.8'
+              services:
+                app:
+                  image: node:18
+                  command: npm run dev
+              """,
+            sourceSpecs -> sourceSpecs.path("docker-compose.yml")
+          )
         );
     }
 }

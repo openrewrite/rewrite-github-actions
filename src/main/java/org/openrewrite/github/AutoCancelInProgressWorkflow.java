@@ -15,6 +15,9 @@
  */
 package org.openrewrite.github;
 
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.internal.StringUtils;
@@ -22,10 +25,6 @@ import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.YamlParser;
 import org.openrewrite.yaml.tree.Yaml;
-
-import lombok.EqualsAndHashCode;
-import lombok.Value;
-import org.jspecify.annotations.Nullable;
 
 @EqualsAndHashCode(callSuper = false)
 @SuppressWarnings("ConcatenationWithEmptyString")

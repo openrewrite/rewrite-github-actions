@@ -29,68 +29,68 @@ class UndocumentedPermissionsRecipeTest implements RewriteTest {
         spec.recipe(new UndocumentedPermissionsRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagUndocumentedWorkflowPermissions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                permissions:
-                  contents: write
-                  packages: read
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for workflow.)~~>permissions:
-                  contents: write
-                  packages: read
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              permissions:
+                contents: write
+                packages: read
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for workflow.)~~>permissions:
+                contents: write
+                packages: read
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagUndocumentedJobPermissions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    permissions:
-                      contents: write
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for this job.)~~>permissions:
-                      contents: write
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  permissions:
+                    contents: write
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for this job.)~~>permissions:
+                    contents: write
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
@@ -99,35 +99,35 @@ class UndocumentedPermissionsRecipeTest implements RewriteTest {
         // TODO: This test currently fails due to comment detection issues
         // For now, expect the workflow permissions to be flagged until comment detection is fixed
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                # Required to publish packages to GitHub Packages
-                permissions:
-                  contents: write
-                  packages: read
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                # Required to publish packages to GitHub Packages
-                ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for workflow.)~~>permissions:
-                  contents: write
-                  packages: read
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              # Required to publish packages to GitHub Packages
+              permissions:
+                contents: write
+                packages: read
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              # Required to publish packages to GitHub Packages
+              ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for workflow.)~~>permissions:
+                contents: write
+                packages: read
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
@@ -136,116 +136,116 @@ class UndocumentedPermissionsRecipeTest implements RewriteTest {
         // TODO: This test currently fails due to comment detection issues
         // For now, expect the job permissions to be flagged until comment detection is fixed
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    # Needed to write test results
-                    permissions:
-                      contents: write
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    # Needed to write test results
-                    ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for this job.)~~>permissions:
-                      contents: write
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  # Needed to write test results
+                  permissions:
+                    contents: write
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  # Needed to write test results
+                  ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for this job.)~~>permissions:
+                    contents: write
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagMultipleUndocumentedPermissions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                permissions:
-                  contents: write
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    permissions:
-                      packages: read
-                    steps:
-                      - uses: actions/checkout@v4
-                  deploy:
-                    runs-on: ubuntu-latest
-                    # This job needs write access for deployment
-                    permissions:
-                      contents: write
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for workflow.)~~>permissions:
-                  contents: write
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for this job.)~~>permissions:
-                      packages: read
-                    steps:
-                      - uses: actions/checkout@v4
-                  deploy:
-                    runs-on: ubuntu-latest
-                    # This job needs write access for deployment
-                    ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for this job.)~~>permissions:
-                      contents: write
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              permissions:
+                contents: write
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  permissions:
+                    packages: read
+                  steps:
+                    - uses: actions/checkout@v4
+                deploy:
+                  runs-on: ubuntu-latest
+                  # This job needs write access for deployment
+                  permissions:
+                    contents: write
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for workflow.)~~>permissions:
+                contents: write
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for this job.)~~>permissions:
+                    packages: read
+                  steps:
+                    - uses: actions/checkout@v4
+                deploy:
+                  runs-on: ubuntu-latest
+                  # This job needs write access for deployment
+                  ~~(Permissions block lacks documentation comment. Consider adding a comment explaining why these permissions are needed for this job.)~~>permissions:
+                    contents: write
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagNonPermissionsFields() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                env:
-                  SOME_VAR: value
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              env:
+                SOME_VAR: value
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldIgnorePermissionsInNonWorkflowFiles() {
         rewriteRun(
-            yaml(
-                """
-                some_config:
-                  permissions:
-                    read: true
-                """,
-                sourceSpecs -> sourceSpecs.path("config.yml")
-            )
+          yaml(
+            """
+              some_config:
+                permissions:
+                  read: true
+              """,
+            sourceSpecs -> sourceSpecs.path("config.yml")
+          )
         );
     }
 }

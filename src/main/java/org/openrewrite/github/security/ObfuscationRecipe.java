@@ -30,7 +30,7 @@ public class ObfuscationRecipe extends Recipe {
 
     // Pattern to detect potentially obfuscated expressions
     private static final Pattern OBFUSCATED_EXPRESSION_PATTERN = Pattern.compile(
-        "\\$\\{\\{[^}]*['\"]}|['\"]{2,}|\\{\\{[^}]*\\$"
+            "\\$\\{\\{[^}]*['\"]}|['\"]{2,}|\\{\\{[^}]*\\$"
     );
 
     @Override
@@ -41,16 +41,16 @@ public class ObfuscationRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Find workflows that use obfuscated action references or expressions that may be attempting to hide " +
-               "malicious behavior. This includes action paths with `'.'`, `'..'`, empty components, or expressions " +
-               "that use quote manipulation to hide their true intent. " +
-               "Based on [zizmor's `obfuscation` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/obfuscation.rs).";
+                "malicious behavior. This includes action paths with `'.'`, `'..'`, empty components, or expressions " +
+                "that use quote manipulation to hide their true intent. " +
+                "Based on [zizmor's `obfuscation` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/obfuscation.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new ObfuscationVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new ObfuscationVisitor()
         );
     }
 
@@ -72,19 +72,25 @@ public class ObfuscationRecipe extends Recipe {
         }
 
         private boolean isUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "uses".equals(key.getValue());
         }
 
         private boolean isRunEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "run".equals(key.getValue());
         }
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
 
@@ -96,21 +102,23 @@ public class ObfuscationRecipe extends Recipe {
             // Check for obfuscated repository actions
             if (hasObfuscatedPath(usesValue)) {
                 return SearchResult.found(entry,
-                    "Action reference contains obfuscated path components that may hide the actual action being used.");
+                        "Action reference contains obfuscated path components that may hide the actual action being used.");
             }
 
             return entry;
         }
 
         private Yaml.Mapping.Entry checkRunEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String runCommand = ((Yaml.Scalar) entry.getValue()).getValue();
 
             // Check for obfuscated expressions
             if (hasObfuscatedExpressions(runCommand)) {
                 return SearchResult.found(entry,
-                    "Contains potentially obfuscated GitHub Actions expressions that may be attempting to hide malicious code.");
+                        "Contains potentially obfuscated GitHub Actions expressions that may be attempting to hide malicious code.");
             }
 
             return entry;

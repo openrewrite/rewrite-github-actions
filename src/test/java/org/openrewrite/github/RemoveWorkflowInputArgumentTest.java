@@ -15,11 +15,10 @@
  */
 package org.openrewrite.github;
 
+import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
-
-import org.junit.jupiter.api.Test;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
@@ -28,9 +27,9 @@ class RemoveWorkflowInputArgumentTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new RemoveWorkflowInputArgument(
-            "org/repo/.github/workflows/myWorkflow.yml",
-            "v1.2.3",
-            "myInputToRemove"
+          "org/repo/.github/workflows/myWorkflow.yml",
+          "v1.2.3",
+          "myInputToRemove"
         ));
     }
 
@@ -40,7 +39,7 @@ class RemoveWorkflowInputArgumentTest implements RewriteTest {
         rewriteRun(
           //language=yaml
           yaml(
-        """
+            """
               name: My workflow
               on: workflow_dispatch
               jobs:

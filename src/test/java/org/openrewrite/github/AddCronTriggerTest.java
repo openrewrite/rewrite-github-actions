@@ -15,15 +15,15 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.test.RewriteTest;
-
-import java.util.Random;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.openrewrite.test.RewriteTest;
+
+import java.util.Random;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
@@ -66,7 +66,7 @@ class AddCronTriggerTest implements RewriteTest {
     })
     void makesChangesForMatchingWorkflow(String workflow) {
         rewriteRun(
-          spec -> spec.recipe(new AddCronTrigger( "0 18 * * *", workflow)),
+          spec -> spec.recipe(new AddCronTrigger("0 18 * * *", workflow)),
           //language=yml
           yaml(
             """
