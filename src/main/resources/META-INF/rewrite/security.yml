@@ -24,7 +24,6 @@ tags:
   - security
   - supply-chain
 recipeList:
-  - org.openrewrite.github.security.AnonymousJobsRecipe
   - org.openrewrite.github.security.ArtifactSecurityRecipe
   - org.openrewrite.github.security.BotConditionsRecipe
   - org.openrewrite.github.security.CachePoisoningRecipe
