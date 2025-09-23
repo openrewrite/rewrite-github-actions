@@ -15,6 +15,8 @@
  */
 package org.openrewrite.github;
 
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.yaml.JsonPathMatcher;
@@ -23,8 +25,6 @@ import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
 import java.util.Optional;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
 
 import static java.util.stream.Collectors.toList;
 

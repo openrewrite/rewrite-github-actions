@@ -29,8 +29,8 @@ class CachePoisoningRecipeTest implements RewriteTest {
         spec.recipe(new CachePoisoningRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldDetectCacheInReleaseWorkflow() {
         rewriteRun(
             yaml(

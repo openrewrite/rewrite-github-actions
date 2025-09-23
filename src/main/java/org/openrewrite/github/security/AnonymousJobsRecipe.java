@@ -90,14 +90,20 @@ public class AnonymousJobsRecipe extends Recipe {
             Cursor current = getCursor();
             Cursor parent = current.getParent();
 
-            if (parent == null) return false;
+            if (parent == null) {
+                return false;
+            }
 
             Object parentValue = parent.getValue();
-            if (!(parentValue instanceof Yaml.Mapping)) return false;
+            if (!(parentValue instanceof Yaml.Mapping)) {
+                return false;
+            }
 
             // Now check if this mapping is the value of a "jobs" entry
             Cursor grandParent = parent.getParent();
-            if (grandParent == null) return false;
+            if (grandParent == null) {
+                return false;
+            }
 
             Object grandParentValue = grandParent.getValue();
             if (grandParentValue instanceof Yaml.Mapping.Entry) {

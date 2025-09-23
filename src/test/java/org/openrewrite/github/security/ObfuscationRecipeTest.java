@@ -29,8 +29,8 @@ class ObfuscationRecipeTest implements RewriteTest {
         spec.recipe(new ObfuscationRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagObfuscatedUsesWithDot() {
         rewriteRun(
             yaml(

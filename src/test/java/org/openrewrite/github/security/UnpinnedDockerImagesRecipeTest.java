@@ -29,8 +29,8 @@ class UnpinnedDockerImagesRecipeTest implements RewriteTest {
         spec.recipe(new UnpinnedDockerImagesRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagUnpinnedContainerImage() {
         rewriteRun(
             yaml(

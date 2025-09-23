@@ -29,8 +29,8 @@ class GitHubEnvRecipeTest implements RewriteTest {
         spec.recipe(new GitHubEnvRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldDetectGitHubEnvInPullRequestTarget() {
         rewriteRun(
             yaml(

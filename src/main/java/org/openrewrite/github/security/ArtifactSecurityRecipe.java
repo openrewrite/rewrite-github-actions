@@ -102,13 +102,17 @@ public class ArtifactSecurityRecipe extends Recipe {
         }
 
         private boolean isUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "uses".equals(key.getValue());
         }
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
 
@@ -128,7 +132,9 @@ public class ArtifactSecurityRecipe extends Recipe {
         private Yaml.Mapping.Entry checkCheckoutAction(Yaml.Mapping.Entry entry) {
             // Look for 'with' section in the parent step
             Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) return entry;
+            if (stepMapping == null) {
+                return entry;
+            }
 
             Yaml.Mapping withMapping = findWithMapping(stepMapping);
 
@@ -155,10 +161,14 @@ public class ArtifactSecurityRecipe extends Recipe {
         private Yaml.Mapping.Entry checkUploadArtifactAction(Yaml.Mapping.Entry entry) {
             // Look for 'with' section to check the path
             Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) return entry;
+            if (stepMapping == null) {
+                return entry;
+            }
 
             Yaml.Mapping withMapping = findWithMapping(stepMapping);
-            if (withMapping == null) return entry;
+            if (withMapping == null) {
+                return entry;
+            }
 
             String pathValue = getWithValue(withMapping, "path");
             if (pathValue != null && hasDangerousArtifactPaths(pathValue)) {
@@ -189,7 +199,9 @@ public class ArtifactSecurityRecipe extends Recipe {
         }
 
         private boolean containsUploadArtifact(Yaml.Document document) {
-            if (!(document.getBlock() instanceof Yaml.Mapping)) return false;
+            if (!(document.getBlock() instanceof Yaml.Mapping)) {
+                return false;
+            }
 
             // Simple check for upload-artifact in the document content
             String docContent = document.print(getCursor());
@@ -213,7 +225,7 @@ public class ArtifactSecurityRecipe extends Recipe {
             }
 
             // Check for current directory or home directory uploads
-            if (pathValue.trim().equals(".") || pathValue.trim().equals("~") || pathValue.trim().equals("/")) {
+            if (".".equals(pathValue.trim()) || "~".equals(pathValue.trim()) || "/".equals(pathValue.trim())) {
                 return true;
             }
 

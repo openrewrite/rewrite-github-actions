@@ -29,8 +29,8 @@ class TemplateInjectionRecipeTest implements RewriteTest {
         spec.recipe(new TemplateInjectionRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagPullRequestTitleInjection() {
         rewriteRun(
             yaml(

@@ -29,8 +29,8 @@ class InsecureCommandsRecipeTest implements RewriteTest {
         spec.recipe(new InsecureCommandsRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldDetectInsecureCommandsAtWorkflowLevel() {
         rewriteRun(
             yaml(

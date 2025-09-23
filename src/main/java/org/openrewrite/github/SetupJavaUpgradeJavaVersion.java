@@ -15,6 +15,10 @@
  */
 package org.openrewrite.github;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlVisitor;
@@ -22,10 +26,6 @@ import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
-import org.jspecify.annotations.Nullable;
 
 @EqualsAndHashCode(callSuper = false)
 @Value

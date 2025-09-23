@@ -29,8 +29,8 @@ class UnpinnedActionsRecipeTest implements RewriteTest {
         spec.recipe(new UnpinnedActionsRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagUnpinnedActionWithTagVersion() {
         rewriteRun(
             yaml(

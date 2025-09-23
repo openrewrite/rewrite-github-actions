@@ -29,8 +29,8 @@ class BotConditionsRecipeTest implements RewriteTest {
         spec.recipe(new BotConditionsRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagSpoofableActorNameCheck() {
         rewriteRun(
             yaml(

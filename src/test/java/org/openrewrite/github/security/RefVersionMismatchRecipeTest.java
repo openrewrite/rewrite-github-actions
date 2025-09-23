@@ -29,8 +29,8 @@ class RefVersionMismatchRecipeTest implements RewriteTest {
         spec.recipe(new RefVersionMismatchRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagMismatchedVersionComment() {
         rewriteRun(
             yaml(

@@ -17,7 +17,9 @@ package org.openrewrite.github.security;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -131,13 +133,14 @@ public class CachePoisoningRecipe extends Recipe {
         private boolean isPublishingTrigger(Yaml.Block onValue) {
             if (onValue instanceof Yaml.Scalar) {
                 String trigger = ((Yaml.Scalar) onValue).getValue();
-                return "release".equals(trigger);
-            } else if (onValue instanceof Yaml.Sequence) {
+                return "release".equals( trigger );
+            }
+            if (onValue instanceof Yaml.Sequence) {
                 Yaml.Sequence sequence = (Yaml.Sequence) onValue;
                 for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
                     if (seqEntry.getBlock() instanceof Yaml.Scalar) {
                         String trigger = ((Yaml.Scalar) seqEntry.getBlock()).getValue();
-                        if ("release".equals(trigger)) {
+                        if ("release".equals( trigger )) {
                             return true;
                         }
                     }
@@ -147,11 +150,12 @@ public class CachePoisoningRecipe extends Recipe {
                 for (Yaml.Mapping.Entry triggerEntry : mapping.getEntries()) {
                     if (triggerEntry.getKey() instanceof Yaml.Scalar) {
                         String trigger = ((Yaml.Scalar) triggerEntry.getKey()).getValue();
-                        if ("release".equals(trigger)) {
+                        if ("release".equals( trigger )) {
                             return true;
-                        } else if ("push".equals(trigger)) {
+                        }
+                        if ("push".equals( trigger )) {
                             // Check for release branches or tags
-                            if (isReleasePush(triggerEntry.getValue())) {
+                            if (isReleasePush( triggerEntry.getValue() )) {
                                 return true;
                             }
                         }
@@ -167,11 +171,12 @@ public class CachePoisoningRecipe extends Recipe {
                 for (Yaml.Mapping.Entry entry : mapping.getEntries()) {
                     if (entry.getKey() instanceof Yaml.Scalar) {
                         String key = ((Yaml.Scalar) entry.getKey()).getValue();
-                        if ("tags".equals(key)) {
+                        if ("tags".equals( key )) {
                             return true; // Pushing tags suggests release
-                        } else if ("branches".equals(key)) {
+                        }
+                        if ("branches".equals( key )) {
                             // Check if any branch name suggests release
-                            return hasReleaseBranches(entry.getValue());
+                            return hasReleaseBranches( entry.getValue() );
                         }
                     }
                 }

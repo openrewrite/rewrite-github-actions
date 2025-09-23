@@ -29,8 +29,8 @@ class SecretsInheritRecipeTest implements RewriteTest {
         spec.recipe(new SecretsInheritRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldDetectSecretsInherit() {
         rewriteRun(
             yaml(

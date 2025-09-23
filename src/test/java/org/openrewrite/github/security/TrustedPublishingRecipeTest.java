@@ -29,8 +29,8 @@ class TrustedPublishingRecipeTest implements RewriteTest {
         spec.recipe(new TrustedPublishingRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagPyPIPublishWithPassword() {
         rewriteRun(
             yaml(

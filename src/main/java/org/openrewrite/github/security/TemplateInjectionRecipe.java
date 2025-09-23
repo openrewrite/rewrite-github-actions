@@ -115,25 +115,33 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private boolean isRunEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "run".equals(key.getValue());
         }
 
         private boolean isUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "uses".equals(key.getValue());
         }
 
         private boolean isScriptEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "script".equals(key.getValue());
         }
 
         private Yaml.Mapping.Entry checkRunEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String runCommand = ((Yaml.Scalar) entry.getValue()).getValue();
 
@@ -153,7 +161,9 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
 
@@ -172,7 +182,9 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkScriptEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String scriptContent = ((Yaml.Scalar) entry.getValue()).getValue();
 
@@ -237,10 +249,14 @@ public class TemplateInjectionRecipe extends Recipe {
         private boolean hasVulnerableScriptInput() {
             // Look for script input in the current step's with section
             Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) return false;
+            if (stepMapping == null) {
+                return false;
+            }
 
             Yaml.Mapping withMapping = findWithMapping(stepMapping);
-            if (withMapping == null) return false;
+            if (withMapping == null) {
+                return false;
+            }
 
             // Check the script input for vulnerable contexts
             for (Yaml.Mapping.Entry withEntry : withMapping.getEntries()) {
@@ -259,7 +275,9 @@ public class TemplateInjectionRecipe extends Recipe {
         private boolean isInsideCodeInjectionAction() {
             // Check if the current script entry is within a code injection action
             Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) return false;
+            if (stepMapping == null) {
+                return false;
+            }
 
             // Look for uses entry in the step
             for (Yaml.Mapping.Entry stepEntry : stepMapping.getEntries()) {

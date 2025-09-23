@@ -29,8 +29,8 @@ class UndocumentedPermissionsRecipeTest implements RewriteTest {
         spec.recipe(new UndocumentedPermissionsRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagUndocumentedWorkflowPermissions() {
         rewriteRun(
             yaml(

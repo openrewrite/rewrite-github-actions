@@ -15,6 +15,7 @@
  */
 package org.openrewrite.github;
 
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.marker.Markers;
 import org.openrewrite.yaml.JsonPathMatcher;
@@ -27,7 +28,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jspecify.annotations.Nullable;
 
 import static java.util.Collections.emptyList;
 import static org.openrewrite.Tree.randomId;

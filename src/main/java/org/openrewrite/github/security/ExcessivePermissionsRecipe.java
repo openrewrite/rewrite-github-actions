@@ -19,13 +19,12 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
-import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
@@ -87,9 +86,10 @@ public class ExcessivePermissionsRecipe extends Recipe {
         private Yaml.Mapping.Entry checkPermissions(Yaml.Mapping.Entry entry) {
             if (entry.getValue() instanceof Yaml.Scalar) {
                 String permissionValue = ((Yaml.Scalar) entry.getValue()).getValue();
-                return checkScalarPermissions(entry, permissionValue);
-            } else if (entry.getValue() instanceof Yaml.Mapping) {
-                return checkMappingPermissions(entry, (Yaml.Mapping) entry.getValue());
+                return checkScalarPermissions( entry, permissionValue );
+            }
+            if (entry.getValue() instanceof Yaml.Mapping) {
+                return checkMappingPermissions( entry, (Yaml.Mapping) entry.getValue() );
             }
 
             return entry;

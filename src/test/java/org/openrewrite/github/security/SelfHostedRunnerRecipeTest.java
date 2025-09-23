@@ -29,8 +29,8 @@ class SelfHostedRunnerRecipeTest implements RewriteTest {
         spec.recipe(new SelfHostedRunnerRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagSelfHostedRunner() {
         rewriteRun(
             yaml(

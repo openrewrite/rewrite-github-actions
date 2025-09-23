@@ -103,31 +103,40 @@ public class TrustedPublishingRecipe extends Recipe {
         }
 
         private boolean isUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "uses".equals(key.getValue());
         }
 
         private boolean isRunEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "run".equals(key.getValue());
         }
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
 
             // Check for known problematic publishing actions
-            if (usesValue.startsWith("pypa/gh-action-pypi-publish")) {
-                return checkPyPIAction(entry);
-            } else if (usesValue.startsWith("rubygems/release-gem")) {
-                return checkRubyGemsAction(entry);
-            } else if (usesValue.startsWith("rubygems/configure-rubygems-credentials")) {
-                return checkRubyGemsCredentialsAction(entry);
-            } else if (usesValue.startsWith("actions/setup-node")) {
-                return checkSetupNodeAction(entry);
+            if (usesValue.startsWith( "pypa/gh-action-pypi-publish" )) {
+                return checkPyPIAction( entry );
+            }
+            if (usesValue.startsWith( "rubygems/release-gem" )) {
+                return checkRubyGemsAction( entry );
+            }
+            if (usesValue.startsWith( "rubygems/configure-rubygems-credentials" )) {
+                return checkRubyGemsCredentialsAction( entry );
+            }
+            if (usesValue.startsWith( "actions/setup-node" )) {
+                return checkSetupNodeAction( entry );
             }
 
             return entry;
@@ -136,10 +145,14 @@ public class TrustedPublishingRecipe extends Recipe {
         private Yaml.Mapping.Entry checkPyPIAction(Yaml.Mapping.Entry entry) {
             // Look for 'with' section in the parent step
             Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) return entry;
+            if (stepMapping == null) {
+                return entry;
+            }
 
             Yaml.Mapping withMapping = findWithMapping(stepMapping);
-            if (withMapping == null) return entry;
+            if (withMapping == null) {
+                return entry;
+            }
 
             // Check if it has password but is publishing to a trusted registry
             boolean hasPassword = withMapping.getEntries().stream()
@@ -175,10 +188,14 @@ public class TrustedPublishingRecipe extends Recipe {
 
         private Yaml.Mapping.Entry checkRubyGemsAction(Yaml.Mapping.Entry entry) {
             Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) return entry;
+            if (stepMapping == null) {
+                return entry;
+            }
 
             Yaml.Mapping withMapping = findWithMapping(stepMapping);
-            if (withMapping == null) return entry;
+            if (withMapping == null) {
+                return entry;
+            }
 
             // Check if setup-trusted-publisher is explicitly false
             boolean explicitlyDisabled = withMapping.getEntries().stream()
@@ -205,10 +222,14 @@ public class TrustedPublishingRecipe extends Recipe {
 
         private Yaml.Mapping.Entry checkRubyGemsCredentialsAction(Yaml.Mapping.Entry entry) {
             Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) return entry;
+            if (stepMapping == null) {
+                return entry;
+            }
 
             Yaml.Mapping withMapping = findWithMapping(stepMapping);
-            if (withMapping == null) return entry;
+            if (withMapping == null) {
+                return entry;
+            }
 
             // Check if it has api-token and gem-server for rubygems
             boolean hasApiToken = withMapping.getEntries().stream()
@@ -244,10 +265,14 @@ public class TrustedPublishingRecipe extends Recipe {
 
         private Yaml.Mapping.Entry checkSetupNodeAction(Yaml.Mapping.Entry entry) {
             Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) return entry;
+            if (stepMapping == null) {
+                return entry;
+            }
 
             Yaml.Mapping withMapping = findWithMapping(stepMapping);
-            if (withMapping == null) return entry;
+            if (withMapping == null) {
+                return entry;
+            }
 
             // Check if it has registry-url for npmjs and always-auth is true
             boolean isNpmRegistry = withMapping.getEntries().stream()
@@ -287,7 +312,9 @@ public class TrustedPublishingRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkRunEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String runCommand = ((Yaml.Scalar) entry.getValue()).getValue();
 
@@ -389,7 +416,9 @@ public class TrustedPublishingRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkWithEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             String keyValue = key.getValue();

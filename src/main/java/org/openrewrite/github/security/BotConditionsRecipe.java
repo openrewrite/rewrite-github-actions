@@ -94,13 +94,17 @@ public class BotConditionsRecipe extends Recipe {
         }
 
         private boolean isIfEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) return false;
+            if (!(entry.getKey() instanceof Yaml.Scalar)) {
+                return false;
+            }
             Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
             return "if".equals(key.getValue());
         }
 
         private Yaml.Mapping.Entry checkIfCondition(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) return entry;
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+                return entry;
+            }
 
             String condition = ((Yaml.Scalar) entry.getValue()).getValue();
 

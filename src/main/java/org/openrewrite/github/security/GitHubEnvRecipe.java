@@ -17,7 +17,9 @@ package org.openrewrite.github.security;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -109,13 +111,14 @@ public class GitHubEnvRecipe extends Recipe {
         private boolean checkForDangerousTriggers(Yaml.Block onValue) {
             if (onValue instanceof Yaml.Scalar) {
                 String trigger = ((Yaml.Scalar) onValue).getValue();
-                return DANGEROUS_TRIGGERS.contains(trigger);
-            } else if (onValue instanceof Yaml.Sequence) {
+                return DANGEROUS_TRIGGERS.contains( trigger );
+            }
+            if (onValue instanceof Yaml.Sequence) {
                 Yaml.Sequence sequence = (Yaml.Sequence) onValue;
                 for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
                     if (seqEntry.getBlock() instanceof Yaml.Scalar) {
                         String trigger = ((Yaml.Scalar) seqEntry.getBlock()).getValue();
-                        if (DANGEROUS_TRIGGERS.contains(trigger)) {
+                        if (DANGEROUS_TRIGGERS.contains( trigger )) {
                             return true;
                         }
                     }
@@ -125,7 +128,7 @@ public class GitHubEnvRecipe extends Recipe {
                 for (Yaml.Mapping.Entry triggerEntry : mapping.getEntries()) {
                     if (triggerEntry.getKey() instanceof Yaml.Scalar) {
                         String trigger = ((Yaml.Scalar) triggerEntry.getKey()).getValue();
-                        if (DANGEROUS_TRIGGERS.contains(trigger)) {
+                        if (DANGEROUS_TRIGGERS.contains( trigger )) {
                             return true;
                         }
                     }
@@ -194,9 +197,10 @@ public class GitHubEnvRecipe extends Recipe {
         }
 
         private String getEnvironmentVariable(String runContent) {
-            if (runContent.toUpperCase().contains("GITHUB_ENV")) {
+            if (runContent.toUpperCase().contains( "GITHUB_ENV" )) {
                 return "GITHUB_ENV";
-            } else if (runContent.toUpperCase().contains("GITHUB_PATH")) {
+            }
+            if (runContent.toUpperCase().contains( "GITHUB_PATH" )) {
                 return "GITHUB_PATH";
             }
             return "environment file";

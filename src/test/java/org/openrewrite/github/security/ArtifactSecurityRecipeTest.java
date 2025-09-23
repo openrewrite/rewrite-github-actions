@@ -29,8 +29,8 @@ class ArtifactSecurityRecipeTest implements RewriteTest {
         spec.recipe(new ArtifactSecurityRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagCredentialPersistenceRisk() {
         rewriteRun(
             yaml(

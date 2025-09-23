@@ -29,8 +29,8 @@ class AnonymousJobsRecipeTest implements RewriteTest {
         spec.recipe(new AnonymousJobsRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagJobWithoutName() {
         rewriteRun(
             yaml(

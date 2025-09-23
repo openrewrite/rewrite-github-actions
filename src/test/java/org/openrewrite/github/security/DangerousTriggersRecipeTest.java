@@ -29,8 +29,8 @@ class DangerousTriggersRecipeTest implements RewriteTest {
         spec.recipe(new DangerousTriggersRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldDetectPullRequestTarget() {
         rewriteRun(
             yaml(

@@ -15,6 +15,8 @@
  */
 package org.openrewrite.github;
 
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
@@ -22,8 +24,6 @@ import org.openrewrite.yaml.tree.Yaml;
 import org.openrewrite.yaml.tree.Yaml.Scalar;
 
 import java.util.regex.Pattern;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
 
 import static org.openrewrite.marker.Markers.EMPTY;
 import static org.openrewrite.yaml.tree.Yaml.Scalar.Style.PLAIN;

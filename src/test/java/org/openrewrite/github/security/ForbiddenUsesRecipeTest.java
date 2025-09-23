@@ -31,8 +31,8 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
         spec.recipe(new ForbiddenUsesRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagDangerousAction() {
         rewriteRun(
             yaml(

@@ -29,8 +29,8 @@ class HardcodedCredentialsRecipeTest implements RewriteTest {
         spec.recipe(new HardcodedCredentialsRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldDetectHardcodedContainerPassword() {
         rewriteRun(
             yaml(

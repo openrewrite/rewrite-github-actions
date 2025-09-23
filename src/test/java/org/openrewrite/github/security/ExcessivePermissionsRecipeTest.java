@@ -29,8 +29,8 @@ class ExcessivePermissionsRecipeTest implements RewriteTest {
         spec.recipe(new ExcessivePermissionsRecipe());
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldFlagWriteAllPermissions() {
         rewriteRun(
             yaml(
