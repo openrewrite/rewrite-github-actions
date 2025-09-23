@@ -35,6 +35,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
     @Test
     void shouldFlagDangerousAction() {
         rewriteRun(
+          //language=yaml
           yaml(
             """
               name: Test Workflow
@@ -64,6 +65,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
     @Test
     void shouldFlagMultipleDangerousActions() {
         rewriteRun(
+          //language=yaml
           yaml(
             """
               name: Test Workflow
@@ -101,6 +103,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
     @Test
     void shouldFlagSuspiciousActionPattern() {
         rewriteRun(
+          //language=yaml
           yaml(
             """
               name: Test Workflow
@@ -130,6 +133,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
     @Test
     void shouldFlagSingleCharacterOwner() {
         rewriteRun(
+          //language=yaml
           yaml(
             """
               name: Test Workflow
@@ -159,6 +163,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
     @Test
     void shouldNotFlagLocalActions() {
         rewriteRun(
+          //language=yaml
           yaml(
             """
               name: Test Workflow
@@ -178,6 +183,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
     @Test
     void shouldNotFlagDockerActions() {
         rewriteRun(
+          //language=yaml
           yaml(
             """
               name: Test Workflow
@@ -197,6 +203,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
     @Test
     void shouldNotFlagSafeActions() {
         rewriteRun(
+          //language=yaml
           yaml(
             """
               name: Test Workflow
@@ -220,6 +227,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
     @Test
     void shouldIgnoreUsesInNonWorkflowFiles() {
         rewriteRun(
+          //language=yaml
           yaml(
             """
               some_config:
@@ -237,6 +245,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
             Arrays.asList("custom-org/dangerous-action@v1", "another-org/risky-action@v2"),
             null
           )),
+          //language=yaml
           yaml(
             """
               name: Test Workflow
@@ -274,6 +283,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
             null,
             Arrays.asList("crypto-miner", "backdoor")
           )),
+          //language=yaml
           yaml(
             """
               name: Test Workflow
@@ -311,6 +321,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
             Arrays.asList("custom-org/dangerous-action@v1"),
             Arrays.asList("malware")
           )),
+          //language=yaml
           yaml(
             """
               name: Test Workflow

@@ -15,8 +15,10 @@
  */
 package org.openrewrite.github.security;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
@@ -36,6 +38,7 @@ public class ForbiddenUsesRecipe extends Recipe {
                     "These will be merged with the default dangerous actions.",
             required = false,
             example = "[\"some-org/dangerous-action@v1\", \"another-org/risky-action@v2\"]")
+    @Nullable
     List<String> additionalDangerousActions;
 
     @Option(displayName = "Additional suspicious patterns",
@@ -43,6 +46,7 @@ public class ForbiddenUsesRecipe extends Recipe {
                     "These will be merged with the default suspicious patterns.",
             required = false,
             example = "[\"malware\", \"crypto-miner\", \"backdoor\"]")
+    @Nullable
     List<String> additionalSuspiciousPatterns;
 
     private static final Set<String> KNOWN_DANGEROUS_ACTIONS = new HashSet<>(Arrays.asList(
@@ -68,14 +72,17 @@ public class ForbiddenUsesRecipe extends Recipe {
             "execute-script"
     ));
 
-    private final Set<String> allDangerousActions;
-    private final Set<String> allSuspiciousPatterns;
+    Set<String> allDangerousActions;
+    Set<String> allSuspiciousPatterns;
 
     public ForbiddenUsesRecipe() {
         this(null, null);
     }
 
-    public ForbiddenUsesRecipe(List<String> additionalDangerousActions, List<String> additionalSuspiciousPatterns) {
+    @JsonCreator
+    public ForbiddenUsesRecipe(
+            @Nullable List<String> additionalDangerousActions,
+            @Nullable List<String> additionalSuspiciousPatterns) {
         this.additionalDangerousActions = additionalDangerousActions;
         this.additionalSuspiciousPatterns = additionalSuspiciousPatterns;
 
@@ -144,14 +151,14 @@ public class ForbiddenUsesRecipe extends Recipe {
                     "uses".equals(((Yaml.Scalar) entry.getKey()).getValue());
         }
 
-        private String getUsesValue(Yaml.Mapping.Entry entry) {
+        private @Nullable String getUsesValue(Yaml.Mapping.Entry entry) {
             if (entry.getValue() instanceof Yaml.Scalar) {
                 return ((Yaml.Scalar) entry.getValue()).getValue();
             }
             return null;
         }
 
-        private String checkForForbiddenAction(String usesValue) {
+        private @Nullable String checkForForbiddenAction(String usesValue) {
             // Skip local actions and Docker actions
             if (usesValue.startsWith("./") || usesValue.startsWith("docker://")) {
                 return null;
