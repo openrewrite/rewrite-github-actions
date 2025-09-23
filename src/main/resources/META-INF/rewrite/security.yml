@@ -35,3 +35,11 @@ recipeList:
   - org.openrewrite.github.security.SecretsInheritRecipe
   - org.openrewrite.github.security.CachePoisoningRecipe
   - org.openrewrite.github.security.GitHubEnvRecipe
+  - org.openrewrite.github.security.AnonymousJobsRecipe
+  - org.openrewrite.github.security.ArtifactSecurityRecipe
+  - org.openrewrite.github.security.BotConditionsRecipe
+  - org.openrewrite.github.security.ObfuscationRecipe
+  - org.openrewrite.github.security.RefVersionMismatchRecipe
+  - org.openrewrite.github.security.SelfHostedRunnerRecipe
+  - org.openrewrite.github.security.TemplateInjectionRecipe
+  - org.openrewrite.github.security.TrustedPublishingRecipe
