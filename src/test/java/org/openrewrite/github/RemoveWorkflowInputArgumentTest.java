@@ -27,9 +27,9 @@ class RemoveWorkflowInputArgumentTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new RemoveWorkflowInputArgument(
-            "org/repo/.github/workflows/myWorkflow.yml",
-            "v1.2.3",
-            "myInputToRemove"
+          "org/repo/.github/workflows/myWorkflow.yml",
+          "v1.2.3",
+          "myInputToRemove"
         ));
     }
 
@@ -39,7 +39,7 @@ class RemoveWorkflowInputArgumentTest implements RewriteTest {
         rewriteRun(
           //language=yaml
           yaml(
-        """
+            """
               name: My workflow
               on: workflow_dispatch
               jobs:

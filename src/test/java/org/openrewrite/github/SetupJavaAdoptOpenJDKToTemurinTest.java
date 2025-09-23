@@ -143,7 +143,7 @@ class SetupJavaAdoptOpenJDKToTemurinTest implements RewriteTest {
                     - name: build
                       run: ./gradlew snapshot publish
               """,
-                spec -> spec.path(".github/workflows/ci.yml")
+            spec -> spec.path(".github/workflows/ci.yml")
           )
         );
     }

@@ -35,39 +35,39 @@ public class CachePoisoningRecipe extends Recipe {
 
     // Actions that have caching capabilities and could be vulnerable
     private static final Set<String> CACHE_AWARE_ACTIONS = new HashSet<>(Arrays.asList(
-        "actions/cache",
-        "actions/setup-java",
-        "actions/setup-go",
-        "actions/setup-node",
-        "actions/setup-python",
-        "actions/setup-dotnet",
-        "astral-sh/setup-uv",
-        "Swatinem/rust-cache",
-        "ruby/setup-ruby",
-        "PyO3/maturin-action",
-        "mlugg/setup-zig",
-        "oven-sh/setup-bun",
-        "DeterminateSystems/magic-nix-cache-action",
-        "graalvm/setup-graalvm",
-        "gradle/actions/setup-gradle",
-        "docker/setup-buildx-action",
-        "actions-rust-lang/setup-rust-toolchain",
-        "Mozilla-Actions/sccache-action",
-        "nix-community/cache-nix-action",
-        "jdx/mise-action"
+            "actions/cache",
+            "actions/setup-java",
+            "actions/setup-go",
+            "actions/setup-node",
+            "actions/setup-python",
+            "actions/setup-dotnet",
+            "astral-sh/setup-uv",
+            "Swatinem/rust-cache",
+            "ruby/setup-ruby",
+            "PyO3/maturin-action",
+            "mlugg/setup-zig",
+            "oven-sh/setup-bun",
+            "DeterminateSystems/magic-nix-cache-action",
+            "graalvm/setup-graalvm",
+            "gradle/actions/setup-gradle",
+            "docker/setup-buildx-action",
+            "actions-rust-lang/setup-rust-toolchain",
+            "Mozilla-Actions/sccache-action",
+            "nix-community/cache-nix-action",
+            "jdx/mise-action"
     ));
 
     // Actions that typically publish artifacts
     private static final Set<String> PUBLISHER_ACTIONS = new HashSet<>(Arrays.asList(
-        "pypa/gh-action-pypi-publish",
-        "rubygems/release-gem",
-        "jreleaser/release-action",
-        "goreleaser/goreleaser-action",
-        "softprops/action-gh-release",
-        "release-drafter/release-drafter",
-        "googleapis/release-please-action",
-        "docker/build-push-action",
-        "redhat-actions/push-to-registry"
+            "pypa/gh-action-pypi-publish",
+            "rubygems/release-gem",
+            "jreleaser/release-action",
+            "goreleaser/goreleaser-action",
+            "softprops/action-gh-release",
+            "release-drafter/release-drafter",
+            "googleapis/release-please-action",
+            "docker/build-push-action",
+            "redhat-actions/push-to-registry"
     ));
 
     private static final Pattern RELEASE_BRANCH_PATTERN = Pattern.compile(".*release.*", Pattern.CASE_INSENSITIVE);
@@ -80,9 +80,9 @@ public class CachePoisoningRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Detects potential cache poisoning vulnerabilities in workflows that use caching and publish artifacts. " +
-               "When workflows use caches during artifact publishing, attackers may be able to poison the cache " +
-               "with malicious content that gets included in published artifacts. " +
-               "Based on [zizmor's cache-poisoning audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/cache_poisoning.rs).";
+                "When workflows use caches during artifact publishing, attackers may be able to poison the cache " +
+                "with malicious content that gets included in published artifacts. " +
+                "Based on [zizmor's cache-poisoning audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/cache_poisoning.rs).";
     }
 
     @Override
@@ -133,14 +133,14 @@ public class CachePoisoningRecipe extends Recipe {
         private boolean isPublishingTrigger(Yaml.Block onValue) {
             if (onValue instanceof Yaml.Scalar) {
                 String trigger = ((Yaml.Scalar) onValue).getValue();
-                return "release".equals( trigger );
+                return "release".equals(trigger);
             }
             if (onValue instanceof Yaml.Sequence) {
                 Yaml.Sequence sequence = (Yaml.Sequence) onValue;
                 for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
                     if (seqEntry.getBlock() instanceof Yaml.Scalar) {
                         String trigger = ((Yaml.Scalar) seqEntry.getBlock()).getValue();
-                        if ("release".equals( trigger )) {
+                        if ("release".equals(trigger)) {
                             return true;
                         }
                     }
@@ -150,12 +150,12 @@ public class CachePoisoningRecipe extends Recipe {
                 for (Yaml.Mapping.Entry triggerEntry : mapping.getEntries()) {
                     if (triggerEntry.getKey() instanceof Yaml.Scalar) {
                         String trigger = ((Yaml.Scalar) triggerEntry.getKey()).getValue();
-                        if ("release".equals( trigger )) {
+                        if ("release".equals(trigger)) {
                             return true;
                         }
-                        if ("push".equals( trigger )) {
+                        if ("push".equals(trigger)) {
                             // Check for release branches or tags
-                            if (isReleasePush( triggerEntry.getValue() )) {
+                            if (isReleasePush(triggerEntry.getValue())) {
                                 return true;
                             }
                         }
@@ -171,12 +171,12 @@ public class CachePoisoningRecipe extends Recipe {
                 for (Yaml.Mapping.Entry entry : mapping.getEntries()) {
                     if (entry.getKey() instanceof Yaml.Scalar) {
                         String key = ((Yaml.Scalar) entry.getKey()).getValue();
-                        if ("tags".equals( key )) {
+                        if ("tags".equals(key)) {
                             return true; // Pushing tags suggests release
                         }
-                        if ("branches".equals( key )) {
+                        if ("branches".equals(key)) {
                             // Check if any branch name suggests release
-                            return hasReleaseBranches( entry.getValue() );
+                            return hasReleaseBranches(entry.getValue());
                         }
                     }
                 }
@@ -254,10 +254,10 @@ public class CachePoisoningRecipe extends Recipe {
             if (isCacheAwareActionStep(mappingEntry)) {
                 String actionName = getActionName(mappingEntry);
                 return SearchResult.found(mappingEntry,
-                    String.format("Action '%s' uses caching in a workflow that publishes artifacts. " +
-                    "This could lead to cache poisoning where malicious content gets cached and " +
-                    "included in published artifacts. Consider disabling caching for this step " +
-                    "or using read-only cache mode.", actionName));
+                        String.format("Action '%s' uses caching in a workflow that publishes artifacts. " +
+                                "This could lead to cache poisoning where malicious content gets cached and " +
+                                "included in published artifacts. Consider disabling caching for this step " +
+                                "or using read-only cache mode.", actionName));
             }
 
             return mappingEntry;

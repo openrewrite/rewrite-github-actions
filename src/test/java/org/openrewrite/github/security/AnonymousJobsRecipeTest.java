@@ -33,181 +33,181 @@ class AnonymousJobsRecipeTest implements RewriteTest {
     @Test
     void shouldFlagJobWithoutName() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                  build:
-                    name: Build application
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "building"
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  ~~(Job has no name. Add a descriptive name to make it easier to identify in workflow runs.)~~>test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                  build:
-                    name: Build application
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "building"
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                build:
+                  name: Build application
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "building"
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                ~~(Job has no name. Add a descriptive name to make it easier to identify in workflow runs.)~~>test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                build:
+                  name: Build application
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "building"
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagMultipleAnonymousJobs() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                  lint:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "linting"
-                  build:
-                    name: Build application
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "building"
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  ~~(Job has no name. Add a descriptive name to make it easier to identify in workflow runs.)~~>test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                  ~~(Job has no name. Add a descriptive name to make it easier to identify in workflow runs.)~~>lint:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "linting"
-                  build:
-                    name: Build application
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "building"
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                lint:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "linting"
+                build:
+                  name: Build application
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "building"
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                ~~(Job has no name. Add a descriptive name to make it easier to identify in workflow runs.)~~>test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                ~~(Job has no name. Add a descriptive name to make it easier to identify in workflow runs.)~~>lint:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "linting"
+                build:
+                  name: Build application
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "building"
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagWorkflowWithName() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    name: Run tests
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                      - run: npm test
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  name: Run tests
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - run: npm test
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagJobWithName() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    name: Run unit tests
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                      - run: npm test
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  name: Run unit tests
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - run: npm test
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagJobWithoutNameInWorkflowWithoutName() {
         rewriteRun(
-            yaml(
-                """
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                on: push
-                jobs:
-                  ~~(Job has no name. Add a descriptive name to make it easier to identify in workflow runs.)~~>test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              on: push
+              jobs:
+                ~~(Job has no name. Add a descriptive name to make it easier to identify in workflow runs.)~~>test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldIgnoreReusableWorkflowJobs() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  call-reusable:
-                    uses: ./.github/workflows/reusable.yml
-                    with:
-                      environment: production
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                call-reusable:
+                  uses: ./.github/workflows/reusable.yml
+                  with:
+                    environment: production
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldIgnoreNonWorkflowFiles() {
         rewriteRun(
-            yaml(
-                """
-                version: '3.8'
-                services:
-                  test:
-                    image: node:18
-                    command: npm test
-                """,
-                sourceSpecs -> sourceSpecs.path("docker-compose.yml")
-            )
+          yaml(
+            """
+              version: '3.8'
+              services:
+                test:
+                  image: node:18
+                  command: npm test
+              """,
+            sourceSpecs -> sourceSpecs.path("docker-compose.yml")
+          )
         );
     }
 }

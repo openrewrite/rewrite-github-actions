@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public class UnpinnedActionsRecipe extends Recipe {
 
     private static final Pattern UNPINNED_ACTION_PATTERN = Pattern.compile(
-        "^([^/@]+/[^/@]+)(@(main|master|HEAD|latest|v?\\d+(\\.\\d+)*(\\.\\d+)*))??$"
+            "^([^/@]+/[^/@]+)(@(main|master|HEAD|latest|v?\\d+(\\.\\d+)*(\\.\\d+)*))??$"
     );
 
     private static final Pattern SHA_PATTERN = Pattern.compile("^[a-f0-9]{40}$");
@@ -42,16 +42,16 @@ public class UnpinnedActionsRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Pin GitHub Actions to specific commit SHAs for security and reproducibility. " +
-               "Actions pinned to tags or branches can be changed by the action author, " +
-               "while SHA pins are immutable. " +
-               "Based on [zizmor's unpinned-uses audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/unpinned_uses.rs).";
+                "Actions pinned to tags or branches can be changed by the action author, " +
+                "while SHA pins are immutable. " +
+                "Based on [zizmor's unpinned-uses audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/unpinned_uses.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new UnpinnedActionsVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new UnpinnedActionsVisitor()
         );
     }
 
@@ -65,8 +65,8 @@ public class UnpinnedActionsRecipe extends Recipe {
                 String usesValue = getUsesValue(mappingEntry);
                 if (usesValue != null && isUnpinned(usesValue)) {
                     return SearchResult.found(mappingEntry,
-                        "Action '" + usesValue + "' is not pinned to a commit SHA. " +
-                        "Consider pinning to a specific commit for security and reproducibility.");
+                            "Action '" + usesValue + "' is not pinned to a commit SHA. " +
+                                    "Consider pinning to a specific commit for security and reproducibility.");
                 }
             }
 
@@ -76,7 +76,7 @@ public class UnpinnedActionsRecipe extends Recipe {
         private boolean isUsesEntry(Yaml.Mapping.Entry entry) {
             // Broader approach - match any "uses" entry and let the logic handle context validation
             return entry.getKey() instanceof Yaml.Scalar &&
-                   "uses".equals(((Yaml.Scalar) entry.getKey()).getValue());
+                    "uses".equals(((Yaml.Scalar) entry.getKey()).getValue());
         }
 
         private String getUsesValue(Yaml.Mapping.Entry entry) {

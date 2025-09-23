@@ -33,234 +33,234 @@ class DangerousTriggersRecipeTest implements RewriteTest {
     @Test
     void shouldDetectPullRequestTarget() {
         rewriteRun(
-            yaml(
-                """
-                on: pull_request_target
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "test"
-                """,
-                """
-                ~~(The 'pull_request_target' trigger is almost always used insecurely. It runs with write permissions in the context of the target repository, potentially allowing code injection from pull requests. Consider using 'pull_request' instead, or implement proper isolation.)~~>on: pull_request_target
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "test"
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              on: pull_request_target
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "test"
+              """,
+            """
+              ~~(The 'pull_request_target' trigger is almost always used insecurely. It runs with write permissions in the context of the target repository, potentially allowing code injection from pull requests. Consider using 'pull_request' instead, or implement proper isolation.)~~>on: pull_request_target
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "test"
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldDetectWorkflowRun() {
         rewriteRun(
-            yaml(
-                """
-                on: workflow_run
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "test"
-                """,
-                """
-                ~~(The 'workflow_run' trigger is almost always used insecurely. It can trigger workflows with sensitive permissions based on external events. Consider using more specific triggers with explicit safety checks.)~~>on: workflow_run
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "test"
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              on: workflow_run
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "test"
+              """,
+            """
+              ~~(The 'workflow_run' trigger is almost always used insecurely. It can trigger workflows with sensitive permissions based on external events. Consider using more specific triggers with explicit safety checks.)~~>on: workflow_run
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "test"
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldDetectDangerousTriggersInArray() {
         rewriteRun(
-            yaml(
-                """
-                on: [push, pull_request_target, pull_request]
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "test"
-                """,
-                """
-                ~~(The 'pull_request_target' trigger is almost always used insecurely. It runs with write permissions in the context of the target repository, potentially allowing code injection from pull requests. Consider using 'pull_request' instead, or implement proper isolation.)~~>on: [push, pull_request_target, pull_request]
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "test"
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              on: [push, pull_request_target, pull_request]
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "test"
+              """,
+            """
+              ~~(The 'pull_request_target' trigger is almost always used insecurely. It runs with write permissions in the context of the target repository, potentially allowing code injection from pull requests. Consider using 'pull_request' instead, or implement proper isolation.)~~>on: [push, pull_request_target, pull_request]
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "test"
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldDetectDangerousTriggersInObject() {
         rewriteRun(
-            yaml(
-                """
-                on:
-                  push:
-                    branches: [main]
-                  pull_request_target:
-                    types: [opened, synchronize]
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "test"
-                """,
-                """
-                ~~(The 'pull_request_target' trigger is almost always used insecurely. It runs with write permissions in the context of the target repository, potentially allowing code injection from pull requests. Consider using 'pull_request' instead, or implement proper isolation.)~~>on:
-                  push:
-                    branches: [main]
-                  pull_request_target:
-                    types: [opened, synchronize]
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "test"
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              on:
+                push:
+                  branches: [main]
+                pull_request_target:
+                  types: [opened, synchronize]
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "test"
+              """,
+            """
+              ~~(The 'pull_request_target' trigger is almost always used insecurely. It runs with write permissions in the context of the target repository, potentially allowing code injection from pull requests. Consider using 'pull_request' instead, or implement proper isolation.)~~>on:
+                push:
+                  branches: [main]
+                pull_request_target:
+                  types: [opened, synchronize]
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "test"
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldDetectMultipleDangerousTriggers() {
         rewriteRun(
-            yaml(
-                """
-                on:
-                  pull_request_target:
-                    types: [opened]
-                  workflow_run:
-                    workflows: [build]
-                  push:
-                    branches: [main]
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "test"
-                """,
-                """
-                ~~(The 'pull_request_target' trigger is almost always used insecurely. It runs with write permissions in the context of the target repository, potentially allowing code injection from pull requests. Consider using 'pull_request' instead, or implement proper isolation.)~~>on:
-                  pull_request_target:
-                    types: [opened]
-                  workflow_run:
-                    workflows: [build]
-                  push:
-                    branches: [main]
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "test"
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              on:
+                pull_request_target:
+                  types: [opened]
+                workflow_run:
+                  workflows: [build]
+                push:
+                  branches: [main]
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "test"
+              """,
+            """
+              ~~(The 'pull_request_target' trigger is almost always used insecurely. It runs with write permissions in the context of the target repository, potentially allowing code injection from pull requests. Consider using 'pull_request' instead, or implement proper isolation.)~~>on:
+                pull_request_target:
+                  types: [opened]
+                workflow_run:
+                  workflows: [build]
+                push:
+                  branches: [main]
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "test"
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagSafeTriggers() {
         rewriteRun(
-            yaml(
-                """
-                on:
-                  push:
-                    branches: [main]
-                  pull_request:
-                    branches: [main]
-                  release:
-                    types: [published]
-                  schedule:
-                    - cron: '0 0 * * *'
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "test"
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              on:
+                push:
+                  branches: [main]
+                pull_request:
+                  branches: [main]
+                release:
+                  types: [published]
+                schedule:
+                  - cron: '0 0 * * *'
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "test"
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagTriggersInJobContext() {
         rewriteRun(
-            yaml(
-                """
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - run: echo "This should not trigger on pull_request_target"
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - run: echo "This should not trigger on pull_request_target"
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldHandleComplexWorkflowStructure() {
         rewriteRun(
-            yaml(
-                """
-                name: Complex Workflow
-                on:
-                  workflow_run:
-                    workflows: ["CI"]
-                    types: [completed]
-                    branches: [main]
-                permissions:
-                  contents: read
-                env:
-                  NODE_VERSION: '18'
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    if: github.event.workflow_run.conclusion == 'success'
-                    steps:
-                      - uses: actions/checkout@v4
-                      - run: npm test
-                """,
-                """
-                name: Complex Workflow
-                ~~(The 'workflow_run' trigger is almost always used insecurely. It can trigger workflows with sensitive permissions based on external events. Consider using more specific triggers with explicit safety checks.)~~>on:
-                  workflow_run:
-                    workflows: ["CI"]
-                    types: [completed]
-                    branches: [main]
-                permissions:
-                  contents: read
-                env:
-                  NODE_VERSION: '18'
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    if: github.event.workflow_run.conclusion == 'success'
-                    steps:
-                      - uses: actions/checkout@v4
-                      - run: npm test
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Complex Workflow
+              on:
+                workflow_run:
+                  workflows: ["CI"]
+                  types: [completed]
+                  branches: [main]
+              permissions:
+                contents: read
+              env:
+                NODE_VERSION: '18'
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  if: github.event.workflow_run.conclusion == 'success'
+                  steps:
+                    - uses: actions/checkout@v4
+                    - run: npm test
+              """,
+            """
+              name: Complex Workflow
+              ~~(The 'workflow_run' trigger is almost always used insecurely. It can trigger workflows with sensitive permissions based on external events. Consider using more specific triggers with explicit safety checks.)~~>on:
+                workflow_run:
+                  workflows: ["CI"]
+                  types: [completed]
+                  branches: [main]
+              permissions:
+                contents: read
+              env:
+                NODE_VERSION: '18'
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  if: github.event.workflow_run.conclusion == 'success'
+                  steps:
+                    - uses: actions/checkout@v4
+                    - run: npm test
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 }

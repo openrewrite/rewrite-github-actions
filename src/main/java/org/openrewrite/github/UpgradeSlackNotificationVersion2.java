@@ -75,11 +75,11 @@ public class UpgradeSlackNotificationVersion2 extends Recipe {
 
             d = (Yaml.Documents) new MergeYaml(jsonPath,
                     "with:\n" +
-                    "  method: chat.postMessage\n" +
-                    "  token: " + slackToken + "\n" +
-                    "  payload: |\n" +
-                    "    channel: \"" + channelName + "\"\n" +
-                    "    text: \"" + messageText + "\"\n",
+                            "  method: chat.postMessage\n" +
+                            "  token: " + slackToken + "\n" +
+                            "  payload: |\n" +
+                            "    channel: \"" + channelName + "\"\n" +
+                            "    text: \"" + messageText + "\"\n",
                     false, null, null, null, null, null)
                     .getVisitor().visitNonNull(d, ctx);
 

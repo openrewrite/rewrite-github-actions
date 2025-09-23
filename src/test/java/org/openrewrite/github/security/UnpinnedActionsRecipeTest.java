@@ -33,194 +33,194 @@ class UnpinnedActionsRecipeTest implements RewriteTest {
     @Test
     void shouldFlagUnpinnedActionWithTagVersion() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                        name: Checkout code
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Action 'actions/checkout@v4' is not pinned to a commit SHA. Consider pinning to a specific commit for security and reproducibility.)~~>uses: actions/checkout@v4
-                        name: Checkout code
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                      name: Checkout code
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Action 'actions/checkout@v4' is not pinned to a commit SHA. Consider pinning to a specific commit for security and reproducibility.)~~>uses: actions/checkout@v4
+                      name: Checkout code
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagUnpinnedActionWithBranchName() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@main
-                        name: Checkout code
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Action 'actions/checkout@main' is not pinned to a commit SHA. Consider pinning to a specific commit for security and reproducibility.)~~>uses: actions/checkout@main
-                        name: Checkout code
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@main
+                      name: Checkout code
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Action 'actions/checkout@main' is not pinned to a commit SHA. Consider pinning to a specific commit for security and reproducibility.)~~>uses: actions/checkout@main
+                      name: Checkout code
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagActionWithNoVersion() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout
-                        name: Checkout code
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Action 'actions/checkout' is not pinned to a commit SHA. Consider pinning to a specific commit for security and reproducibility.)~~>uses: actions/checkout
-                        name: Checkout code
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout
+                      name: Checkout code
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Action 'actions/checkout' is not pinned to a commit SHA. Consider pinning to a specific commit for security and reproducibility.)~~>uses: actions/checkout
+                      name: Checkout code
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagActionPinnedToSHA() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-                        name: Checkout code
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+                      name: Checkout code
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagLocalAction() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: ./local-action
-                        name: Run local action
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: ./local-action
+                      name: Run local action
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagDockerAction() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: docker://alpine:latest
-                        name: Run in Docker
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: docker://alpine:latest
+                      name: Run in Docker
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagMultipleUnpinnedActions() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                        name: Checkout code
-                      - uses: actions/setup-java@v3
-                        name: Setup Java
-                      - uses: actions/cache@b4ffde65f46336ab88eb53be808477a3936bae11
-                        name: Cache dependencies
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - ~~(Action 'actions/checkout@v4' is not pinned to a commit SHA. Consider pinning to a specific commit for security and reproducibility.)~~>uses: actions/checkout@v4
-                        name: Checkout code
-                      - ~~(Action 'actions/setup-java@v3' is not pinned to a commit SHA. Consider pinning to a specific commit for security and reproducibility.)~~>uses: actions/setup-java@v3
-                        name: Setup Java
-                      - uses: actions/cache@b4ffde65f46336ab88eb53be808477a3936bae11
-                        name: Cache dependencies
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                      name: Checkout code
+                    - uses: actions/setup-java@v3
+                      name: Setup Java
+                    - uses: actions/cache@b4ffde65f46336ab88eb53be808477a3936bae11
+                      name: Cache dependencies
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - ~~(Action 'actions/checkout@v4' is not pinned to a commit SHA. Consider pinning to a specific commit for security and reproducibility.)~~>uses: actions/checkout@v4
+                      name: Checkout code
+                    - ~~(Action 'actions/setup-java@v3' is not pinned to a commit SHA. Consider pinning to a specific commit for security and reproducibility.)~~>uses: actions/setup-java@v3
+                      name: Setup Java
+                    - uses: actions/cache@b4ffde65f46336ab88eb53be808477a3936bae11
+                      name: Cache dependencies
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldIgnoreUsesInNonWorkflowFiles() {
         rewriteRun(
-            yaml(
-                """
-                some_config:
-                  uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path("config.yml")
-            )
+          yaml(
+            """
+              some_config:
+                uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path("config.yml")
+          )
         );
     }
 }

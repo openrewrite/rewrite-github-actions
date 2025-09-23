@@ -34,16 +34,16 @@ public class UndocumentedPermissionsRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Add documentation comments for permissions blocks in GitHub Actions workflows. " +
-               "Documenting permissions helps reviewers understand why specific permissions " +
-               "are needed and ensures security-conscious development practices. " +
-               "Based on [zizmor's undocumented-permissions audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/undocumented_permissions.rs).";
+                "Documenting permissions helps reviewers understand why specific permissions " +
+                "are needed and ensures security-conscious development practices. " +
+                "Based on [zizmor's undocumented-permissions audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/undocumented_permissions.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new UndocumentedPermissionsVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new UndocumentedPermissionsVisitor()
         );
     }
 
@@ -57,9 +57,9 @@ public class UndocumentedPermissionsRecipe extends Recipe {
                 if (!hasDocumentationComment(mappingEntry)) {
                     String context = getPermissionsContext();
                     return SearchResult.found(mappingEntry,
-                        "Permissions block lacks documentation comment. " +
-                        "Consider adding a comment explaining why these permissions are needed" +
-                        (context != null ? " for " + context : "") + ".");
+                            "Permissions block lacks documentation comment. " +
+                                    "Consider adding a comment explaining why these permissions are needed" +
+                                    (context != null ? " for " + context : "") + ".");
                 }
             }
 
@@ -68,7 +68,7 @@ public class UndocumentedPermissionsRecipe extends Recipe {
 
         private boolean isPermissionsEntry(Yaml.Mapping.Entry entry) {
             if (!(entry.getKey() instanceof Yaml.Scalar) ||
-                !"permissions".equals(((Yaml.Scalar) entry.getKey()).getValue())) {
+                    !"permissions".equals(((Yaml.Scalar) entry.getKey()).getValue())) {
                 return false;
             }
 
@@ -111,10 +111,10 @@ public class UndocumentedPermissionsRecipe extends Recipe {
                         // Check if the grandparent is the jobs mapping
                         Cursor grandparent = cursor.getParent().getParent();
                         if (grandparent != null && grandparent.getParent() != null &&
-                            grandparent.getParent().getValue() instanceof Yaml.Mapping.Entry) {
+                                grandparent.getParent().getValue() instanceof Yaml.Mapping.Entry) {
                             Yaml.Mapping.Entry ggEntry = (Yaml.Mapping.Entry) grandparent.getParent().getValue();
                             if (ggEntry.getKey() instanceof Yaml.Scalar &&
-                                "jobs".equals(((Yaml.Scalar) ggEntry.getKey()).getValue())) {
+                                    "jobs".equals(((Yaml.Scalar) ggEntry.getKey()).getValue())) {
                                 return "this job";
                             }
                         }

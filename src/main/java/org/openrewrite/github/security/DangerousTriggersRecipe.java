@@ -33,8 +33,8 @@ import java.util.Set;
 public class DangerousTriggersRecipe extends Recipe {
 
     private static final Set<String> DANGEROUS_TRIGGERS = new HashSet<>(Arrays.asList(
-        "pull_request_target",
-        "workflow_run"
+            "pull_request_target",
+            "workflow_run"
     ));
 
     @Override
@@ -45,9 +45,9 @@ public class DangerousTriggersRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Detects use of fundamentally insecure workflow triggers like `pull_request_target` and `workflow_run`. " +
-               "These triggers run with elevated privileges and are almost always used insecurely, " +
-               "potentially allowing code injection from untrusted sources. " +
-               "Based on [zizmor's dangerous-triggers audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/dangerous_triggers.rs).";
+                "These triggers run with elevated privileges and are almost always used insecurely, " +
+                "potentially allowing code injection from untrusted sources. " +
+                "Based on [zizmor's dangerous-triggers audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/dangerous_triggers.rs).";
     }
 
     @Override
@@ -121,13 +121,13 @@ public class DangerousTriggersRecipe extends Recipe {
             switch (trigger) {
                 case "pull_request_target":
                     return "The 'pull_request_target' trigger is almost always used insecurely. " +
-                           "It runs with write permissions in the context of the target repository, " +
-                           "potentially allowing code injection from pull requests. " +
-                           "Consider using 'pull_request' instead, or implement proper isolation.";
+                            "It runs with write permissions in the context of the target repository, " +
+                            "potentially allowing code injection from pull requests. " +
+                            "Consider using 'pull_request' instead, or implement proper isolation.";
                 case "workflow_run":
                     return "The 'workflow_run' trigger is almost always used insecurely. " +
-                           "It can trigger workflows with sensitive permissions based on external events. " +
-                           "Consider using more specific triggers with explicit safety checks.";
+                            "It can trigger workflows with sensitive permissions based on external events. " +
+                            "Consider using more specific triggers with explicit safety checks.";
                 default:
                     return String.format("The '%s' trigger is considered insecure and should be avoided.", trigger);
             }

@@ -34,15 +34,15 @@ public class AnonymousJobsRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Find jobs that lack descriptive names, making them harder to identify in workflow runs. " +
-               "Jobs without `name` properties default to their job ID, which may not be descriptive. " +
-               "Based on [zizmor's anonymous-definition audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/anonymous_definition.rs).";
+                "Jobs without `name` properties default to their job ID, which may not be descriptive. " +
+                "Based on [zizmor's anonymous-definition audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/anonymous_definition.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new AnonymousJobsVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new AnonymousJobsVisitor()
         );
     }
 
@@ -57,27 +57,27 @@ public class AnonymousJobsRecipe extends Recipe {
                 Yaml.Mapping jobMapping = (Yaml.Mapping) mappingEntry.getValue();
 
                 boolean hasName = jobMapping.getEntries().stream()
-                    .anyMatch(jobProp -> {
-                        if (jobProp.getKey() instanceof Yaml.Scalar) {
-                            Yaml.Scalar scalar = (Yaml.Scalar) jobProp.getKey();
-                            return "name".equals(scalar.getValue());
-                        }
-                        return false;
-                    });
+                        .anyMatch(jobProp -> {
+                            if (jobProp.getKey() instanceof Yaml.Scalar) {
+                                Yaml.Scalar scalar = (Yaml.Scalar) jobProp.getKey();
+                                return "name".equals(scalar.getValue());
+                            }
+                            return false;
+                        });
 
                 // Skip reusable workflow calls (jobs that have "uses" instead of typical job properties)
                 boolean isReusableWorkflowCall = jobMapping.getEntries().stream()
-                    .anyMatch(jobProp -> {
-                        if (jobProp.getKey() instanceof Yaml.Scalar) {
-                            Yaml.Scalar scalar = (Yaml.Scalar) jobProp.getKey();
-                            return "uses".equals(scalar.getValue());
-                        }
-                        return false;
-                    });
+                        .anyMatch(jobProp -> {
+                            if (jobProp.getKey() instanceof Yaml.Scalar) {
+                                Yaml.Scalar scalar = (Yaml.Scalar) jobProp.getKey();
+                                return "uses".equals(scalar.getValue());
+                            }
+                            return false;
+                        });
 
                 if (!hasName && !isReusableWorkflowCall) {
                     return SearchResult.found(mappingEntry,
-                        "Job has no name. Add a descriptive name to make it easier to identify in workflow runs.");
+                            "Job has no name. Add a descriptive name to make it easier to identify in workflow runs.");
                 }
             }
 

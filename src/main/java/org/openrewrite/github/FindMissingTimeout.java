@@ -40,7 +40,7 @@ public class FindMissingTimeout extends Recipe {
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 Yaml.Mapping.Entry job = super.visitMappingEntry(entry, ctx);
                 if (new JsonPathMatcher("$.jobs.*.*").matches(getCursor()) &&
-                    FindKey.find(job, "$..timeout-minutes").isEmpty()) {
+                        FindKey.find(job, "$..timeout-minutes").isEmpty()) {
                     return SearchResult.found(job, "missing: $.jobs.*.timeout-minutes");
                 }
                 return job;

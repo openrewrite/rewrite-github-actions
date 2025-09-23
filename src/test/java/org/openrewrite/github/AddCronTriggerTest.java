@@ -66,7 +66,7 @@ class AddCronTriggerTest implements RewriteTest {
     })
     void makesChangesForMatchingWorkflow(String workflow) {
         rewriteRun(
-          spec -> spec.recipe(new AddCronTrigger( "0 18 * * *", workflow)),
+          spec -> spec.recipe(new AddCronTrigger("0 18 * * *", workflow)),
           //language=yml
           yaml(
             """

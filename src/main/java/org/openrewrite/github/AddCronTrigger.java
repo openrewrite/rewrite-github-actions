@@ -100,7 +100,7 @@ public class AddCronTrigger extends Recipe {
                 "$.on",
                 String.format(
                         "schedule:%n" +
-                        "  - cron: \"%s\"", expression),
+                                "  - cron: \"%s\"", expression),
                 true,
                 null, null, null, null, null).getVisitor());
     }

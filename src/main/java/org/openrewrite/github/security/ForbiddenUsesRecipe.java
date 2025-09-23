@@ -33,39 +33,39 @@ public class ForbiddenUsesRecipe extends Recipe {
 
     @Option(displayName = "Additional dangerous actions",
             description = "Additional actions to flag as dangerous, beyond the built-in list. " +
-                         "These will be merged with the default dangerous actions.",
+                    "These will be merged with the default dangerous actions.",
             required = false,
             example = "[\"some-org/dangerous-action@v1\", \"another-org/risky-action@v2\"]")
     List<String> additionalDangerousActions;
 
     @Option(displayName = "Additional suspicious patterns",
             description = "Additional patterns to flag as suspicious, beyond the built-in patterns. " +
-                         "These will be merged with the default suspicious patterns.",
+                    "These will be merged with the default suspicious patterns.",
             required = false,
             example = "[\"malware\", \"crypto-miner\", \"backdoor\"]")
     List<String> additionalSuspiciousPatterns;
 
     private static final Set<String> KNOWN_DANGEROUS_ACTIONS = new HashSet<>(Arrays.asList(
-        // Actions with known security issues or vulnerabilities
-        "actions/checkout@v1",  // Has security vulnerabilities, should use v3+
-        "actions/checkout@v2",  // Has security vulnerabilities, should use v3+
-        "actions/setup-node@v1", // Deprecated with vulnerabilities
-        "actions/setup-node@v2", // Deprecated with vulnerabilities
-        // Add more known dangerous actions here
-        "actions/cache@v1",      // Has vulnerabilities
-        "actions/cache@v2"       // Has vulnerabilities
+            // Actions with known security issues or vulnerabilities
+            "actions/checkout@v1",  // Has security vulnerabilities, should use v3+
+            "actions/checkout@v2",  // Has security vulnerabilities, should use v3+
+            "actions/setup-node@v1", // Deprecated with vulnerabilities
+            "actions/setup-node@v2", // Deprecated with vulnerabilities
+            // Add more known dangerous actions here
+            "actions/cache@v1",      // Has vulnerabilities
+            "actions/cache@v2"       // Has vulnerabilities
     ));
 
     private static final Set<String> SUSPICIOUS_ACTION_PATTERNS = new HashSet<>(Arrays.asList(
-        // Actions that run arbitrary code
-        "run",
-        "exec",
-        "eval",
-        // Actions from suspicious organizations
-        "malicious-org/",
-        // Actions with suspicious names
-        "download-and-run",
-        "execute-script"
+            // Actions that run arbitrary code
+            "run",
+            "exec",
+            "eval",
+            // Actions from suspicious organizations
+            "malicious-org/",
+            // Actions with suspicious names
+            "download-and-run",
+            "execute-script"
     ));
 
     private final Set<String> allDangerousActions;
@@ -99,15 +99,15 @@ public class ForbiddenUsesRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Find usage of forbidden or dangerous GitHub Actions that have known " +
-               "security vulnerabilities or follow suspicious patterns. " +
-               "Based on [zizmor's forbidden-uses audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/forbidden_uses.rs).";
+                "security vulnerabilities or follow suspicious patterns. " +
+                "Based on [zizmor's forbidden-uses audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/forbidden_uses.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new ForbiddenUsesVisitor(allDangerousActions, allSuspiciousPatterns)
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new ForbiddenUsesVisitor(allDangerousActions, allSuspiciousPatterns)
         );
     }
 
@@ -141,7 +141,7 @@ public class ForbiddenUsesRecipe extends Recipe {
         private boolean isUsesEntry(Yaml.Mapping.Entry entry) {
             // Broader approach - match any "uses" entry and let the logic handle context validation
             return entry.getKey() instanceof Yaml.Scalar &&
-                   "uses".equals(((Yaml.Scalar) entry.getKey()).getValue());
+                    "uses".equals(((Yaml.Scalar) entry.getKey()).getValue());
         }
 
         private String getUsesValue(Yaml.Mapping.Entry entry) {
@@ -161,7 +161,7 @@ public class ForbiddenUsesRecipe extends Recipe {
             for (String dangerous : dangerousActions) {
                 if (usesValue.equals(dangerous)) {
                     return "Action '" + usesValue + "' is known to have security vulnerabilities. " +
-                           "Consider upgrading to a more recent version or using an alternative.";
+                            "Consider upgrading to a more recent version or using an alternative.";
                 }
             }
 
@@ -177,7 +177,7 @@ public class ForbiddenUsesRecipe extends Recipe {
 
             if (longestMatch != null) {
                 return "Action '" + usesValue + "' contains suspicious pattern '" + longestMatch + "'. " +
-                       "Review this action carefully for potential security risks.";
+                        "Review this action carefully for potential security risks.";
             }
 
             // Check for actions from unverified sources
@@ -188,7 +188,7 @@ public class ForbiddenUsesRecipe extends Recipe {
                     // Flag actions from single-character owners (often suspicious)
                     if (owner.length() == 1) {
                         return "Action '" + usesValue + "' is from a single-character organization '" +
-                               owner + "' which may be suspicious. Verify the action's authenticity.";
+                                owner + "' which may be suspicious. Verify the action's authenticity.";
                     }
                 }
             }

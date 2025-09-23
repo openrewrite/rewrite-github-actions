@@ -107,9 +107,9 @@ public class RemoveWorkflowInputArgument extends Recipe {
                             if (entry.getValue() instanceof Yaml.Mapping) {
                                 Yaml.Mapping withMapping = (Yaml.Mapping) entry.getValue();
                                 Yaml.Mapping newMapping = withMapping.withEntries(
-                                    withMapping.getEntries().stream()
-                                        .filter(e -> !(e.getKey() instanceof Yaml.Scalar && inputArgumentName.equals(e.getKey().getValue())))
-                                        .collect(toList())
+                                        withMapping.getEntries().stream()
+                                                .filter(e -> !(e.getKey() instanceof Yaml.Scalar && inputArgumentName.equals(e.getKey().getValue())))
+                                                .collect(toList())
                                 );
                                 if (newMapping.getEntries().isEmpty()) {
                                     return null;

@@ -31,12 +31,12 @@ import java.util.Set;
 public class ExcessivePermissionsRecipe extends Recipe {
 
     private static final Set<String> HIGH_RISK_PERMISSIONS = new HashSet<>(Arrays.asList(
-        "actions", "attestations", "contents", "deployments", "id-token",
-        "issues", "packages", "pages", "pull-requests"
+            "actions", "attestations", "contents", "deployments", "id-token",
+            "issues", "packages", "pages", "pull-requests"
     ));
 
     private static final Set<String> MEDIUM_RISK_PERMISSIONS = new HashSet<>(Arrays.asList(
-        "checks", "discussions", "repository-projects", "security-events"
+            "checks", "discussions", "repository-projects", "security-events"
     ));
 
     @Override
@@ -47,16 +47,16 @@ public class ExcessivePermissionsRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Find overly broad permissions in GitHub Actions workflows. " +
-               "Flags 'write-all' permissions and excessive write permissions that " +
-               "could be scoped more narrowly for security. " +
-               "Based on [zizmor's excessive-permissions audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/excessive_permissions.rs).";
+                "Flags 'write-all' permissions and excessive write permissions that " +
+                "could be scoped more narrowly for security. " +
+                "Based on [zizmor's excessive-permissions audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/excessive_permissions.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new ExcessivePermissionsVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new ExcessivePermissionsVisitor()
         );
     }
 
@@ -75,7 +75,7 @@ public class ExcessivePermissionsRecipe extends Recipe {
 
         private boolean isPermissionsEntry(Yaml.Mapping.Entry entry) {
             if (!(entry.getKey() instanceof Yaml.Scalar) ||
-                !"permissions".equals(((Yaml.Scalar) entry.getKey()).getValue())) {
+                    !"permissions".equals(((Yaml.Scalar) entry.getKey()).getValue())) {
                 return false;
             }
 
@@ -86,10 +86,10 @@ public class ExcessivePermissionsRecipe extends Recipe {
         private Yaml.Mapping.Entry checkPermissions(Yaml.Mapping.Entry entry) {
             if (entry.getValue() instanceof Yaml.Scalar) {
                 String permissionValue = ((Yaml.Scalar) entry.getValue()).getValue();
-                return checkScalarPermissions( entry, permissionValue );
+                return checkScalarPermissions(entry, permissionValue);
             }
             if (entry.getValue() instanceof Yaml.Mapping) {
-                return checkMappingPermissions( entry, (Yaml.Mapping) entry.getValue() );
+                return checkMappingPermissions(entry, (Yaml.Mapping) entry.getValue());
             }
 
             return entry;
@@ -99,12 +99,12 @@ public class ExcessivePermissionsRecipe extends Recipe {
             switch (permissionValue) {
                 case "write-all":
                     return SearchResult.found(entry,
-                        "Uses 'write-all' permissions which grants excessive access. " +
-                        "Consider using specific permissions instead.");
+                            "Uses 'write-all' permissions which grants excessive access. " +
+                                    "Consider using specific permissions instead.");
                 case "read-all":
                     return SearchResult.found(entry,
-                        "Uses 'read-all' permissions. Consider using specific permissions " +
-                        "if only certain resources need to be accessed.");
+                            "Uses 'read-all' permissions. Consider using specific permissions " +
+                                    "if only certain resources need to be accessed.");
                 default:
                     return entry;
             }
@@ -116,7 +116,7 @@ public class ExcessivePermissionsRecipe extends Recipe {
 
             for (Yaml.Mapping.Entry permEntry : permissionsMapping.getEntries()) {
                 if (permEntry.getKey() instanceof Yaml.Scalar &&
-                    permEntry.getValue() instanceof Yaml.Scalar) {
+                        permEntry.getValue() instanceof Yaml.Scalar) {
 
                     String permissionName = ((Yaml.Scalar) permEntry.getKey()).getValue();
                     String permissionValue = ((Yaml.Scalar) permEntry.getValue()).getValue();
@@ -141,8 +141,8 @@ public class ExcessivePermissionsRecipe extends Recipe {
 
             if (hasExcessivePermissions) {
                 return SearchResult.found(entry,
-                    "Contains potentially excessive write permissions: " + issues.toString() + ". " +
-                    "Consider whether these permissions are necessary and if they can be scoped more narrowly.");
+                        "Contains potentially excessive write permissions: " + issues.toString() + ". " +
+                                "Consider whether these permissions are necessary and if they can be scoped more narrowly.");
             }
 
             return entry;

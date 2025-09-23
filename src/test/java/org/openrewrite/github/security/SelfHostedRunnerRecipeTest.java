@@ -33,150 +33,150 @@ class SelfHostedRunnerRecipeTest implements RewriteTest {
     @Test
     void shouldFlagSelfHostedRunner() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: [self-hosted, linux, x64]
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    ~~(Uses self-hosted runner which may have security implications in public repositories. Ensure runners are ephemeral and properly isolated.)~~>runs-on: [self-hosted, linux, x64]
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: [self-hosted, linux, x64]
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  ~~(Uses self-hosted runner which may have security implications in public repositories. Ensure runners are ephemeral and properly isolated.)~~>runs-on: [self-hosted, linux, x64]
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagSelfHostedRunnerAsString() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: self-hosted
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    ~~(Uses self-hosted runner which may have security implications in public repositories. Ensure runners are ephemeral and properly isolated.)~~>runs-on: self-hosted
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: self-hosted
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  ~~(Uses self-hosted runner which may have security implications in public repositories. Ensure runners are ephemeral and properly isolated.)~~>runs-on: self-hosted
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldFlagExpressionThatMayExpandToSelfHosted() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ${{ matrix.runner }}
-                    strategy:
-                      matrix:
-                        runner: [ubuntu-latest, self-hosted]
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    ~~(Expression may expand to self-hosted runner. Verify that self-hosted runners are properly secured.)~~>runs-on: ${{ matrix.runner }}
-                    strategy:
-                      matrix:
-                        runner: [ubuntu-latest, self-hosted]
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ${{ matrix.runner }}
+                  strategy:
+                    matrix:
+                      runner: [ubuntu-latest, self-hosted]
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  ~~(Expression may expand to self-hosted runner. Verify that self-hosted runners are properly secured.)~~>runs-on: ${{ matrix.runner }}
+                  strategy:
+                    matrix:
+                      runner: [ubuntu-latest, self-hosted]
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagGitHubHostedRunners() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ubuntu-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                  test-windows:
-                    runs-on: windows-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                  test-macos:
-                    runs-on: macos-latest
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                test-windows:
+                  runs-on: windows-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                test-macos:
+                  runs-on: macos-latest
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldNotFlagRunsOnWithMatrixButNoSelfHosted() {
         rewriteRun(
-            yaml(
-                """
-                name: Test Workflow
-                on: push
-                jobs:
-                  test:
-                    runs-on: ${{ matrix.os }}
-                    strategy:
-                      matrix:
-                        os: [ubuntu-latest, windows-latest, macos-latest]
-                    steps:
-                      - uses: actions/checkout@v4
-                """,
-                sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
-            )
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ${{ matrix.os }}
+                  strategy:
+                    matrix:
+                      os: [ubuntu-latest, windows-latest, macos-latest]
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
         );
     }
 
     @Test
     void shouldIgnoreNonWorkflowFiles() {
         rewriteRun(
-            yaml(
-                """
-                version: '3.8'
-                services:
-                  test:
-                    image: self-hosted
-                    command: npm test
-                """,
-                sourceSpecs -> sourceSpecs.path("docker-compose.yml")
-            )
+          yaml(
+            """
+              version: '3.8'
+              services:
+                test:
+                  image: self-hosted
+                  command: npm test
+              """,
+            sourceSpecs -> sourceSpecs.path("docker-compose.yml")
+          )
         );
     }
 }

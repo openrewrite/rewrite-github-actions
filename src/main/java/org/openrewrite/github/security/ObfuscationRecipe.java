@@ -30,7 +30,7 @@ public class ObfuscationRecipe extends Recipe {
 
     // Pattern to detect potentially obfuscated expressions
     private static final Pattern OBFUSCATED_EXPRESSION_PATTERN = Pattern.compile(
-        "\\$\\{\\{[^}]*['\"]}|['\"]{2,}|\\{\\{[^}]*\\$"
+            "\\$\\{\\{[^}]*['\"]}|['\"]{2,}|\\{\\{[^}]*\\$"
     );
 
     @Override
@@ -41,16 +41,16 @@ public class ObfuscationRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Find workflows that use obfuscated action references or expressions that may be attempting to hide " +
-               "malicious behavior. This includes action paths with `'.'`, `'..'`, empty components, or expressions " +
-               "that use quote manipulation to hide their true intent. " +
-               "Based on [zizmor's `obfuscation` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/obfuscation.rs).";
+                "malicious behavior. This includes action paths with `'.'`, `'..'`, empty components, or expressions " +
+                "that use quote manipulation to hide their true intent. " +
+                "Based on [zizmor's `obfuscation` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/obfuscation.rs).";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-            new FindSourceFiles(".github/workflows/*.yml"),
-            new ObfuscationVisitor()
+                new FindSourceFiles(".github/workflows/*.yml"),
+                new ObfuscationVisitor()
         );
     }
 
@@ -102,7 +102,7 @@ public class ObfuscationRecipe extends Recipe {
             // Check for obfuscated repository actions
             if (hasObfuscatedPath(usesValue)) {
                 return SearchResult.found(entry,
-                    "Action reference contains obfuscated path components that may hide the actual action being used.");
+                        "Action reference contains obfuscated path components that may hide the actual action being used.");
             }
 
             return entry;
@@ -118,7 +118,7 @@ public class ObfuscationRecipe extends Recipe {
             // Check for obfuscated expressions
             if (hasObfuscatedExpressions(runCommand)) {
                 return SearchResult.found(entry,
-                    "Contains potentially obfuscated GitHub Actions expressions that may be attempting to hide malicious code.");
+                        "Contains potentially obfuscated GitHub Actions expressions that may be attempting to hide malicious code.");
             }
 
             return entry;

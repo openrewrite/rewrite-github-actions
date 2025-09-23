@@ -38,8 +38,8 @@ public class InsecureCommandsRecipe extends Recipe {
     @Override
     public String getDescription() {
         return "Detects when insecure workflow commands are enabled via `ACTIONS_ALLOW_UNSECURE_COMMANDS`. " +
-               "This environment variable enables dangerous workflow commands that can lead to code injection vulnerabilities. " +
-               "Based on [zizmor's insecure-commands audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/insecure_commands.rs).";
+                "This environment variable enables dangerous workflow commands that can lead to code injection vulnerabilities. " +
+                "Based on [zizmor's insecure-commands audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/insecure_commands.rs).";
     }
 
     @Override
@@ -58,9 +58,9 @@ public class InsecureCommandsRecipe extends Recipe {
                 String value = getEnvironmentValue(mappingEntry);
                 if (value != null && isTruthyValue(value)) {
                     return SearchResult.found(mappingEntry,
-                        "Insecure commands are enabled via ACTIONS_ALLOW_UNSECURE_COMMANDS. " +
-                        "This allows dangerous workflow commands that can lead to code injection. " +
-                        "Remove this environment variable to disable insecure commands.");
+                            "Insecure commands are enabled via ACTIONS_ALLOW_UNSECURE_COMMANDS. " +
+                                    "This allows dangerous workflow commands that can lead to code injection. " +
+                                    "Remove this environment variable to disable insecure commands.");
                 }
             }
 
@@ -91,9 +91,9 @@ public class InsecureCommandsRecipe extends Recipe {
             String lowerValue = value.toLowerCase().trim();
             // Check various truthy representations
             return "true".equals(lowerValue) ||
-                   "1".equals(lowerValue) ||
-                   "yes".equals(lowerValue) ||
-                   "on".equals(lowerValue);
+                    "1".equals(lowerValue) ||
+                    "yes".equals(lowerValue) ||
+                    "on".equals(lowerValue);
         }
     }
 }
