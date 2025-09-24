@@ -19,6 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
+import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -57,6 +58,9 @@ public class UnpinnedDockerImagesRecipe extends Recipe {
 
     private static class UnpinnedDockerImagesVisitor extends YamlIsoVisitor<ExecutionContext> {
 
+        private final JsonPathMatcher imageInServices = new JsonPathMatcher("$.jobs.*.services.*.image");
+        private final JsonPathMatcher imageInContainers = new JsonPathMatcher("$.jobs.*.container.image");
+
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
             Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
@@ -78,7 +82,10 @@ public class UnpinnedDockerImagesRecipe extends Recipe {
         }
 
         private String getImageValue(Yaml.Mapping.Entry entry) {
-            return entry.getValue() instanceof Yaml.Scalar ? ((Yaml.Scalar) entry.getValue()).getValue() : null;
+            if (entry.getValue() instanceof Yaml.Scalar) {
+                return ((Yaml.Scalar) entry.getValue()).getValue();
+            }
+            return null;
         }
 
         private boolean isUnpinnedDockerImage(String imageValue) {

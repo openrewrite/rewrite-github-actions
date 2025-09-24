@@ -19,11 +19,14 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
+import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Value
@@ -61,6 +64,9 @@ public class ExcessivePermissionsRecipe extends Recipe {
     }
 
     private static class ExcessivePermissionsVisitor extends YamlIsoVisitor<ExecutionContext> {
+
+        private static final JsonPathMatcher WORKFLOW_PERMISSIONS = new JsonPathMatcher("$.permissions");
+        private static final JsonPathMatcher JOB_PERMISSIONS = new JsonPathMatcher("$.jobs.*.permissions");
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
@@ -105,8 +111,7 @@ public class ExcessivePermissionsRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkMappingPermissions(Yaml.Mapping.Entry entry, Yaml.Mapping permissionsMapping) {
-            boolean hasExcessivePermissions = false;
-            StringBuilder issues = new StringBuilder();
+            List<String> issues = new ArrayList<>();
 
             for (Yaml.Mapping.Entry permEntry : permissionsMapping.getEntries()) {
                 String permissionName = permEntry.getKey().getValue();
@@ -115,25 +120,17 @@ public class ExcessivePermissionsRecipe extends Recipe {
 
                     if ("write".equals(permissionValue)) {
                         if (HIGH_RISK_PERMISSIONS.contains(permissionName)) {
-                            hasExcessivePermissions = true;
-                            if (issues.length() > 0) {
-                                issues.append(", ");
-                            }
-                            issues.append(permissionName).append(": write (high risk)");
+                            issues.add(permissionName + ": write (high risk)");
                         } else if (MEDIUM_RISK_PERMISSIONS.contains(permissionName)) {
-                            hasExcessivePermissions = true;
-                            if (issues.length() > 0) {
-                                issues.append(", ");
-                            }
-                            issues.append(permissionName).append(": write (medium risk)");
+                            issues.add(permissionName + ": write (medium risk)");
                         }
                     }
                 }
             }
 
-            if (hasExcessivePermissions) {
+            if (!issues.isEmpty()) {
                 return SearchResult.found(entry,
-                        "Contains potentially excessive write permissions: " + issues.toString() + ". " +
+                        "Contains potentially excessive write permissions: " + String.join(", ", issues) + ". " +
                                 "Consider whether these permissions are necessary and if they can be scoped more narrowly.");
             }
 
