@@ -629,4 +629,33 @@ class SetupPythonToUvTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void noModifyNodeCache() {
+        rewriteRun(
+          spec -> spec.recipe(new SetupPythonToUv(null, null, true, true)),
+          //language=yaml
+          yaml(
+            """
+              name: Test
+
+              on: [push]
+
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - name: Use Node.js 18
+                      uses: actions/setup-node@v4
+                      with:
+                        node-version: 18
+                        cache: npm
+                        cache-dependency-path: ./path-to-repo/package-lock.json
+              """,
+            source -> source.path(".github/workflows/test.yml")
+          )
+        );
+    }
+
 }

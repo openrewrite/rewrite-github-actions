@@ -123,6 +123,7 @@ public class SetupPythonToUv extends Recipe {
     private static class SetupPythonToUvVisitor extends YamlIsoVisitor<ExecutionContext> {
 
         private static final Pattern SETUP_PYTHON_PATTERN = Pattern.compile("^actions/setup-python(@.*)?$");
+        private static final Pattern SETUP_UV_PATTERN = Pattern.compile("^astral-sh/setup-uv(@.*)?$");
         private static final Pattern PIP_INSTALL_REQUIREMENTS = Pattern.compile("^pip install -r requirements\\.txt$");
         private static final Pattern PIP_INSTALL_DEV = Pattern.compile("^pip install \\.$");
         private static final Pattern PIP_INSTALL_EDITABLE = Pattern.compile("^pip install -e \\.$");
@@ -159,7 +160,28 @@ public class SetupPythonToUv extends Recipe {
             }
 
             if ("cache-dependency-path".equals(entry.getKey().getValue())) {
-                return null;
+                // Only remove cache-dependency-path if we're in a setup-python action
+                // The parent mapping contains the 'with' block, so we need to go up one more level
+                Cursor withCursor = getCursor().getParentOrThrow();  // The 'with' mapping
+                Cursor stepCursor = withCursor.getParentOrThrow();   // The step mapping entry
+                Cursor stepMappingCursor = stepCursor.getParentOrThrow(); // The step mapping
+
+                if (stepMappingCursor.getValue() instanceof Yaml.Mapping) {
+                    Yaml.Mapping stepMapping = (Yaml.Mapping) stepMappingCursor.getValue();
+
+                    boolean hasSetupPython = stepMapping.getEntries().stream()
+                        .anyMatch(e -> {
+                            if ("uses".equals(e.getKey().getValue()) && e.getValue() instanceof Yaml.Scalar) {
+                                String value = ((Yaml.Scalar) e.getValue()).getValue();
+                                return value.startsWith("actions/setup-python");
+                            }
+                            return false;
+                        });
+
+                    if (hasSetupPython) {
+                        return null;
+                    }
+                }
             }
 
             if (transformPipCommands && "run".equals(entry.getKey().getValue()) && entry.getValue() instanceof Yaml.Scalar) {

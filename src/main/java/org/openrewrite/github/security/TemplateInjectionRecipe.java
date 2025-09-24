@@ -19,6 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
+import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -92,58 +93,41 @@ public class TemplateInjectionRecipe extends Recipe {
 
     private static class TemplateInjectionVisitor extends YamlIsoVisitor<ExecutionContext> {
 
+        private static final JsonPathMatcher STEP_RUN_MATCHER = new JsonPathMatcher("$.jobs.*.steps[*].run");
+        private static final JsonPathMatcher STEP_USES_MATCHER = new JsonPathMatcher("$.jobs.*.steps[*].uses");
+        private static final JsonPathMatcher STEP_SCRIPT_MATCHER = new JsonPathMatcher("$.jobs.*.steps[*].with.script");
+
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
             Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
 
             // Check run commands for injection vulnerabilities
-            if (isRunEntry(mappingEntry)) {
+            if ("run".equals(mappingEntry.getKey().getValue())) {
                 return checkRunEntry(mappingEntry);
             }
 
             // Check uses entries for code injection actions
-            if (isUsesEntry(mappingEntry)) {
+            if ("uses".equals(mappingEntry.getKey().getValue())) {
                 return checkUsesEntry(mappingEntry);
             }
 
             // Check script inputs for code injection actions
-            if (isScriptEntry(mappingEntry)) {
+            if ("script".equals(mappingEntry.getKey().getValue())) {
                 return checkScriptEntry(mappingEntry);
             }
 
             return mappingEntry;
         }
 
-        private boolean isRunEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) {
-                return false;
-            }
-            Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
-            return "run".equals(key.getValue());
-        }
-
-        private boolean isUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) {
-                return false;
-            }
-            Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
-            return "uses".equals(key.getValue());
-        }
-
-        private boolean isScriptEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) {
-                return false;
-            }
-            Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
-            return "script".equals(key.getValue());
+        private String getScalarValue(Yaml.Block value) {
+            return value instanceof Yaml.Scalar ? ((Yaml.Scalar) value).getValue() : null;
         }
 
         private Yaml.Mapping.Entry checkRunEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+            String runCommand = getScalarValue(entry.getValue());
+            if (runCommand == null) {
                 return entry;
             }
-
-            String runCommand = ((Yaml.Scalar) entry.getValue()).getValue();
 
             // Check for dangerous template expressions in run commands
             String vulnerableContext = findVulnerableContext(runCommand);
@@ -161,20 +145,17 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+            String usesValue = getScalarValue(entry.getValue());
+            if (usesValue == null) {
                 return entry;
             }
-
-            String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
 
             // Check if this is a code injection action
             for (String dangerousAction : CODE_INJECTION_ACTIONS) {
                 if (usesValue.startsWith(dangerousAction)) {
-                    // Look for script input in the with section
-                    if (hasVulnerableScriptInput()) {
-                        return SearchResult.found(entry,
-                                "Potential code injection in script input. User-controlled content in script execution context.");
-                    }
+                    // Flag the use of a code injection action as potentially dangerous
+                    return SearchResult.found(entry,
+                            "Potential code injection in script input. User-controlled content in script execution context.");
                 }
             }
 
@@ -182,20 +163,22 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkScriptEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+            String scriptContent = getScalarValue(entry.getValue());
+            if (scriptContent == null) {
                 return entry;
             }
 
-            String scriptContent = ((Yaml.Scalar) entry.getValue()).getValue();
-
-            // Check if we're inside a code injection action
-            if (isInsideCodeInjectionAction()) {
-                String vulnerableContext = findVulnerableContext(scriptContent);
-                if (vulnerableContext != null) {
-                    return SearchResult.found(entry,
-                            "Potential code injection in script. User-controlled input '" + vulnerableContext +
-                                    "' used in script without proper escaping.");
+            // Check for vulnerable contexts in the script content
+            String vulnerableContext = findVulnerableContext(scriptContent);
+            if (vulnerableContext != null) {
+                String message;
+                if (vulnerableContext.startsWith("User-controlled input")) {
+                    message = "Potential code injection in script. " + vulnerableContext + " used in script without proper escaping.";
+                } else {
+                    message = "Potential code injection in script. User-controlled input '" + vulnerableContext +
+                            "' used in script without proper escaping.";
                 }
+                return SearchResult.found(entry, message);
             }
 
             return entry;
@@ -246,93 +229,5 @@ public class TemplateInjectionRecipe extends Recipe {
             return false;
         }
 
-        private boolean hasVulnerableScriptInput() {
-            // Look for script input in the current step's with section
-            Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) {
-                return false;
-            }
-
-            Yaml.Mapping withMapping = findWithMapping(stepMapping);
-            if (withMapping == null) {
-                return false;
-            }
-
-            // Check the script input for vulnerable contexts
-            for (Yaml.Mapping.Entry withEntry : withMapping.getEntries()) {
-                if (withEntry.getKey() instanceof Yaml.Scalar) {
-                    Yaml.Scalar key = (Yaml.Scalar) withEntry.getKey();
-                    if ("script".equals(key.getValue()) && withEntry.getValue() instanceof Yaml.Scalar) {
-                        String scriptValue = ((Yaml.Scalar) withEntry.getValue()).getValue();
-                        return findVulnerableContext(scriptValue) != null;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private boolean isInsideCodeInjectionAction() {
-            // Check if the current script entry is within a code injection action
-            Yaml.Mapping stepMapping = findParentStepMapping();
-            if (stepMapping == null) {
-                return false;
-            }
-
-            // Look for uses entry in the step
-            for (Yaml.Mapping.Entry stepEntry : stepMapping.getEntries()) {
-                if (stepEntry.getKey() instanceof Yaml.Scalar) {
-                    Yaml.Scalar key = (Yaml.Scalar) stepEntry.getKey();
-                    if ("uses".equals(key.getValue()) && stepEntry.getValue() instanceof Yaml.Scalar) {
-                        String usesValue = ((Yaml.Scalar) stepEntry.getValue()).getValue();
-                        for (String dangerousAction : CODE_INJECTION_ACTIONS) {
-                            if (usesValue.startsWith(dangerousAction)) {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private Yaml.Mapping findParentStepMapping() {
-            // Walk up cursor to find the step mapping
-            Cursor current = getCursor();
-            while (current != null) {
-                Object value = current.getValue();
-                if (value instanceof Yaml.Mapping) {
-                    Yaml.Mapping mapping = (Yaml.Mapping) value;
-                    // Check if this mapping has 'uses' or 'run' (step indicators)
-                    boolean isStep = mapping.getEntries().stream()
-                            .anyMatch(mapEntry -> {
-                                if (mapEntry.getKey() instanceof Yaml.Scalar) {
-                                    Yaml.Scalar key = (Yaml.Scalar) mapEntry.getKey();
-                                    return "uses".equals(key.getValue()) || "run".equals(key.getValue());
-                                }
-                                return false;
-                            });
-
-                    if (isStep) {
-                        return mapping;
-                    }
-                }
-                current = current.getParent();
-            }
-            return null;
-        }
-
-        private Yaml.Mapping findWithMapping(Yaml.Mapping stepMapping) {
-            for (Yaml.Mapping.Entry stepEntry : stepMapping.getEntries()) {
-                if (stepEntry.getKey() instanceof Yaml.Scalar) {
-                    Yaml.Scalar key = (Yaml.Scalar) stepEntry.getKey();
-                    if ("with".equals(key.getValue()) && stepEntry.getValue() instanceof Yaml.Mapping) {
-                        return (Yaml.Mapping) stepEntry.getValue();
-                    }
-                }
-            }
-            return null;
-        }
     }
 }
