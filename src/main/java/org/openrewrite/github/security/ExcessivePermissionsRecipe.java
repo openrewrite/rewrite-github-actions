@@ -74,19 +74,13 @@ public class ExcessivePermissionsRecipe extends Recipe {
         }
 
         private boolean isPermissionsEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar) ||
-                    !"permissions".equals(((Yaml.Scalar) entry.getKey()).getValue())) {
-                return false;
-            }
-
-            // Use a broader approach - accept any permissions entry and let the logic handle context
-            return true;
+            return "permissions".equals(entry.getKey().getValue());
         }
 
         private Yaml.Mapping.Entry checkPermissions(Yaml.Mapping.Entry entry) {
-            if (entry.getValue() instanceof Yaml.Scalar) {
-                String permissionValue = ((Yaml.Scalar) entry.getValue()).getValue();
-                return checkScalarPermissions(entry, permissionValue);
+            String scalarPermissionValue = entry.getValue() instanceof Yaml.Scalar ? ((Yaml.Scalar) entry.getValue()).getValue() : null;
+            if (scalarPermissionValue != null) {
+                return checkScalarPermissions(entry, scalarPermissionValue);
             }
             if (entry.getValue() instanceof Yaml.Mapping) {
                 return checkMappingPermissions(entry, (Yaml.Mapping) entry.getValue());
@@ -115,11 +109,9 @@ public class ExcessivePermissionsRecipe extends Recipe {
             StringBuilder issues = new StringBuilder();
 
             for (Yaml.Mapping.Entry permEntry : permissionsMapping.getEntries()) {
-                if (permEntry.getKey() instanceof Yaml.Scalar &&
-                        permEntry.getValue() instanceof Yaml.Scalar) {
-
-                    String permissionName = ((Yaml.Scalar) permEntry.getKey()).getValue();
-                    String permissionValue = ((Yaml.Scalar) permEntry.getValue()).getValue();
+                String permissionName = permEntry.getKey().getValue();
+                String permissionValue = permEntry.getValue() instanceof Yaml.Scalar ? ((Yaml.Scalar) permEntry.getValue()).getValue() : null;
+                if (permissionName != null && permissionValue != null) {
 
                     if ("write".equals(permissionValue)) {
                         if (HIGH_RISK_PERMISSIONS.contains(permissionName)) {

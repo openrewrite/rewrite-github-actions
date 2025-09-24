@@ -102,19 +102,14 @@ public class ArtifactSecurityRecipe extends Recipe {
         }
 
         private boolean isUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) {
-                return false;
-            }
-            Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
-            return "uses".equals(key.getValue());
+            return "uses".equals(entry.getKey().getValue());
         }
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+            String usesValue = entry.getValue() instanceof Yaml.Scalar ? ((Yaml.Scalar) entry.getValue()).getValue() : null;
+            if (usesValue == null) {
                 return entry;
             }
-
-            String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
 
             // Check for checkout actions
             if (usesValue.startsWith("actions/checkout")) {
@@ -260,11 +255,8 @@ public class ArtifactSecurityRecipe extends Recipe {
 
         private Yaml.Mapping findWithMapping(Yaml.Mapping stepMapping) {
             for (Yaml.Mapping.Entry stepEntry : stepMapping.getEntries()) {
-                if (stepEntry.getKey() instanceof Yaml.Scalar) {
-                    Yaml.Scalar key = (Yaml.Scalar) stepEntry.getKey();
-                    if ("with".equals(key.getValue()) && stepEntry.getValue() instanceof Yaml.Mapping) {
-                        return (Yaml.Mapping) stepEntry.getValue();
-                    }
+                if ("with".equals(stepEntry.getKey().getValue()) && stepEntry.getValue() instanceof Yaml.Mapping) {
+                    return (Yaml.Mapping) stepEntry.getValue();
                 }
             }
             return null;
@@ -272,11 +264,8 @@ public class ArtifactSecurityRecipe extends Recipe {
 
         private String getWithValue(Yaml.Mapping withMapping, String key) {
             for (Yaml.Mapping.Entry withEntry : withMapping.getEntries()) {
-                if (withEntry.getKey() instanceof Yaml.Scalar) {
-                    Yaml.Scalar withKey = (Yaml.Scalar) withEntry.getKey();
-                    if (key.equals(withKey.getValue()) && withEntry.getValue() instanceof Yaml.Scalar) {
-                        return ((Yaml.Scalar) withEntry.getValue()).getValue();
-                    }
+                if (key.equals(withEntry.getKey().getValue())) {
+                    return withEntry.getValue() instanceof Yaml.Scalar ? ((Yaml.Scalar) withEntry.getValue()).getValue() : null;
                 }
             }
             return null;

@@ -74,20 +74,11 @@ public class UnpinnedDockerImagesRecipe extends Recipe {
         }
 
         private boolean isImageEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) {
-                return false;
-            }
-
-            String key = ((Yaml.Scalar) entry.getKey()).getValue();
-            // Broader approach - match any "image" entry and let logic handle context validation
-            return "image".equals(key);
+            return "image".equals(entry.getKey().getValue());
         }
 
         private String getImageValue(Yaml.Mapping.Entry entry) {
-            if (entry.getValue() instanceof Yaml.Scalar) {
-                return ((Yaml.Scalar) entry.getValue()).getValue();
-            }
-            return null;
+            return entry.getValue() instanceof Yaml.Scalar ? ((Yaml.Scalar) entry.getValue()).getValue() : null;
         }
 
         private boolean isUnpinnedDockerImage(String imageValue) {

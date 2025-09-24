@@ -19,6 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
+import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -55,19 +56,11 @@ public class SelfHostedRunnerRecipe extends Recipe {
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
             Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
 
-            if (isRunsOnEntry(mappingEntry)) {
+            if ("runs-on".equals(mappingEntry.getKey().getValue()) && isInsideJob()) {
                 return checkRunsOn(mappingEntry);
             }
 
             return mappingEntry;
-        }
-
-        private boolean isRunsOnEntry(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar)) {
-                return false;
-            }
-            Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
-            return "runs-on".equals(key.getValue()) && isInsideJob();
         }
 
         private boolean isInsideJob() {
@@ -77,11 +70,8 @@ public class SelfHostedRunnerRecipe extends Recipe {
                 Object value = current.getValue();
                 if (value instanceof Yaml.Mapping.Entry) {
                     Yaml.Mapping.Entry entry = (Yaml.Mapping.Entry) value;
-                    if (entry.getKey() instanceof Yaml.Scalar) {
-                        Yaml.Scalar key = (Yaml.Scalar) entry.getKey();
-                        if ("jobs".equals(key.getValue())) {
-                            return true;
-                        }
+                    if ("jobs".equals(entry.getKey().getValue())) {
+                        return true;
                     }
                 }
                 current = current.getParent();
@@ -89,10 +79,11 @@ public class SelfHostedRunnerRecipe extends Recipe {
             return false;
         }
 
+
         private Yaml.Mapping.Entry checkRunsOn(Yaml.Mapping.Entry entry) {
-            if (entry.getValue() instanceof Yaml.Scalar) {
-                String runsOnValue = ((Yaml.Scalar) entry.getValue()).getValue();
-                return checkScalarRunsOn(entry, runsOnValue);
+            String scalarValue = entry.getValue() instanceof Yaml.Scalar ? ((Yaml.Scalar) entry.getValue()).getValue() : null;
+            if (scalarValue != null) {
+                return checkScalarRunsOn(entry, scalarValue);
             }
             if (entry.getValue() instanceof Yaml.Sequence) {
                 return checkSequenceRunsOn(entry, (Yaml.Sequence) entry.getValue());
@@ -142,13 +133,9 @@ public class SelfHostedRunnerRecipe extends Recipe {
                 Object value = current.getValue();
                 if (value instanceof Yaml.Mapping) {
                     Yaml.Mapping mapping = (Yaml.Mapping) value;
-                    // Look for strategy.matrix in this mapping
                     for (Yaml.Mapping.Entry matrixEntry : mapping.getEntries()) {
-                        if (matrixEntry.getKey() instanceof Yaml.Scalar) {
-                            Yaml.Scalar key = (Yaml.Scalar) matrixEntry.getKey();
-                            if ("strategy".equals(key.getValue()) && matrixEntry.getValue() instanceof Yaml.Mapping) {
-                                return hasMatrixWithSelfHosted((Yaml.Mapping) matrixEntry.getValue());
-                            }
+                        if ("strategy".equals(matrixEntry.getKey().getValue()) && matrixEntry.getValue() instanceof Yaml.Mapping) {
+                            return hasMatrixWithSelfHosted((Yaml.Mapping) matrixEntry.getValue());
                         }
                     }
                 }
@@ -160,12 +147,9 @@ public class SelfHostedRunnerRecipe extends Recipe {
 
         private boolean hasMatrixWithSelfHosted(Yaml.Mapping strategyMapping) {
             for (Yaml.Mapping.Entry strategyEntry : strategyMapping.getEntries()) {
-                if (strategyEntry.getKey() instanceof Yaml.Scalar) {
-                    Yaml.Scalar key = (Yaml.Scalar) strategyEntry.getKey();
-                    if ("matrix".equals(key.getValue()) && strategyEntry.getValue() instanceof Yaml.Mapping) {
-                        Yaml.Mapping matrixMapping = (Yaml.Mapping) strategyEntry.getValue();
-                        return containsSelfHostedInMatrixValues(matrixMapping);
-                    }
+                if ("matrix".equals(strategyEntry.getKey().getValue()) && strategyEntry.getValue() instanceof Yaml.Mapping) {
+                    Yaml.Mapping matrixMapping = (Yaml.Mapping) strategyEntry.getValue();
+                    return containsSelfHostedInMatrixValues(matrixMapping);
                 }
             }
             return false;
@@ -177,8 +161,8 @@ public class SelfHostedRunnerRecipe extends Recipe {
                     Yaml.Sequence sequence = (Yaml.Sequence) matrixEntry.getValue();
                     for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
                         if (seqEntry.getBlock() instanceof Yaml.Scalar) {
-                            Yaml.Scalar scalar = (Yaml.Scalar) seqEntry.getBlock();
-                            if ("self-hosted".equals(scalar.getValue())) {
+                            String value = ((Yaml.Scalar) seqEntry.getBlock()).getValue();
+                            if ("self-hosted".equals(value)) {
                                 return true;
                             }
                         }
