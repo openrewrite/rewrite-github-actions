@@ -67,3 +67,29 @@ recipeList:
       regex: "True"
       caseSensitive: "False"
       filePattern: "**/.github/workflows/**/*.yml;**/.github/workflows/**/*.yaml"
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.github.MigrateTibdexGitHubAppTokenToActions
+displayName: Migrate from tibdex/github-app-token to actions/create-github-app-token
+description: Migrates from tibdex/github-app-token@v2 to actions/create-github-app-token@v2 and updates parameter names from snake_case to kebab-case.
+tags:
+  - github
+  - actions
+recipeList:
+  - org.openrewrite.github.ChangeAction:
+      oldAction: tibdex/github-app-token
+      newAction: actions/create-github-app-token
+      newVersion: v2
+  - org.openrewrite.yaml.ChangeKey:
+      oldKeyPath: $.jobs..[?(@.uses =~ 'actions/create-github-app-token.*')].with.app_id
+      newKey: app-id
+  - org.openrewrite.yaml.ChangeKey:
+      oldKeyPath: $.jobs..[?(@.uses =~ 'actions/create-github-app-token.*')].with.private_key
+      newKey: private-key
+  - org.openrewrite.yaml.MergeYaml:
+      key: $.jobs..[?(@.uses =~ 'actions/create-github-app-token.*')].with
+      yaml: |-
+        owner: ${{ github.repository_owner }}
+      acceptTheirs: false
+      fileMatcher: '.github/workflows/*.yml'
