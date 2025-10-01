@@ -19,7 +19,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
-import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -92,10 +91,6 @@ public class TemplateInjectionRecipe extends Recipe {
     }
 
     private static class TemplateInjectionVisitor extends YamlIsoVisitor<ExecutionContext> {
-
-        private static final JsonPathMatcher STEP_RUN_MATCHER = new JsonPathMatcher("$.jobs.*.steps[*].run");
-        private static final JsonPathMatcher STEP_USES_MATCHER = new JsonPathMatcher("$.jobs.*.steps[*].uses");
-        private static final JsonPathMatcher STEP_SCRIPT_MATCHER = new JsonPathMatcher("$.jobs.*.steps[*].with.script");
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {

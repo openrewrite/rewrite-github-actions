@@ -19,7 +19,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
-import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -57,9 +56,6 @@ public class UnpinnedDockerImagesRecipe extends Recipe {
     }
 
     private static class UnpinnedDockerImagesVisitor extends YamlIsoVisitor<ExecutionContext> {
-
-        private final JsonPathMatcher imageInServices = new JsonPathMatcher("$.jobs.*.services.*.image");
-        private final JsonPathMatcher imageInContainers = new JsonPathMatcher("$.jobs.*.container.image");
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {

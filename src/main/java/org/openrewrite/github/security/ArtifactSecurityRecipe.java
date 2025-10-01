@@ -19,15 +19,13 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
-import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
@@ -79,8 +77,6 @@ public class ArtifactSecurityRecipe extends Recipe {
     }
 
     private static class ArtifactSecurityVisitor extends YamlIsoVisitor<ExecutionContext> {
-
-        private static final JsonPathMatcher USES_MATCHER = new JsonPathMatcher("$.jobs.*.steps[*].uses");
 
         @Override
         public Yaml.Document visitDocument(Yaml.Document document, ExecutionContext ctx) {
@@ -275,19 +271,6 @@ public class ArtifactSecurityRecipe extends Recipe {
                 }
             }
             return null;
-        }
-
-        private String findNestedScalarValue(Yaml.Mapping mapping, String parentKey, String childKey) {
-            return mapping.getEntries().stream()
-                .filter(entry -> parentKey.equals(entry.getKey().getValue()))
-                .filter(entry -> entry.getValue() instanceof Yaml.Mapping)
-                .map(entry -> (Yaml.Mapping) entry.getValue())
-                .flatMap(childMapping -> childMapping.getEntries().stream())
-                .filter(childEntry -> childKey.equals(childEntry.getKey().getValue()))
-                .filter(childEntry -> childEntry.getValue() instanceof Yaml.Scalar)
-                .map(childEntry -> ((Yaml.Scalar) childEntry.getValue()).getValue())
-                .findFirst()
-                .orElse(null);
         }
 
         private String getWithValue(Yaml.Mapping withMapping, String key) {
