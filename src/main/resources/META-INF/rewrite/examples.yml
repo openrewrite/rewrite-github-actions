@@ -573,6 +573,85 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.SetupNodeUpgradeNodeVersion
+examples:
+- description: ''
+  parameters:
+  - 'null'
+  sources:
+  - before: |
+      name: CI
+      on:
+        pull_request:
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                node-version: '18'
+            - run: npm ci
+            - run: npm test
+    after: |
+      name: CI
+      on:
+        pull_request:
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                node-version: '24'
+            - run: npm ci
+            - run: npm test
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.SetupPythonToUv
+examples:
+- description: ''
+  parameters:
+  - 'null'
+  - 'null'
+  - 'null'
+  - 'null'
+  sources:
+  - before: |
+      name: Test
+
+      on: [push]
+
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                python-version: '3.11'
+            - run: pip install -r requirements.txt
+            - run: python -m pytest
+    after: |
+      name: Test
+
+      on: [push]
+
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - uses: astral-sh/setup-uv@v6
+              with:
+                python-version: '3.11'
+            - run: uv sync
+            - run: uv run pytest
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.UpgradeSlackNotificationVersion2
 examples:
 - description: ''

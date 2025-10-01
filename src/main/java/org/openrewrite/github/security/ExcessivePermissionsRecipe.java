@@ -19,15 +19,10 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
-import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
@@ -64,9 +59,6 @@ public class ExcessivePermissionsRecipe extends Recipe {
     }
 
     private static class ExcessivePermissionsVisitor extends YamlIsoVisitor<ExecutionContext> {
-
-        private static final JsonPathMatcher WORKFLOW_PERMISSIONS = new JsonPathMatcher("$.permissions");
-        private static final JsonPathMatcher JOB_PERMISSIONS = new JsonPathMatcher("$.jobs.*.permissions");
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {

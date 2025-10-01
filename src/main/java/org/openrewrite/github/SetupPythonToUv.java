@@ -15,12 +15,12 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.*;
-import org.openrewrite.yaml.YamlIsoVisitor;
-import org.openrewrite.yaml.tree.Yaml;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
+import org.openrewrite.*;
+import org.openrewrite.yaml.YamlIsoVisitor;
+import org.openrewrite.yaml.tree.Yaml;
 
 import java.time.Duration;
 import java.util.regex.Pattern;
@@ -73,20 +73,20 @@ public class SetupPythonToUv extends Recipe {
         return "Replace `actions/setup-python` action with `astral-sh/setup-uv` action for faster Python " +
                "environment setup and dependency management.\n\n" +
                "**Benefits of UV:**\n" +
-               "- Significantly faster package installation and environment setup\n" +
-               "- Built-in dependency resolution and locking\n" +
-               "- Integrated caching for improved CI performance\n" +
-               "- Drop-in replacement for pip workflows\n\n" +
+               " - Significantly faster package installation and environment setup\n" +
+               " - Built-in dependency resolution and locking\n" +
+               " - Integrated caching for improved CI performance\n" +
+               " - Drop-in replacement for pip workflows\n\n" +
                "**Transformations applied:**\n" +
-               "- `actions/setup-python@v5` → `astral-sh/setup-uv@v6`\n" +
-               "- `cache: 'pip'` → `enable-cache: 'true'`\n" +
-               "- `pip install -r requirements.txt` → `uv sync` (configurable strategy)\n" +
-               "- `python -m <module>` → `uv run <module>`\n" +
-               "- Removes unnecessary `pip install --upgrade pip` steps\n\n" +
+               " - `actions/setup-python@v5` → `astral-sh/setup-uv@v6`\n" +
+               " - `cache: 'pip'` → `enable-cache: 'true'`\n" +
+               " - `pip install -r requirements.txt` → `uv sync` (configurable strategy)\n" +
+               " - `python -m <module>` → `uv run <module>`\n" +
+               " - Removes unnecessary `pip install --upgrade pip` steps\n\n" +
                "**Sync strategies:**\n" +
-               "- `basic`: Basic synchronization (`uv sync`)\n" +
-               "- `locked`: Use locked dependencies (`uv sync --locked`)\n" +
-               "- `full`: Install all extras and dev dependencies (`uv sync --all-extras --dev`)\n\n" +
+               " - `basic`: Basic synchronization (`uv sync`)\n" +
+               " - `locked`: Use locked dependencies (`uv sync --locked`)\n" +
+               " - `full`: Install all extras and dev dependencies (`uv sync --all-extras --dev`)\n\n" +
                "See the [UV GitHub integration guide](https://docs.astral.sh/uv/guides/integration/github/) for more details.";
     }
 
@@ -123,7 +123,6 @@ public class SetupPythonToUv extends Recipe {
     private static class SetupPythonToUvVisitor extends YamlIsoVisitor<ExecutionContext> {
 
         private static final Pattern SETUP_PYTHON_PATTERN = Pattern.compile("^actions/setup-python(@.*)?$");
-        private static final Pattern SETUP_UV_PATTERN = Pattern.compile("^astral-sh/setup-uv(@.*)?$");
         private static final Pattern PIP_INSTALL_REQUIREMENTS = Pattern.compile("^pip install -r requirements\\.txt$");
         private static final Pattern PIP_INSTALL_DEV = Pattern.compile("^pip install \\.$");
         private static final Pattern PIP_INSTALL_EDITABLE = Pattern.compile("^pip install -e \\.$");
@@ -143,7 +142,7 @@ public class SetupPythonToUv extends Recipe {
         }
 
         @Override
-        public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
+        public  Yaml.Mapping.@Nullable Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
             if ("uses".equals(entry.getKey().getValue()) &&
                 entry.getValue() instanceof Yaml.Scalar &&
                 SETUP_PYTHON_PATTERN.matcher(((Yaml.Scalar) entry.getValue()).getValue()).matches()) {
@@ -209,7 +208,7 @@ public class SetupPythonToUv extends Recipe {
         }
 
         @Override
-        public Yaml.Sequence.Entry visitSequenceEntry(Yaml.Sequence.Entry entry, ExecutionContext ctx) {
+        public  Yaml.Sequence.@Nullable Entry visitSequenceEntry(Yaml.Sequence.Entry entry, ExecutionContext ctx) {
             if (transformPipCommands && entry.getBlock() instanceof Yaml.Mapping) {
                 Yaml.Mapping mapping = (Yaml.Mapping) entry.getBlock();
 

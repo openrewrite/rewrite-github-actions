@@ -19,11 +19,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
-import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
-import java.util.List;
 import java.util.Optional;
 
 @Value
@@ -52,9 +50,6 @@ public class SelfHostedRunnerRecipe extends Recipe {
     }
 
     private static class SelfHostedRunnerVisitor extends YamlIsoVisitor<ExecutionContext> {
-
-        private static final JsonPathMatcher RUNS_ON_MATCHER = new JsonPathMatcher("$.jobs.*.runs-on");
-        private static final JsonPathMatcher MATRIX_MATCHER = new JsonPathMatcher("$.jobs.*.strategy.matrix.*");
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
