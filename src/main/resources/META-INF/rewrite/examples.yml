@@ -15,7 +15,7 @@
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.AddManualTrigger
 examples:
-- description: ''
+- description: '`AddManualTriggerTest#manualTrigger`'
   sources:
   - before: |
       on:
@@ -32,12 +32,13 @@ examples:
         workflow_dispatch:
       env:
         TEST: 'value'
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.AutoCancelInProgressWorkflow
 examples:
-- description: ''
+- description: '`AutoCancelInProgressWorkflowTest#useDefaultAccessToken`'
   parameters:
   - 'null'
   sources:
@@ -56,12 +57,13 @@ examples:
               with:
                 access_token: ${{ github.token }}
             - uses: actions/checkout@v2
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.ChangeAction
 examples:
-- description: ''
+- description: '`ChangeActionTest#changeActionInSteps`'
   parameters:
   - gradle/wrapper-validation-action
   - gradle/actions/wrapper-validation
@@ -85,12 +87,13 @@ examples:
               uses: actions/checkout@v4
             - name: Validate wrapper
               uses: gradle/actions/wrapper-validation@v3
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.ChangeActionVersion
 examples:
-- description: ''
+- description: '`ChangeActionVersionTest#updateActionVersion`'
   parameters:
   - actions/setup-java
   - v4
@@ -109,12 +112,13 @@ examples:
           steps:
             - uses: actions/checkout@v2
             - uses: actions/setup-java@v4
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.ChangeDependabotScheduleInterval
 examples:
-- description: ''
+- description: '`ChangeDependabotScheduleIntervalTest#changeDependabotScheduleInterval`'
   parameters:
   - github-actions
   - weekly
@@ -149,12 +153,13 @@ examples:
           directory: /
           schedule:
             interval: monthly
+    path: .github/dependabot.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.FindMissingTimeout
 examples:
-- description: ''
+- description: '`FindMissingTimeoutTest#findMissingTimeout`'
   sources:
   - before: |
       jobs:
@@ -172,12 +177,13 @@ examples:
             - uses: actions/checkout@v2
             - name: Run a one-line script
               run: echo Hello, world!
+    path: .github/workflows/build.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.PreferSecretsInheritWorkflow
 examples:
-- description: ''
+- description: '`PreferSecretsInheritWorkflowTest#replaceIdenticalSecretsWithInherit`'
   sources:
   - before: |
       jobs:
@@ -194,12 +200,13 @@ examples:
           with:
             config-path: .github/labeler.yml
           secrets: inherit
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.PreferTemurinDistributions
 examples:
-- description: ''
+- description: '`PreferTemurinDistributionsTest#changesWhenAllAreHosted`'
   sources:
   - before: |
       jobs:
@@ -251,12 +258,13 @@ examples:
                 java-version: "8"
             - name: build
               run: ./gradlew build test
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.RemoveAllCronTriggers
 examples:
-- description: ''
+- description: '`RemoveAllCronTriggerTest#removeCronTrigger`'
   sources:
   - before: |
       on:
@@ -271,12 +279,13 @@ examples:
         push:
           branches:
             - main
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.RemoveUnusedWorkflowDispatchInputs
 examples:
-- description: ''
+- description: '`RemoveUnusedWorkflowDispatchInputsTest#removeUnusedInputs`'
   sources:
   - before: |
       name: Test Workflow
@@ -328,12 +337,13 @@ examples:
             - name: Step 3
               if: inputs . usedInGithubActionSyntax == 'true'
               run: echo "Conditional step"
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.RemoveWorkflowInputArgument
 examples:
-- description: ''
+- description: '`RemoveWorkflowInputArgumentTest#removeWorkflowInputArgument`'
   parameters:
   - org/repo/.github/workflows/myWorkflow.yml
   - v1.2.3
@@ -358,12 +368,13 @@ examples:
           with:
             keepThisInput: "keep this value"
             anotherInput: "also keep this"
+    path: .github/workflows/caller.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.ReplaceRunners
 examples:
-- description: ''
+- description: '`ReplaceRunnersTest#replaceRunners`'
   parameters:
   - build
   - List.of("ubuntu-latest", "MyRunner")
@@ -380,12 +391,13 @@ examples:
           runs-on: [ubuntu-latest, MyRunner]
         other:
           runs-on: ubuntu-latest
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.ReplaceSecrets
 examples:
-- description: ''
+- description: '`ReplaceSecretsTest#replaceSecretsInWorkflow`'
   parameters:
   - OSSRH_S01_USERNAME
   - SONATYPE_USERNAME
@@ -413,12 +425,13 @@ examples:
             - name: Publish to Maven Central
               env:
                 MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+    path: .github/workflows/publish.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.SetupJavaAdoptOpenJDKToTemurin
 examples:
-- description: ''
+- description: '`SetupJavaAdoptOpenJDKToTemurinTest#actionsSetupJavaAdoptOpenJDKToTemurin`'
   sources:
   - before: |
       jobs:
@@ -468,12 +481,13 @@ examples:
                 java-version: "11"
             - name: build
               run: ./gradlew build test
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.SetupJavaAdoptOpenj9ToSemeru
 examples:
-- description: ''
+- description: '`SetupJavaAdoptOpenj9ToSemeruTest#actionsSetupJavaAdoptOpenJDKToTemurin`'
   sources:
   - before: |
       jobs:
@@ -523,12 +537,13 @@ examples:
                 java-version: "11"
             - name: build
               run: ./gradlew build test
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.SetupJavaUpgradeJavaVersion
 examples:
-- description: ''
+- description: '`SetupJavaUpgradeJavaVersionTest#updatesOldMajorVersion`'
   parameters:
   - '21'
   sources:
@@ -570,12 +585,13 @@ examples:
                 distribution: zulu
             - name: build
               run: ./gradlew build test
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.SetupNodeUpgradeNodeVersion
 examples:
-- description: ''
+- description: '`SetupNodeUpgradeNodeVersionTest#upgradeNodeVersion`'
   parameters:
   - 'null'
   sources:
@@ -607,12 +623,13 @@ examples:
                 node-version: '24'
             - run: npm ci
             - run: npm test
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.SetupPythonToUv
 examples:
-- description: ''
+- description: '`SetupPythonToUvTest#basicSetupPythonToUv`'
   parameters:
   - 'null'
   - 'null'
@@ -649,12 +666,13 @@ examples:
                 python-version: '3.11'
             - run: uv sync
             - run: uv run pytest
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.UpgradeSlackNotificationVersion2
 examples:
-- description: ''
+- description: '`UpgradeSlackNotificationVersion2Test#updatesVersion2`'
   sources:
   - before: |
       jobs:
@@ -681,12 +699,13 @@ examples:
                 payload: |
                   channel: "##foo-alerts"
                   text: ":boom: Unable run dependency check on: <${{ steps.get_failed_check_link.outputs.failed-check-link }}|${{ inputs.organization }}/${{ inputs.repository }}>"
+    path: .github/workflows/ci.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.AnonymousJobsRecipe
 examples:
-- description: ''
+- description: '`AnonymousJobsRecipeTest#shouldFlagJobWithoutName`'
   sources:
   - before: |
       name: Test Workflow
@@ -714,12 +733,13 @@ examples:
           runs-on: ubuntu-latest
           steps:
             - run: echo "building"
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.ArtifactSecurityRecipe
 examples:
-- description: ''
+- description: '`ArtifactSecurityRecipeTest#shouldFlagCredentialPersistenceRisk`'
   sources:
   - before: |
       name: Build and Upload
@@ -751,12 +771,13 @@ examples:
                   ~/.ssh/
                   ~/.gitconfig
                   ~/.aws/
+    path: .github/workflows/build.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.BotConditionsRecipe
 examples:
-- description: ''
+- description: '`BotConditionsRecipeTest#shouldFlagSpoofableActorNameCheck`'
   sources:
   - before: |
       name: Test Workflow
@@ -776,12 +797,13 @@ examples:
           ~~(Bot actor name check is spoofable. Consider using actor_id instead for more secure bot validation.)~~>if: github.actor == 'dependabot[bot]'
           steps:
             - uses: actions/checkout@v4
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.CachePoisoningRecipe
 examples:
-- description: ''
+- description: '`CachePoisoningRecipeTest#shouldDetectCacheInReleaseWorkflow`'
   sources:
   - before: |
       on: release
@@ -811,12 +833,13 @@ examples:
             - uses: softprops/action-gh-release@v1
               with:
                 files: dist/*
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.DangerousTriggersRecipe
 examples:
-- description: ''
+- description: '`DangerousTriggersRecipeTest#shouldDetectPullRequestTarget`'
   sources:
   - before: |
       on: pull_request_target
@@ -832,12 +855,13 @@ examples:
           runs-on: ubuntu-latest
           steps:
             - run: echo "test"
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.ExcessivePermissionsRecipe
 examples:
-- description: ''
+- description: '`ExcessivePermissionsRecipeTest#shouldFlagWriteAllPermissions`'
   sources:
   - before: |
       name: Test Workflow
@@ -857,12 +881,13 @@ examples:
           runs-on: ubuntu-latest
           steps:
             - uses: actions/checkout@v4
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.ForbiddenUsesRecipe
 examples:
-- description: ''
+- description: '`ForbiddenUsesRecipeTest#shouldFlagDangerousAction`'
   sources:
   - before: |
       name: Test Workflow
@@ -882,12 +907,13 @@ examples:
           steps:
             - ~~(Action 'actions/checkout@v1' is known to have security vulnerabilities. Consider upgrading to a more recent version or using an alternative.)~~>uses: actions/checkout@v1
               name: Checkout code
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.GitHubEnvRecipe
 examples:
-- description: ''
+- description: '`GitHubEnvRecipeTest#shouldDetectGitHubEnvInPullRequestTarget`'
   sources:
   - before: |
       on: pull_request_target
@@ -911,12 +937,13 @@ examples:
               ~~(Write to GITHUB_ENV may allow code execution in a workflow with dangerous triggers. This can lead to code injection when the written content includes user-controlled data. Ensure any dynamic content is properly sanitized or avoid writing to environment files in workflows triggered by untrusted events.)~~>run: |
                 echo "BRANCH_NAME=${{ github.head_ref }}" >> $GITHUB_ENV
                 echo "Building branch: $BRANCH_NAME"
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.HardcodedCredentialsRecipe
 examples:
-- description: ''
+- description: '`HardcodedCredentialsRecipeTest#shouldDetectHardcodedContainerPassword`'
   sources:
   - before: |
       on: push
@@ -942,12 +969,13 @@ examples:
               ~~(Container registry password 'hardcoded-password' appears to be hardcoded. Use secrets (e.g., ${{ secrets.REGISTRY_PASSWORD }}) instead.)~~>password: hardcoded-password
           steps:
             - run: echo "test"
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.InsecureCommandsRecipe
 examples:
-- description: ''
+- description: '`InsecureCommandsRecipeTest#shouldDetectInsecureCommandsAtWorkflowLevel`'
   sources:
   - before: |
       on: push
@@ -969,12 +997,13 @@ examples:
           runs-on: ubuntu-latest
           steps:
             - run: echo "test"
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.ObfuscationRecipe
 examples:
-- description: ''
+- description: '`ObfuscationRecipeTest#shouldFlagObfuscatedUsesWithDot`'
   sources:
   - before: |
       name: Test Workflow
@@ -992,12 +1021,13 @@ examples:
           runs-on: ubuntu-latest
           steps:
             - ~~(Action reference contains obfuscated path components that may hide the actual action being used.)~~>uses: actions/checkout/./action@v4
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.RefVersionMismatchRecipe
 examples:
-- description: ''
+- description: '`RefVersionMismatchRecipeTest#shouldFlagMismatchedVersionComment`'
   sources:
   - before: |
       name: Test Workflow
@@ -1017,12 +1047,13 @@ examples:
           steps:
             # tag=v3
             - ~~(Action is pinned to a commit SHA but has a version comment that may not match. Verify the comment reflects the actual pinned version.)~~>uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.SecretsInheritRecipe
 examples:
-- description: ''
+- description: '`SecretsInheritRecipeTest#shouldDetectSecretsInherit`'
   sources:
   - before: |
       on: push
@@ -1040,12 +1071,13 @@ examples:
           ~~(This reusable workflow unconditionally inherits all parent secrets. Consider explicitly passing only the required secrets to follow the principle of least privilege and reduce the risk of secret exposure to called workflows.)~~>secrets: inherit
           with:
             environment: production
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.SelfHostedRunnerRecipe
 examples:
-- description: ''
+- description: '`SelfHostedRunnerRecipeTest#shouldFlagSelfHostedRunner`'
   sources:
   - before: |
       name: Test Workflow
@@ -1063,12 +1095,13 @@ examples:
           ~~(Uses self-hosted runner which may have security implications in public repositories. Ensure runners are ephemeral and properly isolated.)~~>runs-on: [self-hosted, linux, x64]
           steps:
             - uses: actions/checkout@v4
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.TemplateInjectionRecipe
 examples:
-- description: ''
+- description: '`TemplateInjectionRecipeTest#shouldFlagPullRequestTitleInjection`'
   sources:
   - before: |
       name: Test Workflow
@@ -1086,12 +1119,13 @@ examples:
           runs-on: ubuntu-latest
           steps:
             - ~~(Potential template injection vulnerability. User-controlled input 'github.event.pull_request.title' used in run command without proper escaping.)~~>run: 'echo "PR Title: ${{ github.event.pull_request.title }}"'
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.TrustedPublishingRecipe
 examples:
-- description: ''
+- description: '`TrustedPublishingRecipeTest#shouldFlagPyPIPublishWithPassword`'
   sources:
   - before: |
       name: Publish to PyPI
@@ -1115,12 +1149,13 @@ examples:
               with:
                 ~~(Manual credential used here)~~>password: ${{ secrets.PYPI_API_TOKEN }}
                 repository-url: https://upload.pypi.org/legacy/
+    path: .github/workflows/publish.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.UndocumentedPermissionsRecipe
 examples:
-- description: ''
+- description: '`UndocumentedPermissionsRecipeTest#shouldFlagUndocumentedWorkflowPermissions`'
   sources:
   - before: |
       name: Test Workflow
@@ -1144,12 +1179,13 @@ examples:
           runs-on: ubuntu-latest
           steps:
             - uses: actions/checkout@v4
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.UnpinnedActionsRecipe
 examples:
-- description: ''
+- description: '`UnpinnedActionsRecipeTest#shouldFlagUnpinnedActionWithTagVersion`'
   sources:
   - before: |
       name: Test Workflow
@@ -1169,12 +1205,13 @@ examples:
           steps:
             - ~~(Action 'actions/checkout@v4' is not pinned to a commit SHA. Consider pinning to a specific commit for security and reproducibility.)~~>uses: actions/checkout@v4
               name: Checkout code
+    path: .github/workflows/test.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.UnpinnedDockerImagesRecipe
 examples:
-- description: ''
+- description: '`UnpinnedDockerImagesRecipeTest#shouldFlagUnpinnedContainerImage`'
   sources:
   - before: |
       name: Test Workflow
@@ -1196,4 +1233,5 @@ examples:
             ~~(Docker image 'node:18' is not pinned to a digest. Consider pinning to a specific digest for security and reproducibility.)~~>image: node:18
           steps:
             - uses: actions/checkout@v4
+    path: .github/workflows/test.yml
     language: yaml
