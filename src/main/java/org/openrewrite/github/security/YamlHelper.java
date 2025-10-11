@@ -18,13 +18,11 @@ package org.openrewrite.github.security;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.yaml.tree.Yaml;
 
-import java.util.Optional;
-
 /**
  * Utility class containing common patterns for working with YAML LST in OpenRewrite recipes.
  * These methods help eliminate code duplication and provide idiomatic ways to work with YAML structures.
  */
-public final class YamlHelper {
+final class YamlHelper {
 
     private YamlHelper() {
         // Utility class - prevent instantiation
@@ -41,24 +39,13 @@ public final class YamlHelper {
     }
 
     /**
-     * Gets the first value from a YAML sequence if it exists and is a scalar.
-     *
-     * @param sequence The YAML sequence to extract from
-     * @return Optional containing the first scalar value, or empty if sequence is empty or first element is not a scalar
-     */
-    public static Optional<String> getFirstSequenceValue(Yaml.Sequence sequence) {
-        return sequence.getEntries().isEmpty() ? Optional.empty() :
-            Optional.ofNullable(getScalarValue(sequence.getEntries().get(0).getBlock()));
-    }
-
-    /**
      * Finds a mapping entry with the given key in a YAML mapping.
      *
      * @param mapping The YAML mapping to search in
      * @param key The key to look for
      * @return The Yaml.Mapping if found, null otherwise
      */
-    public static Yaml.@Nullable Mapping findMappingWithKey(Yaml.Mapping mapping, String key) {
+    private static Yaml.@Nullable Mapping findMappingWithKey(Yaml.Mapping mapping, String key) {
         for (Yaml.Mapping.Entry entry : mapping.getEntries()) {
             if (key.equals(entry.getKey().getValue()) && entry.getValue() instanceof Yaml.Mapping) {
                 return (Yaml.Mapping) entry.getValue();
@@ -74,7 +61,7 @@ public final class YamlHelper {
      * @param key The key to look for
      * @return The scalar value if found, null otherwise
      */
-    public static @Nullable String findScalarValue(Yaml.Mapping mapping, String key) {
+    private static @Nullable String findScalarValue(Yaml.Mapping mapping, String key) {
         for (Yaml.Mapping.Entry entry : mapping.getEntries()) {
             if (key.equals(entry.getKey().getValue())) {
                 return getScalarValue(entry.getValue());

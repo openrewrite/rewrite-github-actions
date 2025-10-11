@@ -22,8 +22,6 @@ import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
-import java.util.Optional;
-
 @Value
 @EqualsAndHashCode(callSuper = false)
 public class SelfHostedRunnerRecipe extends Recipe {
@@ -89,8 +87,8 @@ public class SelfHostedRunnerRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkRunsOnSequence(Yaml.Mapping.Entry entry, Yaml.Sequence sequence) {
-            Optional<String> firstValue = YamlHelper.getFirstSequenceValue(sequence);
-            if (firstValue.isPresent() && "self-hosted".equals(firstValue.get())) {
+            String firstValue = YamlHelper.getScalarValue(sequence.getEntries().get(0).getBlock());
+            if ("self-hosted".equals(firstValue)) {
                 return SearchResult.found(entry,
                         "Uses self-hosted runner which may have security implications in public repositories. " +
                                 "Ensure runners are ephemeral and properly isolated.");
