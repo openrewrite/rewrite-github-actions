@@ -87,15 +87,4 @@ final class YamlHelper {
         return findScalarValue(parentMapping, childKey);
     }
 
-    /**
-     * Checks if a mapping contains an entry with the given key.
-     *
-     * @param mapping The YAML mapping to check
-     * @param key The key to look for
-     * @return true if the mapping contains an entry with the key, false otherwise
-     */
-    public static boolean hasKey(Yaml.Mapping mapping, String key) {
-        return mapping.getEntries().stream()
-                .anyMatch(entry -> key.equals(entry.getKey().getValue()));
-    }
 }

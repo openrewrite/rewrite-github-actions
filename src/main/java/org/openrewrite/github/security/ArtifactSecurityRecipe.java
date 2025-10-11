@@ -17,6 +17,7 @@ package org.openrewrite.github.security;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.JsonPathMatcher;
@@ -98,7 +99,7 @@ public class ArtifactSecurityRecipe extends Recipe {
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
             Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
 
-            if (STEP_USES_MATCHER.matches(getCursor()) && "uses".equals(mappingEntry.getKey().getValue())) {
+            if (STEP_USES_MATCHER.matches(getCursor())) {
                 return checkUsesEntry(mappingEntry);
             }
 
@@ -174,7 +175,7 @@ public class ArtifactSecurityRecipe extends Recipe {
                 public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, Void ctx) {
                     if ("uses".equals(entry.getKey().getValue()) && entry.getValue() instanceof Yaml.Scalar) {
                         String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
-                        if (usesValue != null && (usesValue.startsWith("actions/checkout") || usesValue.startsWith("actions/upload-artifact"))) {
+                        if (usesValue.startsWith("actions/checkout") || usesValue.startsWith("actions/upload-artifact")) {
                             // Additional workflow-level analysis can be added here
                         }
                     }
@@ -205,7 +206,7 @@ public class ArtifactSecurityRecipe extends Recipe {
                     if ("uses".equals(entry.getKey().getValue()) &&
                         entry.getValue() instanceof Yaml.Scalar) {
                         String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
-                        if (usesValue != null && usesValue.startsWith("actions/upload-artifact")) {
+                        if (usesValue.startsWith("actions/upload-artifact")) {
                             found.set(true);
                         }
                     }
@@ -232,14 +233,10 @@ public class ArtifactSecurityRecipe extends Recipe {
             }
 
             // Check for current directory or home directory uploads
-            if (".".equals(pathValue.trim()) || "~".equals(pathValue.trim()) || "/".equals(pathValue.trim())) {
-                return true;
-            }
-
-            return false;
+            return ".".equals(pathValue.trim()) || "~".equals(pathValue.trim()) || "/".equals(pathValue.trim());
         }
 
-        private Yaml.Mapping findParentStepMapping() {
+        private Yaml.@Nullable Mapping findParentStepMapping() {
             // Walk up cursor to find the step mapping that contains this 'uses' entry
             Cursor current = getCursor();
             while (current != null) {
@@ -247,7 +244,10 @@ public class ArtifactSecurityRecipe extends Recipe {
                 if (value instanceof Yaml.Mapping) {
                     Yaml.Mapping mapping = (Yaml.Mapping) value;
                     // Check if this mapping has 'uses'
-                    if (YamlHelper.hasKey(mapping, "uses")) {
+                    boolean hasUses = mapping.getEntries().stream()
+                            .anyMatch(entry -> "uses".equals(entry.getKey().getValue()));
+
+                    if (hasUses) {
                         return mapping;
                     }
                 }

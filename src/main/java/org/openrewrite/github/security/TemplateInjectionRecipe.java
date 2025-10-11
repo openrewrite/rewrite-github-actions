@@ -17,6 +17,7 @@ package org.openrewrite.github.security;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.JsonPathMatcher;
@@ -26,6 +27,7 @@ import org.openrewrite.yaml.tree.Yaml;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Value
@@ -102,17 +104,17 @@ public class TemplateInjectionRecipe extends Recipe {
             Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
 
             // Check run commands for injection vulnerabilities
-            if (STEP_RUN_MATCHER.matches(getCursor()) && "run".equals(mappingEntry.getKey().getValue())) {
+            if (STEP_RUN_MATCHER.matches(getCursor())) {
                 return checkRunEntry(mappingEntry);
             }
 
             // Check uses entries for code injection actions
-            if (STEP_USES_MATCHER.matches(getCursor()) && "uses".equals(mappingEntry.getKey().getValue())) {
+            if (STEP_USES_MATCHER.matches(getCursor())) {
                 return checkUsesEntry(mappingEntry);
             }
 
             // Check script inputs for code injection actions
-            if (STEP_SCRIPT_MATCHER.matches(getCursor()) && "script".equals(mappingEntry.getKey().getValue())) {
+            if (STEP_SCRIPT_MATCHER.matches(getCursor())) {
                 return checkScriptEntry(mappingEntry);
             }
 
@@ -180,9 +182,9 @@ public class TemplateInjectionRecipe extends Recipe {
             return entry;
         }
 
-        private String findVulnerableContext(String content) {
+        private @Nullable String findVulnerableContext(String content) {
             // Find all expressions in the content
-            java.util.regex.Matcher matcher = EXPRESSION_PATTERN.matcher(content);
+            Matcher matcher = EXPRESSION_PATTERN.matcher(content);
 
             while (matcher.find()) {
                 String expression = matcher.group(1).trim();
@@ -200,7 +202,7 @@ public class TemplateInjectionRecipe extends Recipe {
                 }
 
                 // Check for steps outputs (which may contain user input)
-                java.util.regex.Matcher stepsMatcher = STEPS_OUTPUT_PATTERN.matcher(expression);
+                Matcher stepsMatcher = STEPS_OUTPUT_PATTERN.matcher(expression);
                 if (stepsMatcher.find()) {
                     return stepsMatcher.group();
                 }
