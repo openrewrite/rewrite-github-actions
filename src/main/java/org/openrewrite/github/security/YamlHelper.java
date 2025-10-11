@@ -15,6 +15,7 @@
  */
 package org.openrewrite.github.security;
 
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.Optional;
@@ -35,7 +36,7 @@ public final class YamlHelper {
      * @param block The YAML block to extract value from
      * @return The string value if block is a Yaml.Scalar, null otherwise
      */
-    public static String getScalarValue(Yaml.Block block) {
+    public static @Nullable String getScalarValue(Yaml.Block block) {
         return block instanceof Yaml.Scalar ? ((Yaml.Scalar) block).getValue() : null;
     }
 
@@ -57,7 +58,7 @@ public final class YamlHelper {
      * @param key The key to look for
      * @return The Yaml.Mapping if found, null otherwise
      */
-    public static Yaml.Mapping findMappingWithKey(Yaml.Mapping mapping, String key) {
+    public static Yaml.@Nullable Mapping findMappingWithKey(Yaml.Mapping mapping, String key) {
         for (Yaml.Mapping.Entry entry : mapping.getEntries()) {
             if (key.equals(entry.getKey().getValue()) && entry.getValue() instanceof Yaml.Mapping) {
                 return (Yaml.Mapping) entry.getValue();
@@ -73,7 +74,7 @@ public final class YamlHelper {
      * @param key The key to look for
      * @return The scalar value if found, null otherwise
      */
-    public static String findScalarValue(Yaml.Mapping mapping, String key) {
+    public static @Nullable String findScalarValue(Yaml.Mapping mapping, String key) {
         for (Yaml.Mapping.Entry entry : mapping.getEntries()) {
             if (key.equals(entry.getKey().getValue())) {
                 return getScalarValue(entry.getValue());
@@ -91,7 +92,7 @@ public final class YamlHelper {
      * @param childKey The child key (e.g., "path")
      * @return The nested scalar value if found, null otherwise
      */
-    public static String findNestedScalarValue(Yaml.Mapping mapping, String parentKey, String childKey) {
+    public static @Nullable String findNestedScalarValue(Yaml.Mapping mapping, String parentKey, String childKey) {
         Yaml.Mapping parentMapping = findMappingWithKey(mapping, parentKey);
         if (parentMapping == null) {
             return null;
