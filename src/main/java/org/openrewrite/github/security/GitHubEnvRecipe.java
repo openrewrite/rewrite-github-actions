@@ -109,28 +109,24 @@ public class GitHubEnvRecipe extends Recipe {
         }
 
         private boolean checkForDangerousTriggers(Yaml.Block onValue) {
-            if (onValue instanceof Yaml.Scalar) {
-                String trigger = ((Yaml.Scalar) onValue).getValue();
-                return DANGEROUS_TRIGGERS.contains(trigger);
+            String scalarTrigger = YamlHelper.getScalarValue(onValue);
+            if (scalarTrigger != null) {
+                return DANGEROUS_TRIGGERS.contains(scalarTrigger);
             }
             if (onValue instanceof Yaml.Sequence) {
                 Yaml.Sequence sequence = (Yaml.Sequence) onValue;
                 for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
-                    if (seqEntry.getBlock() instanceof Yaml.Scalar) {
-                        String trigger = ((Yaml.Scalar) seqEntry.getBlock()).getValue();
-                        if (DANGEROUS_TRIGGERS.contains(trigger)) {
-                            return true;
-                        }
+                    String trigger = YamlHelper.getScalarValue(seqEntry.getBlock());
+                    if (trigger != null && DANGEROUS_TRIGGERS.contains(trigger)) {
+                        return true;
                     }
                 }
             } else if (onValue instanceof Yaml.Mapping) {
                 Yaml.Mapping mapping = (Yaml.Mapping) onValue;
                 for (Yaml.Mapping.Entry triggerEntry : mapping.getEntries()) {
-                    if (triggerEntry.getKey() instanceof Yaml.Scalar) {
-                        String trigger = ((Yaml.Scalar) triggerEntry.getKey()).getValue();
-                        if (DANGEROUS_TRIGGERS.contains(trigger)) {
-                            return true;
-                        }
+                    String trigger = triggerEntry.getKey().getValue();
+                    if (DANGEROUS_TRIGGERS.contains(trigger)) {
+                        return true;
                     }
                 }
             }
@@ -167,10 +163,7 @@ public class GitHubEnvRecipe extends Recipe {
         }
 
         private String getRunContent(Yaml.Mapping.Entry entry) {
-            if (entry.getValue() instanceof Yaml.Scalar) {
-                return ((Yaml.Scalar) entry.getValue()).getValue();
-            }
-            return null;
+            return YamlHelper.getScalarValue(entry.getValue());
         }
 
         private boolean usesGitHubEnv(String runContent) {

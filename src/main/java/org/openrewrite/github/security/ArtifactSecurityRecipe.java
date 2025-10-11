@@ -17,8 +17,10 @@ package org.openrewrite.github.security;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
+import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -78,6 +80,8 @@ public class ArtifactSecurityRecipe extends Recipe {
 
     private static class ArtifactSecurityVisitor extends YamlIsoVisitor<ExecutionContext> {
 
+        private static final JsonPathMatcher STEP_USES_MATCHER = new JsonPathMatcher("$..steps[*].uses");
+
         @Override
         public Yaml.Document visitDocument(Yaml.Document document, ExecutionContext ctx) {
             // Analyze the entire workflow for credential persistence patterns
@@ -95,7 +99,7 @@ public class ArtifactSecurityRecipe extends Recipe {
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
             Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
 
-            if ("uses".equals(mappingEntry.getKey().getValue())) {
+            if (STEP_USES_MATCHER.matches(getCursor())) {
                 return checkUsesEntry(mappingEntry);
             }
 
@@ -104,7 +108,7 @@ public class ArtifactSecurityRecipe extends Recipe {
 
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            String usesValue = entry.getValue() instanceof Yaml.Scalar ? ((Yaml.Scalar) entry.getValue()).getValue() : null;
+            String usesValue = YamlHelper.getScalarValue(entry.getValue());
             if (usesValue == null) {
                 return entry;
             }
@@ -129,22 +133,19 @@ public class ArtifactSecurityRecipe extends Recipe {
                 return entry;
             }
 
-            Yaml.Mapping withMapping = findWithMapping(stepMapping);
+            String persistCredentials = YamlHelper.findNestedScalarValue(stepMapping, "with", "persist-credentials");
 
-            if (withMapping == null) {
-                // No 'with' section means default behavior (persist-credentials: true)
+            if (persistCredentials == null) {
+                // No 'with' section or no persist-credentials means default behavior (persist-credentials: true)
                 if (workflowHasArtifactUpload()) {
                     return SearchResult.found(entry,
                             "Checkout step does not disable credential persistence, which may expose credentials in artifacts.");
                 }
-            } else {
+            } else if ("true".equals(persistCredentials)) {
                 // Check persist-credentials setting
-                String persistCredentials = getWithValue(withMapping, "persist-credentials");
-                if ("true".equals(persistCredentials)) {
-                    if (workflowHasArtifactUpload()) {
-                        return SearchResult.found(entry,
-                                "Checkout step explicitly enables credential persistence, which may expose credentials in artifacts.");
-                    }
+                if (workflowHasArtifactUpload()) {
+                    return SearchResult.found(entry,
+                            "Checkout step explicitly enables credential persistence, which may expose credentials in artifacts.");
                 }
             }
 
@@ -158,12 +159,7 @@ public class ArtifactSecurityRecipe extends Recipe {
                 return entry;
             }
 
-            Yaml.Mapping withMapping = findWithMapping(stepMapping);
-            if (withMapping == null) {
-                return entry;
-            }
-
-            String pathValue = getWithValue(withMapping, "path");
+            String pathValue = YamlHelper.findNestedScalarValue(stepMapping, "with", "path");
             if (pathValue != null && hasDangerousArtifactPaths(pathValue)) {
                 return SearchResult.found(entry,
                         "Uploading potentially sensitive paths that may contain credentials or configuration files.");
@@ -179,7 +175,7 @@ public class ArtifactSecurityRecipe extends Recipe {
                 public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, Void ctx) {
                     if ("uses".equals(entry.getKey().getValue()) && entry.getValue() instanceof Yaml.Scalar) {
                         String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
-                        if (usesValue != null && (usesValue.startsWith("actions/checkout") || usesValue.startsWith("actions/upload-artifact"))) {
+                        if (usesValue.startsWith("actions/checkout") || usesValue.startsWith("actions/upload-artifact")) {
                             // Additional workflow-level analysis can be added here
                         }
                     }
@@ -210,7 +206,7 @@ public class ArtifactSecurityRecipe extends Recipe {
                     if ("uses".equals(entry.getKey().getValue()) &&
                         entry.getValue() instanceof Yaml.Scalar) {
                         String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
-                        if (usesValue != null && usesValue.startsWith("actions/upload-artifact")) {
+                        if (usesValue.startsWith("actions/upload-artifact")) {
                             found.set(true);
                         }
                     }
@@ -237,14 +233,10 @@ public class ArtifactSecurityRecipe extends Recipe {
             }
 
             // Check for current directory or home directory uploads
-            if (".".equals(pathValue.trim()) || "~".equals(pathValue.trim()) || "/".equals(pathValue.trim())) {
-                return true;
-            }
-
-            return false;
+            return ".".equals(pathValue.trim()) || "~".equals(pathValue.trim()) || "/".equals(pathValue.trim());
         }
 
-        private Yaml.Mapping findParentStepMapping() {
+        private Yaml.@Nullable Mapping findParentStepMapping() {
             // Walk up cursor to find the step mapping that contains this 'uses' entry
             Cursor current = getCursor();
             while (current != null) {
@@ -253,31 +245,13 @@ public class ArtifactSecurityRecipe extends Recipe {
                     Yaml.Mapping mapping = (Yaml.Mapping) value;
                     // Check if this mapping has 'uses'
                     boolean hasUses = mapping.getEntries().stream()
-                            .anyMatch(mapEntry -> "uses".equals(mapEntry.getKey().getValue()));
+                            .anyMatch(entry -> "uses".equals(entry.getKey().getValue()));
 
                     if (hasUses) {
                         return mapping;
                     }
                 }
                 current = current.getParent();
-            }
-            return null;
-        }
-
-        private Yaml.Mapping findWithMapping(Yaml.Mapping stepMapping) {
-            for (Yaml.Mapping.Entry stepEntry : stepMapping.getEntries()) {
-                if ("with".equals(stepEntry.getKey().getValue()) && stepEntry.getValue() instanceof Yaml.Mapping) {
-                    return (Yaml.Mapping) stepEntry.getValue();
-                }
-            }
-            return null;
-        }
-
-        private String getWithValue(Yaml.Mapping withMapping, String key) {
-            for (Yaml.Mapping.Entry withEntry : withMapping.getEntries()) {
-                if (key.equals(withEntry.getKey().getValue())) {
-                    return withEntry.getValue() instanceof Yaml.Scalar ? ((Yaml.Scalar) withEntry.getValue()).getValue() : null;
-                }
             }
             return null;
         }

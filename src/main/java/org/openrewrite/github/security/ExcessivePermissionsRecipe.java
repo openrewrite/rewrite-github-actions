@@ -76,7 +76,7 @@ public class ExcessivePermissionsRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkPermissions(Yaml.Mapping.Entry entry) {
-            String scalarPermissionValue = entry.getValue() instanceof Yaml.Scalar ? ((Yaml.Scalar) entry.getValue()).getValue() : null;
+            String scalarPermissionValue = YamlHelper.getScalarValue(entry.getValue());
             if (scalarPermissionValue != null) {
                 return checkScalarPermissions(entry, scalarPermissionValue);
             }
@@ -107,7 +107,7 @@ public class ExcessivePermissionsRecipe extends Recipe {
 
             for (Yaml.Mapping.Entry permEntry : permissionsMapping.getEntries()) {
                 String permissionName = permEntry.getKey().getValue();
-                String permissionValue = permEntry.getValue() instanceof Yaml.Scalar ? ((Yaml.Scalar) permEntry.getValue()).getValue() : null;
+                String permissionValue = YamlHelper.getScalarValue(permEntry.getValue());
                 if (permissionName != null && permissionValue != null) {
 
                     if ("write".equals(permissionValue)) {

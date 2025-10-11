@@ -17,14 +17,17 @@ package org.openrewrite.github.security;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
+import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Value
@@ -92,34 +95,34 @@ public class TemplateInjectionRecipe extends Recipe {
 
     private static class TemplateInjectionVisitor extends YamlIsoVisitor<ExecutionContext> {
 
+        private static final JsonPathMatcher STEP_RUN_MATCHER = new JsonPathMatcher("$..steps[*].run");
+        private static final JsonPathMatcher STEP_USES_MATCHER = new JsonPathMatcher("$..steps[*].uses");
+        private static final JsonPathMatcher STEP_SCRIPT_MATCHER = new JsonPathMatcher("$..steps[*].with.script");
+
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
             Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
 
             // Check run commands for injection vulnerabilities
-            if ("run".equals(mappingEntry.getKey().getValue())) {
+            if (STEP_RUN_MATCHER.matches(getCursor())) {
                 return checkRunEntry(mappingEntry);
             }
 
             // Check uses entries for code injection actions
-            if ("uses".equals(mappingEntry.getKey().getValue())) {
+            if (STEP_USES_MATCHER.matches(getCursor())) {
                 return checkUsesEntry(mappingEntry);
             }
 
             // Check script inputs for code injection actions
-            if ("script".equals(mappingEntry.getKey().getValue())) {
+            if (STEP_SCRIPT_MATCHER.matches(getCursor())) {
                 return checkScriptEntry(mappingEntry);
             }
 
             return mappingEntry;
         }
 
-        private String getScalarValue(Yaml.Block value) {
-            return value instanceof Yaml.Scalar ? ((Yaml.Scalar) value).getValue() : null;
-        }
-
         private Yaml.Mapping.Entry checkRunEntry(Yaml.Mapping.Entry entry) {
-            String runCommand = getScalarValue(entry.getValue());
+            String runCommand = YamlHelper.getScalarValue(entry.getValue());
             if (runCommand == null) {
                 return entry;
             }
@@ -140,7 +143,7 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            String usesValue = getScalarValue(entry.getValue());
+            String usesValue = YamlHelper.getScalarValue(entry.getValue());
             if (usesValue == null) {
                 return entry;
             }
@@ -158,7 +161,7 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkScriptEntry(Yaml.Mapping.Entry entry) {
-            String scriptContent = getScalarValue(entry.getValue());
+            String scriptContent = YamlHelper.getScalarValue(entry.getValue());
             if (scriptContent == null) {
                 return entry;
             }
@@ -179,9 +182,9 @@ public class TemplateInjectionRecipe extends Recipe {
             return entry;
         }
 
-        private String findVulnerableContext(String content) {
+        private @Nullable String findVulnerableContext(String content) {
             // Find all expressions in the content
-            java.util.regex.Matcher matcher = EXPRESSION_PATTERN.matcher(content);
+            Matcher matcher = EXPRESSION_PATTERN.matcher(content);
 
             while (matcher.find()) {
                 String expression = matcher.group(1).trim();
@@ -199,7 +202,7 @@ public class TemplateInjectionRecipe extends Recipe {
                 }
 
                 // Check for steps outputs (which may contain user input)
-                java.util.regex.Matcher stepsMatcher = STEPS_OUTPUT_PATTERN.matcher(expression);
+                Matcher stepsMatcher = STEPS_OUTPUT_PATTERN.matcher(expression);
                 if (stepsMatcher.find()) {
                     return stepsMatcher.group();
                 }
