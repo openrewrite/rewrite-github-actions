@@ -62,15 +62,6 @@ public class SelfHostedRunnerRecipe extends Recipe {
             return mappingEntry;
         }
 
-        private static String getScalarValue(Yaml.Block block) {
-            return block instanceof Yaml.Scalar ? ((Yaml.Scalar) block).getValue() : null;
-        }
-
-        private static Optional<String> getFirstSequenceValue(Yaml.Sequence sequence) {
-            return sequence.getEntries().isEmpty() ? Optional.empty() :
-                Optional.ofNullable(getScalarValue(sequence.getEntries().get(0).getBlock()));
-        }
-
 
         private Yaml.Mapping.Entry checkRunsOn(Yaml.Mapping.Entry entry) {
             if (entry.getValue() instanceof Yaml.Scalar) {
@@ -98,7 +89,7 @@ public class SelfHostedRunnerRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkRunsOnSequence(Yaml.Mapping.Entry entry, Yaml.Sequence sequence) {
-            Optional<String> firstValue = getFirstSequenceValue(sequence);
+            Optional<String> firstValue = YamlHelper.getFirstSequenceValue(sequence);
             if (firstValue.isPresent() && "self-hosted".equals(firstValue.get())) {
                 return SearchResult.found(entry,
                         "Uses self-hosted runner which may have security implications in public repositories. " +
@@ -148,11 +139,9 @@ public class SelfHostedRunnerRecipe extends Recipe {
                 if (matrixEntry.getValue() instanceof Yaml.Sequence) {
                     Yaml.Sequence sequence = (Yaml.Sequence) matrixEntry.getValue();
                     for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
-                        if (seqEntry.getBlock() instanceof Yaml.Scalar) {
-                            String value = ((Yaml.Scalar) seqEntry.getBlock()).getValue();
-                            if ("self-hosted".equals(value)) {
-                                return true;
-                            }
+                        String value = YamlHelper.getScalarValue(seqEntry.getBlock());
+                        if ("self-hosted".equals(value)) {
+                            return true;
                         }
                     }
                 }

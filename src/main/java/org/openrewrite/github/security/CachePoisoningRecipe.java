@@ -131,33 +131,29 @@ public class CachePoisoningRecipe extends Recipe {
         }
 
         private boolean isPublishingTrigger(Yaml.Block onValue) {
-            if (onValue instanceof Yaml.Scalar) {
-                String trigger = ((Yaml.Scalar) onValue).getValue();
-                return "release".equals(trigger);
+            String scalarTrigger = YamlHelper.getScalarValue(onValue);
+            if (scalarTrigger != null) {
+                return "release".equals(scalarTrigger);
             }
             if (onValue instanceof Yaml.Sequence) {
                 Yaml.Sequence sequence = (Yaml.Sequence) onValue;
                 for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
-                    if (seqEntry.getBlock() instanceof Yaml.Scalar) {
-                        String trigger = ((Yaml.Scalar) seqEntry.getBlock()).getValue();
-                        if ("release".equals(trigger)) {
-                            return true;
-                        }
+                    String trigger = YamlHelper.getScalarValue(seqEntry.getBlock());
+                    if ("release".equals(trigger)) {
+                        return true;
                     }
                 }
             } else if (onValue instanceof Yaml.Mapping) {
                 Yaml.Mapping mapping = (Yaml.Mapping) onValue;
                 for (Yaml.Mapping.Entry triggerEntry : mapping.getEntries()) {
-                    if (triggerEntry.getKey() instanceof Yaml.Scalar) {
-                        String trigger = ((Yaml.Scalar) triggerEntry.getKey()).getValue();
-                        if ("release".equals(trigger)) {
+                    String trigger = triggerEntry.getKey().getValue();
+                    if ("release".equals(trigger)) {
+                        return true;
+                    }
+                    if ("push".equals(trigger)) {
+                        // Check for release branches or tags
+                        if (isReleasePush(triggerEntry.getValue())) {
                             return true;
-                        }
-                        if ("push".equals(trigger)) {
-                            // Check for release branches or tags
-                            if (isReleasePush(triggerEntry.getValue())) {
-                                return true;
-                            }
                         }
                     }
                 }
@@ -188,11 +184,9 @@ public class CachePoisoningRecipe extends Recipe {
             if (branchesValue instanceof Yaml.Sequence) {
                 Yaml.Sequence sequence = (Yaml.Sequence) branchesValue;
                 for (Yaml.Sequence.Entry entry : sequence.getEntries()) {
-                    if (entry.getBlock() instanceof Yaml.Scalar) {
-                        String branch = ((Yaml.Scalar) entry.getBlock()).getValue();
-                        if (RELEASE_BRANCH_PATTERN.matcher(branch).matches()) {
-                            return true;
-                        }
+                    String branch = YamlHelper.getScalarValue(entry.getBlock());
+                    if (branch != null && RELEASE_BRANCH_PATTERN.matcher(branch).matches()) {
+                        return true;
                     }
                 }
             }
@@ -235,9 +229,9 @@ public class CachePoisoningRecipe extends Recipe {
 
         private boolean stepUsesPublisherAction(Yaml.Mapping stepMapping) {
             for (Yaml.Mapping.Entry entry : stepMapping.getEntries()) {
-                if (entry.getKey() instanceof Yaml.Scalar && "uses".equals(((Yaml.Scalar) entry.getKey()).getValue())) {
-                    if (entry.getValue() instanceof Yaml.Scalar) {
-                        String uses = ((Yaml.Scalar) entry.getValue()).getValue();
+                if ("uses".equals(entry.getKey().getValue())) {
+                    String uses = YamlHelper.getScalarValue(entry.getValue());
+                    if (uses != null) {
                         String actionName = extractActionName(uses);
                         return PUBLISHER_ACTIONS.contains(actionName);
                     }
@@ -264,24 +258,22 @@ public class CachePoisoningRecipe extends Recipe {
         }
 
         private boolean isCacheAwareActionStep(Yaml.Mapping.Entry entry) {
-            if (!(entry.getKey() instanceof Yaml.Scalar) || !"uses".equals(((Yaml.Scalar) entry.getKey()).getValue())) {
+            if (!"uses".equals(entry.getKey().getValue())) {
                 return false;
             }
 
-            if (!(entry.getValue() instanceof Yaml.Scalar)) {
+            String uses = YamlHelper.getScalarValue(entry.getValue());
+            if (uses == null) {
                 return false;
             }
 
-            String uses = ((Yaml.Scalar) entry.getValue()).getValue();
             String actionName = extractActionName(uses);
             return CACHE_AWARE_ACTIONS.contains(actionName);
         }
 
         private String getActionName(Yaml.Mapping.Entry entry) {
-            if (entry.getValue() instanceof Yaml.Scalar) {
-                return extractActionName(((Yaml.Scalar) entry.getValue()).getValue());
-            }
-            return "unknown";
+            String uses = YamlHelper.getScalarValue(entry.getValue());
+            return uses != null ? extractActionName(uses) : "unknown";
         }
 
         private String extractActionName(String uses) {

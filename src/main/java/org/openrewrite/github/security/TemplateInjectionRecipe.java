@@ -19,6 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.marker.SearchResult;
+import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -92,34 +93,34 @@ public class TemplateInjectionRecipe extends Recipe {
 
     private static class TemplateInjectionVisitor extends YamlIsoVisitor<ExecutionContext> {
 
+        private static final JsonPathMatcher STEP_RUN_MATCHER = new JsonPathMatcher("$..steps[*].run");
+        private static final JsonPathMatcher STEP_USES_MATCHER = new JsonPathMatcher("$..steps[*].uses");
+        private static final JsonPathMatcher STEP_SCRIPT_MATCHER = new JsonPathMatcher("$..steps[*].with.script");
+
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
             Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
 
             // Check run commands for injection vulnerabilities
-            if ("run".equals(mappingEntry.getKey().getValue())) {
+            if (STEP_RUN_MATCHER.matches(getCursor()) && "run".equals(mappingEntry.getKey().getValue())) {
                 return checkRunEntry(mappingEntry);
             }
 
             // Check uses entries for code injection actions
-            if ("uses".equals(mappingEntry.getKey().getValue())) {
+            if (STEP_USES_MATCHER.matches(getCursor()) && "uses".equals(mappingEntry.getKey().getValue())) {
                 return checkUsesEntry(mappingEntry);
             }
 
             // Check script inputs for code injection actions
-            if ("script".equals(mappingEntry.getKey().getValue())) {
+            if (STEP_SCRIPT_MATCHER.matches(getCursor()) && "script".equals(mappingEntry.getKey().getValue())) {
                 return checkScriptEntry(mappingEntry);
             }
 
             return mappingEntry;
         }
 
-        private String getScalarValue(Yaml.Block value) {
-            return value instanceof Yaml.Scalar ? ((Yaml.Scalar) value).getValue() : null;
-        }
-
         private Yaml.Mapping.Entry checkRunEntry(Yaml.Mapping.Entry entry) {
-            String runCommand = getScalarValue(entry.getValue());
+            String runCommand = YamlHelper.getScalarValue(entry.getValue());
             if (runCommand == null) {
                 return entry;
             }
@@ -140,7 +141,7 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            String usesValue = getScalarValue(entry.getValue());
+            String usesValue = YamlHelper.getScalarValue(entry.getValue());
             if (usesValue == null) {
                 return entry;
             }
@@ -158,7 +159,7 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkScriptEntry(Yaml.Mapping.Entry entry) {
-            String scriptContent = getScalarValue(entry.getValue());
+            String scriptContent = YamlHelper.getScalarValue(entry.getValue());
             if (scriptContent == null) {
                 return entry;
             }

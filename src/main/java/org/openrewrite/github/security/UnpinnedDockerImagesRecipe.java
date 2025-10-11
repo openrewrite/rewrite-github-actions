@@ -78,10 +78,7 @@ public class UnpinnedDockerImagesRecipe extends Recipe {
         }
 
         private String getImageValue(Yaml.Mapping.Entry entry) {
-            if (entry.getValue() instanceof Yaml.Scalar) {
-                return ((Yaml.Scalar) entry.getValue()).getValue();
-            }
-            return null;
+            return YamlHelper.getScalarValue(entry.getValue());
         }
 
         private boolean isUnpinnedDockerImage(String imageValue) {
