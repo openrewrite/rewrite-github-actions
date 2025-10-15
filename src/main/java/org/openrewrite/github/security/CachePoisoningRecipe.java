@@ -20,6 +20,7 @@ import lombok.Value;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
+import org.openrewrite.github.traits.YamlScalarAccessor;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -90,7 +91,7 @@ public class CachePoisoningRecipe extends Recipe {
         return new CachePoisoningVisitor();
     }
 
-    private static class CachePoisoningVisitor extends YamlIsoVisitor<ExecutionContext> {
+    private static class CachePoisoningVisitor extends YamlIsoVisitor<ExecutionContext> implements YamlScalarAccessor {
 
         private boolean isPublishingWorkflow = false;
         private boolean hasPublisherAction = false;
@@ -131,14 +132,14 @@ public class CachePoisoningRecipe extends Recipe {
         }
 
         private boolean isPublishingTrigger(Yaml.Block onValue) {
-            String scalarTrigger = YamlHelper.getScalarValue(onValue);
+            String scalarTrigger = getScalarValue(onValue);
             if (scalarTrigger != null) {
                 return "release".equals(scalarTrigger);
             }
             if (onValue instanceof Yaml.Sequence) {
                 Yaml.Sequence sequence = (Yaml.Sequence) onValue;
                 for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
-                    String trigger = YamlHelper.getScalarValue(seqEntry.getBlock());
+                    String trigger = getScalarValue(seqEntry.getBlock());
                     if ("release".equals(trigger)) {
                         return true;
                     }
@@ -184,7 +185,7 @@ public class CachePoisoningRecipe extends Recipe {
             if (branchesValue instanceof Yaml.Sequence) {
                 Yaml.Sequence sequence = (Yaml.Sequence) branchesValue;
                 for (Yaml.Sequence.Entry entry : sequence.getEntries()) {
-                    String branch = YamlHelper.getScalarValue(entry.getBlock());
+                    String branch = getScalarValue(entry.getBlock());
                     if (branch != null && RELEASE_BRANCH_PATTERN.matcher(branch).matches()) {
                         return true;
                     }
@@ -230,7 +231,7 @@ public class CachePoisoningRecipe extends Recipe {
         private boolean stepUsesPublisherAction(Yaml.Mapping stepMapping) {
             for (Yaml.Mapping.Entry entry : stepMapping.getEntries()) {
                 if ("uses".equals(entry.getKey().getValue())) {
-                    String uses = YamlHelper.getScalarValue(entry.getValue());
+                    String uses = getScalarValue(entry.getValue());
                     if (uses != null) {
                         String actionName = extractActionName(uses);
                         return PUBLISHER_ACTIONS.contains(actionName);
@@ -262,7 +263,7 @@ public class CachePoisoningRecipe extends Recipe {
                 return false;
             }
 
-            String uses = YamlHelper.getScalarValue(entry.getValue());
+            String uses = getScalarValue(entry.getValue());
             if (uses == null) {
                 return false;
             }
@@ -272,7 +273,7 @@ public class CachePoisoningRecipe extends Recipe {
         }
 
         private String getActionName(Yaml.Mapping.Entry entry) {
-            String uses = YamlHelper.getScalarValue(entry.getValue());
+            String uses = getScalarValue(entry.getValue());
             return uses != null ? extractActionName(uses) : "unknown";
         }
 

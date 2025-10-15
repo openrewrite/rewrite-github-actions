@@ -19,6 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
+import org.openrewrite.github.traits.YamlScalarAccessor;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
@@ -78,7 +79,7 @@ public class ArtifactSecurityRecipe extends Recipe {
         );
     }
 
-    private static class ArtifactSecurityVisitor extends YamlIsoVisitor<ExecutionContext> {
+    private static class ArtifactSecurityVisitor extends YamlIsoVisitor<ExecutionContext> implements YamlScalarAccessor {
 
         private static final JsonPathMatcher STEP_USES_MATCHER = new JsonPathMatcher("$..steps[*].uses");
 
@@ -108,7 +109,7 @@ public class ArtifactSecurityRecipe extends Recipe {
 
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            String usesValue = YamlHelper.getScalarValue(entry.getValue());
+            String usesValue = getScalarValue(entry.getValue());
             if (usesValue == null) {
                 return entry;
             }
@@ -133,7 +134,7 @@ public class ArtifactSecurityRecipe extends Recipe {
                 return entry;
             }
 
-            String persistCredentials = YamlHelper.findNestedScalarValue(stepMapping, "with", "persist-credentials");
+            String persistCredentials = findNestedScalarValue(stepMapping, "with", "persist-credentials");
 
             if (persistCredentials == null) {
                 // No 'with' section or no persist-credentials means default behavior (persist-credentials: true)
@@ -159,7 +160,7 @@ public class ArtifactSecurityRecipe extends Recipe {
                 return entry;
             }
 
-            String pathValue = YamlHelper.findNestedScalarValue(stepMapping, "with", "path");
+            String pathValue = findNestedScalarValue(stepMapping, "with", "path");
             if (pathValue != null && hasDangerousArtifactPaths(pathValue)) {
                 return SearchResult.found(entry,
                         "Uploading potentially sensitive paths that may contain credentials or configuration files.");

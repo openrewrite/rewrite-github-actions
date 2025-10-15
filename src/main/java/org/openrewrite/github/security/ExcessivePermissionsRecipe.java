@@ -18,6 +18,7 @@ package org.openrewrite.github.security;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
+import org.openrewrite.github.traits.YamlScalarAccessor;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -58,7 +59,7 @@ public class ExcessivePermissionsRecipe extends Recipe {
         );
     }
 
-    private static class ExcessivePermissionsVisitor extends YamlIsoVisitor<ExecutionContext> {
+    private static class ExcessivePermissionsVisitor extends YamlIsoVisitor<ExecutionContext> implements YamlScalarAccessor {
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
@@ -76,7 +77,7 @@ public class ExcessivePermissionsRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkPermissions(Yaml.Mapping.Entry entry) {
-            String scalarPermissionValue = YamlHelper.getScalarValue(entry.getValue());
+            String scalarPermissionValue = getScalarValue(entry.getValue());
             if (scalarPermissionValue != null) {
                 return checkScalarPermissions(entry, scalarPermissionValue);
             }
@@ -107,7 +108,7 @@ public class ExcessivePermissionsRecipe extends Recipe {
 
             for (Yaml.Mapping.Entry permEntry : permissionsMapping.getEntries()) {
                 String permissionName = permEntry.getKey().getValue();
-                String permissionValue = YamlHelper.getScalarValue(permEntry.getValue());
+                String permissionValue = getScalarValue(permEntry.getValue());
                 if (permissionName != null && permissionValue != null) {
 
                     if ("write".equals(permissionValue)) {
