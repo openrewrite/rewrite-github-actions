@@ -18,7 +18,7 @@ package org.openrewrite.github.security;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
-import org.openrewrite.github.traits.YamlScalarAccessor;
+import org.openrewrite.github.util.YamlScalarAccessor;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;

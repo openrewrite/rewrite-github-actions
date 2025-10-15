@@ -15,20 +15,20 @@
  */
 
 /**
- * OpenRewrite traits for GitHub Actions YAML processing.
+ * Utility interfaces for GitHub Actions YAML processing.
  *
- * <p>This package contains reusable traits that provide common patterns for working with
- * GitHub Actions workflow YAML files. Traits follow OpenRewrite best practices for
- * composable, testable recipe development.</p>
+ * <p>This package contains reusable utility interfaces that provide common patterns for working with
+ * GitHub Actions workflow YAML files. These interfaces use default methods to provide mixins that
+ * can be implemented by recipe visitors.</p>
  *
- * <h2>Available Traits</h2>
+ * <h2>Available Utilities</h2>
  * <ul>
- *   <li>{@link org.openrewrite.github.traits.YamlScalarAccessor} - Safe extraction of
+ *   <li>{@link org.openrewrite.github.util.YamlScalarAccessor} - Safe extraction of
  *       scalar values from YAML LST elements</li>
  * </ul>
  *
- * <h2>Using Traits</h2>
- * <p>Traits are designed to be implemented by recipe visitors to provide reusable
+ * <h2>Using Utility Interfaces</h2>
+ * <p>These interfaces are designed to be implemented by recipe visitors to provide reusable
  * functionality through default interface methods:</p>
  *
  * <pre>
@@ -47,15 +47,15 @@
  * </pre>
  *
  * <h2>Design Philosophy</h2>
- * <p>Traits in this package follow these principles:</p>
+ * <p>Utility interfaces in this package follow these principles:</p>
  * <ul>
- *   <li><strong>Composability</strong> - Multiple traits can be combined in a single visitor</li>
+ *   <li><strong>Composability</strong> - Multiple interfaces can be combined in a single visitor</li>
  *   <li><strong>Java 8 Compatibility</strong> - All code uses Java 8 syntax only</li>
  *   <li><strong>Null Safety</strong> - Methods handle null inputs gracefully using {@code @Nullable}</li>
  *   <li><strong>Documentation</strong> - Comprehensive JavaDoc with real-world examples</li>
- *   <li><strong>Testability</strong> - Traits can be tested independently</li>
+ *   <li><strong>Testability</strong> - Utilities can be tested independently</li>
  * </ul>
  *
- * @see org.openrewrite.github.traits.YamlScalarAccessor
+ * @see org.openrewrite.github.util.YamlScalarAccessor
  */
-package org.openrewrite.github.traits;
+package org.openrewrite.github.util;

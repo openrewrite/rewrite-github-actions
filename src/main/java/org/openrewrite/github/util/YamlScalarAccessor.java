@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.openrewrite.github.traits;
+package org.openrewrite.github.util;
 
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.yaml.tree.Yaml;
 
 /**
- * A trait that provides safe access to scalar values from YAML LST elements.
- * This trait encapsulates common patterns for extracting string values from
+ * A utility interface that provides safe access to scalar values from YAML LST elements.
+ * This interface encapsulates common patterns for extracting string values from
  * YAML blocks, eliminating the need for repeated type checking and casting.
  *
- * <p>This trait is designed to be mixed into recipes or visitors that need to
- * work with YAML scalar values, providing a cleaner API than static utility methods.
- * It follows OpenRewrite best practices for trait-based recipe development.</p>
+ * <p>This interface is designed to be implemented by recipes or visitors that need to
+ * work with YAML scalar values, providing a cleaner API than static utility methods.</p>
  *
  * <h2>Usage Example</h2>
  * <pre>
@@ -57,13 +56,13 @@ import org.openrewrite.yaml.tree.Yaml;
  * </pre>
  *
  * <h2>Migration from YamlHelper</h2>
- * <p>This trait replaces the static {@code YamlHelper} utility class with a more
+ * <p>This interface replaces the static {@code YamlHelper} utility class with a more
  * composable and testable approach. To migrate existing code:</p>
  * <pre>
  * // Before (using static utility):
  * String value = YamlHelper.getScalarValue(block);
  *
- * // After (using trait):
+ * // After (using interface):
  * class MyVisitor extends YamlIsoVisitor&lt;ExecutionContext&gt;
  *         implements YamlScalarAccessor {
  *     void myMethod(Yaml.Block block) {
