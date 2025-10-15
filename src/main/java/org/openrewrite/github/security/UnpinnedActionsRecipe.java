@@ -18,9 +18,8 @@ package org.openrewrite.github.security;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
+import org.openrewrite.github.util.ActionStep;
 import org.openrewrite.marker.SearchResult;
-import org.openrewrite.yaml.YamlIsoVisitor;
-import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.regex.Pattern;
 
@@ -31,8 +30,6 @@ public class UnpinnedActionsRecipe extends Recipe {
     private static final Pattern UNPINNED_ACTION_PATTERN = Pattern.compile(
             "^([^/@]+/[^/@]+)(@(main|master|HEAD|latest|v?\\d+(\\.\\d+)*(\\.\\d+)*))??$"
     );
-
-    private static final Pattern SHA_PATTERN = Pattern.compile("^[a-f0-9]{40}$");
 
     @Override
     public String getDisplayName() {
@@ -51,68 +48,47 @@ public class UnpinnedActionsRecipe extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
                 new FindSourceFiles(".github/workflows/*.yml"),
-                new UnpinnedActionsVisitor()
+                new ActionStep.Matcher().asVisitor((actionStep, ctx) -> {
+                    if (isUnpinned(actionStep)) {
+                        String actionRef = actionStep.getActionRef();
+                        return SearchResult.found(actionStep.getTree(),
+                                "Action '" + actionRef + "' is not pinned to a commit SHA. " +
+                                        "Consider pinning to a specific commit for security and reproducibility.");
+                    }
+                    return actionStep.getTree();
+                })
         );
     }
 
-    private static class UnpinnedActionsVisitor extends YamlIsoVisitor<ExecutionContext> {
-
-        @Override
-        public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
-
-            if (isUsesEntry(mappingEntry)) {
-                String usesValue = getUsesValue(mappingEntry);
-                if (usesValue != null && isUnpinned(usesValue)) {
-                    return SearchResult.found(mappingEntry,
-                            "Action '" + usesValue + "' is not pinned to a commit SHA. " +
-                                    "Consider pinning to a specific commit for security and reproducibility.");
-                }
-            }
-
-            return mappingEntry;
+    private static boolean isUnpinned(ActionStep actionStep) {
+        String actionRef = actionStep.getActionRef();
+        if (actionRef == null) {
+            return false;
         }
 
-        private boolean isUsesEntry(Yaml.Mapping.Entry entry) {
-            // Broader approach - match any "uses" entry and let the logic handle context validation
-            return entry.getKey() instanceof Yaml.Scalar &&
-                    "uses".equals(((Yaml.Scalar) entry.getKey()).getValue());
+        // Skip local actions (start with ./)
+        if (actionRef.startsWith("./")) {
+            return false;
         }
 
-        private String getUsesValue(Yaml.Mapping.Entry entry) {
-            if (entry.getValue() instanceof Yaml.Scalar) {
-                return ((Yaml.Scalar) entry.getValue()).getValue();
-            }
-            return null;
+        // Skip Docker actions (start with docker://)
+        if (actionRef.startsWith("docker://")) {
+            return false;
         }
 
-        private boolean isUnpinned(String usesValue) {
-            // Skip local actions (start with ./)
-            if (usesValue.startsWith("./")) {
-                return false;
-            }
-
-            // Skip Docker actions (start with docker://)
-            if (usesValue.startsWith("docker://")) {
-                return false;
-            }
-
-            // Check if it's a repository action
-            String[] parts = usesValue.split("@", 2);
-            if (parts.length < 2) {
-                // No @ symbol means no version specified at all
-                return true;
-            }
-
-            String version = parts[1];
-
-            // If it's already a SHA, it's pinned
-            if (SHA_PATTERN.matcher(version).matches()) {
-                return false;
-            }
-
-            // If it matches unpinned patterns (main, master, HEAD, latest, or version tags), it's unpinned
-            return UNPINNED_ACTION_PATTERN.matcher(usesValue).matches();
+        // If it's already pinned to a SHA, it's not unpinned
+        if (actionStep.isVersionPinned()) {
+            return false;
         }
+
+        // Check if version exists
+        String version = actionStep.getActionVersion();
+        if (version == null) {
+            // No @ symbol means no version specified at all
+            return true;
+        }
+
+        // If it matches unpinned patterns (main, master, HEAD, latest, or version tags), it's unpinned
+        return UNPINNED_ACTION_PATTERN.matcher(actionRef).matches();
     }
 }

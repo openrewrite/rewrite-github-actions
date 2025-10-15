@@ -18,6 +18,7 @@ package org.openrewrite.github.security;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
+import org.openrewrite.github.util.YamlScalarAccessor;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -55,7 +56,7 @@ public class UnpinnedDockerImagesRecipe extends Recipe {
         );
     }
 
-    private static class UnpinnedDockerImagesVisitor extends YamlIsoVisitor<ExecutionContext> {
+    private static class UnpinnedDockerImagesVisitor extends YamlIsoVisitor<ExecutionContext> implements YamlScalarAccessor {
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
@@ -78,7 +79,7 @@ public class UnpinnedDockerImagesRecipe extends Recipe {
         }
 
         private String getImageValue(Yaml.Mapping.Entry entry) {
-            return YamlHelper.getScalarValue(entry.getValue());
+            return getScalarValue(entry.getValue());
         }
 
         private boolean isUnpinnedDockerImage(String imageValue) {

@@ -19,6 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
+import org.openrewrite.github.util.YamlScalarAccessor;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
@@ -93,7 +94,7 @@ public class TemplateInjectionRecipe extends Recipe {
         );
     }
 
-    private static class TemplateInjectionVisitor extends YamlIsoVisitor<ExecutionContext> {
+    private static class TemplateInjectionVisitor extends YamlIsoVisitor<ExecutionContext> implements YamlScalarAccessor {
 
         private static final JsonPathMatcher STEP_RUN_MATCHER = new JsonPathMatcher("$..steps[*].run");
         private static final JsonPathMatcher STEP_USES_MATCHER = new JsonPathMatcher("$..steps[*].uses");
@@ -122,7 +123,7 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkRunEntry(Yaml.Mapping.Entry entry) {
-            String runCommand = YamlHelper.getScalarValue(entry.getValue());
+            String runCommand = getScalarValue(entry.getValue());
             if (runCommand == null) {
                 return entry;
             }
@@ -143,7 +144,7 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkUsesEntry(Yaml.Mapping.Entry entry) {
-            String usesValue = YamlHelper.getScalarValue(entry.getValue());
+            String usesValue = getScalarValue(entry.getValue());
             if (usesValue == null) {
                 return entry;
             }
@@ -161,7 +162,7 @@ public class TemplateInjectionRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkScriptEntry(Yaml.Mapping.Entry entry) {
-            String scriptContent = YamlHelper.getScalarValue(entry.getValue());
+            String scriptContent = getScalarValue(entry.getValue());
             if (scriptContent == null) {
                 return entry;
             }
