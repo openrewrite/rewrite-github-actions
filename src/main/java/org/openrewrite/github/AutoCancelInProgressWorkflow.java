@@ -63,7 +63,7 @@ public class AutoCancelInProgressWorkflow extends Recipe {
                 "  with:\n" +
                 "    access_token: ${{ github.token }}";
 
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new FindSourceFiles(".github/workflows/*.{yml,yaml}"), new YamlIsoVisitor<ExecutionContext>() {
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 if (firstStep.matches(getCursor()) && (!(entry.getValue() instanceof Yaml.Scalar) ||

@@ -57,7 +57,7 @@ public class SetupNodeUpgradeNodeVersion extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new UpgradeNodeVersionVisitor(
+        return Preconditions.check(new FindSourceFiles(".github/workflows/*.{yml,yaml}"), new UpgradeNodeVersionVisitor(
                 minimumNodeMajorVersion == null ? 24 : minimumNodeMajorVersion
         ));
     }

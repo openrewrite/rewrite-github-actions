@@ -44,7 +44,7 @@ public class SetupJavaAdoptOpenJDKToTemurin extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new SetupJavaDistributionReplacerVisitor(Arrays.asList("adopt", "adopt-hotspot"), "temurin"));
+        return Preconditions.check(new FindSourceFiles(".github/workflows/*.{yml,yaml}"), new SetupJavaDistributionReplacerVisitor(Arrays.asList("adopt", "adopt-hotspot"), "temurin"));
     }
 
 }

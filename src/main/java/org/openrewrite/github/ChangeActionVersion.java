@@ -40,13 +40,13 @@ public class ChangeActionVersion extends Recipe {
 
     @Override
     public String getDescription() {
-        return "Change the version of a GitHub Action in any `.github/workflows/*.yml` file.";
+        return "Change the version of a GitHub Action in any `.github/workflows/*.{yml,yaml}` file.";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                new FindSourceFiles(".github/workflows/*.yml"),
+                new FindSourceFiles(".github/workflows/*.{yml,yaml}"),
                 new ChangeValue(
                         "$.jobs..[?(@.uses =~ '" + action + "(?:@.+)?')].uses",
                         action + '@' + version, null).getVisitor());

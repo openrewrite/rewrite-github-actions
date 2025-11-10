@@ -45,7 +45,7 @@ public class PreferTemurinDistributions extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new UseTemurinVisitor());
+        return Preconditions.check(new FindSourceFiles(".github/workflows/*.{yml,yaml}"), new UseTemurinVisitor());
     }
 
     private static final Pattern pattern = Pattern.compile("^(windows|ubuntu|macos)-(latest|\\d+(\\.\\d+)?)$");

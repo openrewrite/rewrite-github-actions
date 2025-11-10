@@ -38,7 +38,7 @@ public class AddCronTrigger extends Recipe {
     private final String cron;
 
     @Option(displayName = "Workflow files to match",
-            description = "Matches one or more workflows to update. Defaults to `*.yml`",
+            description = "Matches one or more workflows to update. Defaults to `*.{yml,yaml}`",
             required = false,
             example = "build.yml")
     @Nullable
@@ -95,7 +95,7 @@ public class AddCronTrigger extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         String expression = parseExpression(cron);
-        String path = StringUtils.isBlank(workflowFileMatcher) ? ".github/workflows/*.yml" : ".github/workflows/" + workflowFileMatcher;
+        String path = StringUtils.isBlank(workflowFileMatcher) ? ".github/workflows/*.{yml,yaml}" : ".github/workflows/" + workflowFileMatcher;
         return Preconditions.check(new FindSourceFiles(path), new MergeYaml(
                 "$.on",
                 String.format(

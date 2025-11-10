@@ -27,7 +27,7 @@ recipeList:
       yaml: |-
         workflow_dispatch:
       acceptTheirs: true
-      fileMatcher: '.github/workflows/*.yml'
+      fileMatcher: '.github/workflows/*.{yml,yaml}'
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.DependabotCheckForGithubActionsUpdatesDaily
@@ -92,7 +92,7 @@ recipeList:
       yaml: |-
         owner: ${{ github.repository_owner }}
       acceptTheirs: false
-      fileMatcher: '.github/workflows/*.yml'
+      fileMatcher: '.github/workflows/*.{yml,yaml}'
 
 ---
 type: specs.openrewrite.org/v1beta/recipe

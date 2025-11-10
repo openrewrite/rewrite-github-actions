@@ -113,7 +113,7 @@ public class ForbiddenUsesRecipe extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                new FindSourceFiles(".github/workflows/*.yml"),
+                new FindSourceFiles(".github/workflows/*.{yml,yaml}"),
                 new ForbiddenUsesVisitor(allDangerousActions, allSuspiciousPatterns)
         );
     }

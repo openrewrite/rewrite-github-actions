@@ -39,7 +39,7 @@ public class RemoveAllCronTriggers extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"),
+        return Preconditions.check(new FindSourceFiles(".github/workflows/*.{yml,yaml}"),
                 new DeleteKey("$.on.schedule", null).getVisitor());
     }
 }

@@ -38,7 +38,7 @@ public class ReplaceSecrets extends Recipe {
     @Option(displayName = "File matcher",
             description = "Optional file path matcher",
             required = false,
-            example = ".github/workflows/*.yml")
+            example = ".github/workflows/*.{yml,yaml}")
     @Nullable
     String fileMatcher;
 
@@ -54,7 +54,7 @@ public class ReplaceSecrets extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(fileMatcher != null ? fileMatcher : ".github/workflows/*.yml"), new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new FindSourceFiles(fileMatcher != null ? fileMatcher : ".github/workflows/*.{yml,yaml}"), new YamlIsoVisitor<ExecutionContext>() {
             @Override
             public Yaml.Scalar visitScalar(Yaml.Scalar scalar, ExecutionContext ctx) {
                 Yaml.Scalar s = super.visitScalar(scalar, ctx);

@@ -73,7 +73,7 @@ public class ArtifactSecurityRecipe extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                new FindSourceFiles(".github/workflows/*.yml"),
+                new FindSourceFiles(".github/workflows/*.{yml,yaml}"),
                 new ArtifactSecurityVisitor()
         );
     }

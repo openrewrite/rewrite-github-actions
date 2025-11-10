@@ -54,7 +54,7 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new FindSourceFiles(".github/workflows/*.{yml,yaml}"), new YamlIsoVisitor<ExecutionContext>() {
             @Override
             public Yaml.Document visitDocument(Yaml.Document document, ExecutionContext ctx) {
                 Set<String> definedInputs = new HashSet<>();
