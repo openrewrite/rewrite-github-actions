@@ -15,8 +15,10 @@
  */
 package org.openrewrite.github;
 
+import org.openrewrite.ExecutionContext;
 import org.openrewrite.FindSourceFiles;
 import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class IsGitHubActionsWorkflow extends Recipe {
     }
 
     @Override
-    public List<Recipe> getRecipeList() {
-        return singletonList(new FindSourceFiles(".github/workflows/*.{yml,yaml}"));
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return new FindSourceFiles(".github/workflows/*.{yml,yaml}").getVisitor();
     }
 }
