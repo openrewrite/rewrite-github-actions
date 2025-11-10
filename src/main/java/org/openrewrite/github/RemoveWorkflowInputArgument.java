@@ -67,7 +67,7 @@ public class RemoveWorkflowInputArgument extends Recipe {
         JsonPathMatcher jobsMatcher = new JsonPathMatcher("$.jobs.*");
         String expectedReference = workflowReference + "@" + version;
 
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.{yml,yaml}"), new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new IsGitHubActionsWorkflow(), new YamlIsoVisitor<ExecutionContext>() {
             @Override
             public Yaml.Mapping visitMapping(Yaml.Mapping mapping, ExecutionContext ctx) {
                 Yaml.Mapping m = super.visitMapping(mapping, ctx);

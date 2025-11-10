@@ -49,7 +49,7 @@ public class SetupJavaUpgradeJavaVersion extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.{yml,yaml}"), new UpgradeJavaVersionVisitor(
+        return Preconditions.check(new IsGitHubActionsWorkflow(), new UpgradeJavaVersionVisitor(
                 minimumJavaMajorVersion == null ? 21 : minimumJavaMajorVersion
         ));
     }

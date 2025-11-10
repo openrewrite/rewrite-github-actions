@@ -15,31 +15,27 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.*;
-import org.openrewrite.yaml.DeleteKey;
+import org.openrewrite.FindSourceFiles;
+import org.openrewrite.Recipe;
 
-import java.time.Duration;
+import java.util.List;
 
-public class RemoveAllCronTriggers extends Recipe {
+import static java.util.Collections.singletonList;
+
+public class IsGitHubActionsWorkflow extends Recipe {
 
     @Override
     public String getDisplayName() {
-        return "Remove all cron triggers";
+        return "Is GitHub Actions Workflow";
     }
 
     @Override
     public String getDescription() {
-        return "Removes all cron triggers from a workflow.";
+        return "Checks if the file is a GitHub Actions workflow file.";
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(1);
-    }
-
-    @Override
-    public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new IsGitHubActionsWorkflow(),
-                new DeleteKey("$.on.schedule", null).getVisitor());
+    public List<Recipe> getRecipeList() {
+        return singletonList(new FindSourceFiles(".github/workflows/*.{yml,yaml}"));
     }
 }

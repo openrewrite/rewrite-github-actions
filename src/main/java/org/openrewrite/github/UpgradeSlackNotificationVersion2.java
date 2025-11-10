@@ -44,7 +44,7 @@ public class UpgradeSlackNotificationVersion2 extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.{yml,yaml}"), new UpgradeSlackNotificationActionVisitor());
+        return Preconditions.check(new IsGitHubActionsWorkflow(), new UpgradeSlackNotificationActionVisitor());
     }
 
     @AllArgsConstructor

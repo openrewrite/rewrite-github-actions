@@ -18,7 +18,11 @@ package org.openrewrite.github.security;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
+import org.openrewrite.github.IsGitHubActionsWorkflow;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
@@ -88,7 +92,7 @@ public class TemplateInjectionRecipe extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                new FindSourceFiles(".github/workflows/*.{yml,yaml}"),
+                new IsGitHubActionsWorkflow(),
                 new TemplateInjectionVisitor()
         );
     }

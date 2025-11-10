@@ -49,7 +49,7 @@ public class PreferSecretsInheritWorkflow extends Recipe {
         final JsonPathMatcher secrets = new JsonPathMatcher("$.jobs..secrets");
 
         return Preconditions.check(
-                new FindSourceFiles(".github/workflows/*.{yml,yaml}").getVisitor(),
+                new IsGitHubActionsWorkflow().getVisitor(),
                 new YamlIsoVisitor<ExecutionContext>() {
                     private static final String USE_INHERIT = "USE_INHERIT";
 

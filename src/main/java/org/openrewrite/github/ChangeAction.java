@@ -51,7 +51,7 @@ public class ChangeAction extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                new FindSourceFiles(".github/workflows/*.{yml,yaml}"),
+                new IsGitHubActionsWorkflow(),
                 new ChangeValue(
                         "$.jobs..[?(@.uses =~ '" + oldAction + "(?:@.+)?')].uses",
                         newAction + '@' + newVersion, null).getVisitor());

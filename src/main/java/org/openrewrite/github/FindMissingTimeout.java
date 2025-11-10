@@ -35,7 +35,7 @@ public class FindMissingTimeout extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.{yml,yaml}"), new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new IsGitHubActionsWorkflow(), new YamlIsoVisitor<ExecutionContext>() {
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 Yaml.Mapping.Entry job = super.visitMappingEntry(entry, ctx);
