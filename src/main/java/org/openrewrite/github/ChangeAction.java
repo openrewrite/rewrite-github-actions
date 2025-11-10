@@ -45,7 +45,7 @@ public class ChangeAction extends Recipe {
 
     @Override
     public String getDescription() {
-        return "Change a GitHub Action in any `.github/workflows/*.{yml,yaml}` file.";
+        return "Change a GitHub Action in any workflow.";
     }
 
     @Override

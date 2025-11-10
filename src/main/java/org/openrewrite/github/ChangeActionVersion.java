@@ -40,7 +40,7 @@ public class ChangeActionVersion extends Recipe {
 
     @Override
     public String getDescription() {
-        return "Change the version of a GitHub Action in any `.github/workflows/*.{yml,yaml}` file.";
+        return "Change the version of a GitHub Action in any workflow.";
     }
 
     @Override
