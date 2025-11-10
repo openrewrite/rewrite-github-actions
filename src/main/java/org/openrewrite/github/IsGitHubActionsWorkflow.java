@@ -20,10 +20,6 @@ import org.openrewrite.FindSourceFiles;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 
-import java.util.List;
-
-import static java.util.Collections.singletonList;
-
 public class IsGitHubActionsWorkflow extends Recipe {
 
     @Override

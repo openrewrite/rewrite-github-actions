@@ -112,7 +112,7 @@ examples:
           steps:
             - uses: actions/checkout@v2
             - uses: actions/setup-java@v4
-    path: .github/workflows/ci.yml
+    path: .github/workflows/ci.yaml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
