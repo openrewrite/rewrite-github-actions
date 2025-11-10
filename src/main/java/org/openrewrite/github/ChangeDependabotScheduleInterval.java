@@ -61,7 +61,7 @@ public class ChangeDependabotScheduleInterval extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/dependabot.yml"), new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new FindSourceFiles(".github/dependabot.{yml,yaml}"), new YamlIsoVisitor<ExecutionContext>() {
             private final JsonPathMatcher targetEcosystem = new JsonPathMatcher("$.updates[?(@.package-ecosystem =~ '" + packageEcosystem + "')].schedule.interval");
 
             @Override

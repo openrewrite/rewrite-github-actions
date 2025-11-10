@@ -18,7 +18,10 @@ package org.openrewrite.github;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 import org.openrewrite.yaml.ChangeValue;
 import org.openrewrite.yaml.DeleteKey;
 import org.openrewrite.yaml.MergeYaml;
@@ -44,7 +47,7 @@ public class UpgradeSlackNotificationVersion2 extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new UpgradeSlackNotificationActionVisitor());
+        return Preconditions.check(new IsGitHubActionsWorkflow(), new UpgradeSlackNotificationActionVisitor());
     }
 
     @AllArgsConstructor

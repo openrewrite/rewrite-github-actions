@@ -15,7 +15,10 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -44,7 +47,7 @@ public class SetupJavaAdoptOpenJDKToTemurin extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new SetupJavaDistributionReplacerVisitor(Arrays.asList("adopt", "adopt-hotspot"), "temurin"));
+        return Preconditions.check(new IsGitHubActionsWorkflow(), new SetupJavaDistributionReplacerVisitor(Arrays.asList("adopt", "adopt-hotspot"), "temurin"));
     }
 
 }

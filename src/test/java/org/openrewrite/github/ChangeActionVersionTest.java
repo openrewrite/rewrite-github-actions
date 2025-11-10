@@ -45,7 +45,7 @@ class ChangeActionVersionTest implements RewriteTest {
                     - uses: actions/checkout@v2
                     - uses: actions/setup-java@v4
               """,
-            source -> source.path(".github/workflows/ci.yml")
+            source -> source.path(".github/workflows/ci.yaml")
           )
         );
     }

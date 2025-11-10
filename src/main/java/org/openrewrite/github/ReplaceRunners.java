@@ -49,7 +49,7 @@ public class ReplaceRunners extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"),
+        return Preconditions.check(new IsGitHubActionsWorkflow(),
                 new ChangeValue(String.format("$.jobs.%s.runs-on", jobName), Arrays.toString(runners.toArray()), null)
                         .getVisitor());
     }

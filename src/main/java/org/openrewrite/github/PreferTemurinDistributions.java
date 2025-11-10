@@ -15,7 +15,10 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -45,7 +48,7 @@ public class PreferTemurinDistributions extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"), new UseTemurinVisitor());
+        return Preconditions.check(new IsGitHubActionsWorkflow(), new UseTemurinVisitor());
     }
 
     private static final Pattern pattern = Pattern.compile("^(windows|ubuntu|macos)-(latest|\\d+(\\.\\d+)?)$");

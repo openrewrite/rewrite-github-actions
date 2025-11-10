@@ -15,7 +15,10 @@
  */
 package org.openrewrite.github;
 
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 
 import java.time.Duration;
 import java.util.Set;
@@ -49,7 +52,7 @@ public class SetupJavaAdoptOpenj9ToSemeru extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindSourceFiles(".github/workflows/*.yml"),
+        return Preconditions.check(new IsGitHubActionsWorkflow(),
                 new SetupJavaDistributionReplacerVisitor(singletonList("adopt-openj9"), "semeru"));
     }
 

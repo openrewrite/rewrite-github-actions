@@ -18,8 +18,10 @@ package org.openrewrite.github.security;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
+import org.openrewrite.github.IsGitHubActionsWorkflow;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -87,201 +89,199 @@ public class CachePoisoningRecipe extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new CachePoisoningVisitor();
-    }
+        return Preconditions.check(new IsGitHubActionsWorkflow(), new YamlIsoVisitor<ExecutionContext>() {
+            private boolean isPublishingWorkflow = false;
+            private boolean hasPublisherAction = false;
 
-    private static class CachePoisoningVisitor extends YamlIsoVisitor<ExecutionContext> {
+            @Override
+            public Yaml.Document visitDocument(Yaml.Document document, ExecutionContext ctx) {
+                // Reset state for each document
+                isPublishingWorkflow = false;
+                hasPublisherAction = false;
 
-        private boolean isPublishingWorkflow = false;
-        private boolean hasPublisherAction = false;
+                // First pass: determine if this is a publishing workflow
+                analyzeWorkflow(document);
 
-        @Override
-        public Yaml.Document visitDocument(Yaml.Document document, ExecutionContext ctx) {
-            // Reset state for each document
-            isPublishingWorkflow = false;
-            hasPublisherAction = false;
-
-            // First pass: determine if this is a publishing workflow
-            analyzeWorkflow(document);
-
-            // Second pass: if it's a publishing workflow, look for cache usage
-            if (isPublishingWorkflow || hasPublisherAction) {
-                return super.visitDocument(document, ctx);
-            }
-
-            return document;
-        }
-
-        private void analyzeWorkflow(Yaml.Document document) {
-            if (document.getBlock() instanceof Yaml.Mapping) {
-                Yaml.Mapping workflowMapping = (Yaml.Mapping) document.getBlock();
-
-                for (Yaml.Mapping.Entry entry : workflowMapping.getEntries()) {
-                    if (entry.getKey() instanceof Yaml.Scalar) {
-                        String key = ((Yaml.Scalar) entry.getKey()).getValue();
-
-                        if ("on".equals(key)) {
-                            isPublishingWorkflow = isPublishingTrigger(entry.getValue());
-                        } else if ("jobs".equals(key)) {
-                            hasPublisherAction = hasPublisherActions(entry.getValue());
-                        }
-                    }
+                // Second pass: if it's a publishing workflow, look for cache usage
+                if (isPublishingWorkflow || hasPublisherAction) {
+                    return super.visitDocument(document, ctx);
                 }
-            }
-        }
 
-        private boolean isPublishingTrigger(Yaml.Block onValue) {
-            String scalarTrigger = YamlHelper.getScalarValue(onValue);
-            if (scalarTrigger != null) {
-                return "release".equals(scalarTrigger);
+                return document;
             }
-            if (onValue instanceof Yaml.Sequence) {
-                Yaml.Sequence sequence = (Yaml.Sequence) onValue;
-                for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
-                    String trigger = YamlHelper.getScalarValue(seqEntry.getBlock());
-                    if ("release".equals(trigger)) {
-                        return true;
-                    }
-                }
-            } else if (onValue instanceof Yaml.Mapping) {
-                Yaml.Mapping mapping = (Yaml.Mapping) onValue;
-                for (Yaml.Mapping.Entry triggerEntry : mapping.getEntries()) {
-                    String trigger = triggerEntry.getKey().getValue();
-                    if ("release".equals(trigger)) {
-                        return true;
-                    }
-                    if ("push".equals(trigger)) {
-                        // Check for release branches or tags
-                        if (isReleasePush(triggerEntry.getValue())) {
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
-        }
 
-        private boolean isReleasePush(Yaml.Block pushConfig) {
-            if (pushConfig instanceof Yaml.Mapping) {
-                Yaml.Mapping mapping = (Yaml.Mapping) pushConfig;
-                for (Yaml.Mapping.Entry entry : mapping.getEntries()) {
-                    if (entry.getKey() instanceof Yaml.Scalar) {
-                        String key = ((Yaml.Scalar) entry.getKey()).getValue();
-                        if ("tags".equals(key)) {
-                            return true; // Pushing tags suggests release
-                        }
-                        if ("branches".equals(key)) {
-                            // Check if any branch name suggests release
-                            return hasReleaseBranches(entry.getValue());
-                        }
-                    }
-                }
-            }
-            return false;
-        }
+            private void analyzeWorkflow(Yaml.Document document) {
+                if (document.getBlock() instanceof Yaml.Mapping) {
+                    Yaml.Mapping workflowMapping = (Yaml.Mapping) document.getBlock();
 
-        private boolean hasReleaseBranches(Yaml.Block branchesValue) {
-            if (branchesValue instanceof Yaml.Sequence) {
-                Yaml.Sequence sequence = (Yaml.Sequence) branchesValue;
-                for (Yaml.Sequence.Entry entry : sequence.getEntries()) {
-                    String branch = YamlHelper.getScalarValue(entry.getBlock());
-                    if (branch != null && RELEASE_BRANCH_PATTERN.matcher(branch).matches()) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
+                    for (Yaml.Mapping.Entry entry : workflowMapping.getEntries()) {
+                        if (entry.getKey() instanceof Yaml.Scalar) {
+                            String key = ((Yaml.Scalar) entry.getKey()).getValue();
 
-        private boolean hasPublisherActions(Yaml.Block jobsValue) {
-            if (jobsValue instanceof Yaml.Mapping) {
-                Yaml.Mapping jobsMapping = (Yaml.Mapping) jobsValue;
-                for (Yaml.Mapping.Entry jobEntry : jobsMapping.getEntries()) {
-                    if (jobEntry.getValue() instanceof Yaml.Mapping) {
-                        Yaml.Mapping jobMapping = (Yaml.Mapping) jobEntry.getValue();
-                        if (jobHasPublisherAction(jobMapping)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-
-        private boolean jobHasPublisherAction(Yaml.Mapping jobMapping) {
-            for (Yaml.Mapping.Entry entry : jobMapping.getEntries()) {
-                if (entry.getKey() instanceof Yaml.Scalar && "steps".equals(((Yaml.Scalar) entry.getKey()).getValue())) {
-                    if (entry.getValue() instanceof Yaml.Sequence) {
-                        Yaml.Sequence stepsSequence = (Yaml.Sequence) entry.getValue();
-                        for (Yaml.Sequence.Entry stepEntry : stepsSequence.getEntries()) {
-                            if (stepEntry.getBlock() instanceof Yaml.Mapping) {
-                                Yaml.Mapping stepMapping = (Yaml.Mapping) stepEntry.getBlock();
-                                if (stepUsesPublisherAction(stepMapping)) {
-                                    return true;
-                                }
+                            if ("on".equals(key)) {
+                                isPublishingWorkflow = isPublishingTrigger(entry.getValue());
+                            } else if ("jobs".equals(key)) {
+                                hasPublisherAction = hasPublisherActions(entry.getValue());
                             }
                         }
                     }
                 }
             }
-            return false;
-        }
 
-        private boolean stepUsesPublisherAction(Yaml.Mapping stepMapping) {
-            for (Yaml.Mapping.Entry entry : stepMapping.getEntries()) {
-                if ("uses".equals(entry.getKey().getValue())) {
-                    String uses = YamlHelper.getScalarValue(entry.getValue());
-                    if (uses != null) {
-                        String actionName = extractActionName(uses);
-                        return PUBLISHER_ACTIONS.contains(actionName);
+            private boolean isPublishingTrigger(Yaml.Block onValue) {
+                String scalarTrigger = YamlHelper.getScalarValue(onValue);
+                if (scalarTrigger != null) {
+                    return "release".equals(scalarTrigger);
+                }
+                if (onValue instanceof Yaml.Sequence) {
+                    Yaml.Sequence sequence = (Yaml.Sequence) onValue;
+                    for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
+                        String trigger = YamlHelper.getScalarValue(seqEntry.getBlock());
+                        if ("release".equals(trigger)) {
+                            return true;
+                        }
+                    }
+                } else if (onValue instanceof Yaml.Mapping) {
+                    Yaml.Mapping mapping = (Yaml.Mapping) onValue;
+                    for (Yaml.Mapping.Entry triggerEntry : mapping.getEntries()) {
+                        String trigger = triggerEntry.getKey().getValue();
+                        if ("release".equals(trigger)) {
+                            return true;
+                        }
+                        if ("push".equals(trigger)) {
+                            // Check for release branches or tags
+                            if (isReleasePush(triggerEntry.getValue())) {
+                                return true;
+                            }
+                        }
                     }
                 }
-            }
-            return false;
-        }
-
-        @Override
-        public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
-
-            // Look for cache-aware actions in steps
-            if (isCacheAwareActionStep(mappingEntry)) {
-                String actionName = getActionName(mappingEntry);
-                return SearchResult.found(mappingEntry,
-                        String.format("Action '%s' uses caching in a workflow that publishes artifacts. " +
-                                "This could lead to cache poisoning where malicious content gets cached and " +
-                                "included in published artifacts. Consider disabling caching for this step " +
-                                "or using read-only cache mode.", actionName));
-            }
-
-            return mappingEntry;
-        }
-
-        private boolean isCacheAwareActionStep(Yaml.Mapping.Entry entry) {
-            if (!"uses".equals(entry.getKey().getValue())) {
                 return false;
             }
 
-            String uses = YamlHelper.getScalarValue(entry.getValue());
-            if (uses == null) {
+            private boolean isReleasePush(Yaml.Block pushConfig) {
+                if (pushConfig instanceof Yaml.Mapping) {
+                    Yaml.Mapping mapping = (Yaml.Mapping) pushConfig;
+                    for (Yaml.Mapping.Entry entry : mapping.getEntries()) {
+                        if (entry.getKey() instanceof Yaml.Scalar) {
+                            String key = ((Yaml.Scalar) entry.getKey()).getValue();
+                            if ("tags".equals(key)) {
+                                return true; // Pushing tags suggests release
+                            }
+                            if ("branches".equals(key)) {
+                                // Check if any branch name suggests release
+                                return hasReleaseBranches(entry.getValue());
+                            }
+                        }
+                    }
+                }
                 return false;
             }
 
-            String actionName = extractActionName(uses);
-            return CACHE_AWARE_ACTIONS.contains(actionName);
-        }
-
-        private String getActionName(Yaml.Mapping.Entry entry) {
-            String uses = YamlHelper.getScalarValue(entry.getValue());
-            return uses != null ? extractActionName(uses) : "unknown";
-        }
-
-        private String extractActionName(String uses) {
-            // Extract action name from "owner/repo@version" format
-            if (uses.contains("@")) {
-                uses = uses.substring(0, uses.indexOf("@"));
+            private boolean hasReleaseBranches(Yaml.Block branchesValue) {
+                if (branchesValue instanceof Yaml.Sequence) {
+                    Yaml.Sequence sequence = (Yaml.Sequence) branchesValue;
+                    for (Yaml.Sequence.Entry entry : sequence.getEntries()) {
+                        String branch = YamlHelper.getScalarValue(entry.getBlock());
+                        if (branch != null && RELEASE_BRANCH_PATTERN.matcher(branch).matches()) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
             }
-            return uses;
-        }
+
+            private boolean hasPublisherActions(Yaml.Block jobsValue) {
+                if (jobsValue instanceof Yaml.Mapping) {
+                    Yaml.Mapping jobsMapping = (Yaml.Mapping) jobsValue;
+                    for (Yaml.Mapping.Entry jobEntry : jobsMapping.getEntries()) {
+                        if (jobEntry.getValue() instanceof Yaml.Mapping) {
+                            Yaml.Mapping jobMapping = (Yaml.Mapping) jobEntry.getValue();
+                            if (jobHasPublisherAction(jobMapping)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            private boolean jobHasPublisherAction(Yaml.Mapping jobMapping) {
+                for (Yaml.Mapping.Entry entry : jobMapping.getEntries()) {
+                    if (entry.getKey() instanceof Yaml.Scalar && "steps".equals(((Yaml.Scalar) entry.getKey()).getValue())) {
+                        if (entry.getValue() instanceof Yaml.Sequence) {
+                            Yaml.Sequence stepsSequence = (Yaml.Sequence) entry.getValue();
+                            for (Yaml.Sequence.Entry stepEntry : stepsSequence.getEntries()) {
+                                if (stepEntry.getBlock() instanceof Yaml.Mapping) {
+                                    Yaml.Mapping stepMapping = (Yaml.Mapping) stepEntry.getBlock();
+                                    if (stepUsesPublisherAction(stepMapping)) {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            private boolean stepUsesPublisherAction(Yaml.Mapping stepMapping) {
+                for (Yaml.Mapping.Entry entry : stepMapping.getEntries()) {
+                    if ("uses".equals(entry.getKey().getValue())) {
+                        String uses = YamlHelper.getScalarValue(entry.getValue());
+                        if (uses != null) {
+                            String actionName = extractActionName(uses);
+                            return PUBLISHER_ACTIONS.contains(actionName);
+                        }
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
+                Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
+
+                // Look for cache-aware actions in steps
+                if (isCacheAwareActionStep(mappingEntry)) {
+                    String actionName = getActionName(mappingEntry);
+                    return SearchResult.found(mappingEntry,
+                            String.format("Action '%s' uses caching in a workflow that publishes artifacts. " +
+                                    "This could lead to cache poisoning where malicious content gets cached and " +
+                                    "included in published artifacts. Consider disabling caching for this step " +
+                                    "or using read-only cache mode.", actionName));
+                }
+
+                return mappingEntry;
+            }
+
+            private boolean isCacheAwareActionStep(Yaml.Mapping.Entry entry) {
+                if (!"uses".equals(entry.getKey().getValue())) {
+                    return false;
+                }
+
+                String uses = YamlHelper.getScalarValue(entry.getValue());
+                if (uses == null) {
+                    return false;
+                }
+
+                String actionName = extractActionName(uses);
+                return CACHE_AWARE_ACTIONS.contains(actionName);
+            }
+
+            private String getActionName(Yaml.Mapping.Entry entry) {
+                String uses = YamlHelper.getScalarValue(entry.getValue());
+                return uses != null ? extractActionName(uses) : "unknown";
+            }
+
+            private String extractActionName(String uses) {
+                // Extract action name from "owner/repo@version" format
+                if (uses.contains("@")) {
+                    uses = uses.substring(0, uses.indexOf("@"));
+                }
+                return uses;
+            }
+        });
     }
+
 }

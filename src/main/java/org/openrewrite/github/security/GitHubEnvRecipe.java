@@ -18,8 +18,10 @@ package org.openrewrite.github.security;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
+import org.openrewrite.github.IsGitHubActionsWorkflow;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -72,131 +74,129 @@ public class GitHubEnvRecipe extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new GitHubEnvVisitor();
-    }
+        return Preconditions.check(new IsGitHubActionsWorkflow(), new YamlIsoVisitor<ExecutionContext>() {
+            private boolean hasDangerousTriggers = false;
 
-    private static class GitHubEnvVisitor extends YamlIsoVisitor<ExecutionContext> {
+            @Override
+            public Yaml.Document visitDocument(Yaml.Document document, ExecutionContext ctx) {
+                // Reset state for each document
+                hasDangerousTriggers = false;
 
-        private boolean hasDangerousTriggers = false;
+                // First pass: check if workflow has dangerous triggers
+                analyzeTriggers(document);
 
-        @Override
-        public Yaml.Document visitDocument(Yaml.Document document, ExecutionContext ctx) {
-            // Reset state for each document
-            hasDangerousTriggers = false;
+                // Only analyze run steps if we have dangerous triggers
+                if (hasDangerousTriggers) {
+                    return super.visitDocument(document, ctx);
+                }
 
-            // First pass: check if workflow has dangerous triggers
-            analyzeTriggers(document);
-
-            // Only analyze run steps if we have dangerous triggers
-            if (hasDangerousTriggers) {
-                return super.visitDocument(document, ctx);
+                return document;
             }
 
-            return document;
-        }
+            private void analyzeTriggers(Yaml.Document document) {
+                if (document.getBlock() instanceof Yaml.Mapping) {
+                    Yaml.Mapping workflowMapping = (Yaml.Mapping) document.getBlock();
 
-        private void analyzeTriggers(Yaml.Document document) {
-            if (document.getBlock() instanceof Yaml.Mapping) {
-                Yaml.Mapping workflowMapping = (Yaml.Mapping) document.getBlock();
-
-                for (Yaml.Mapping.Entry entry : workflowMapping.getEntries()) {
-                    if (entry.getKey() instanceof Yaml.Scalar && "on".equals(((Yaml.Scalar) entry.getKey()).getValue())) {
-                        hasDangerousTriggers = checkForDangerousTriggers(entry.getValue());
-                        break;
+                    for (Yaml.Mapping.Entry entry : workflowMapping.getEntries()) {
+                        if (entry.getKey() instanceof Yaml.Scalar && "on".equals(((Yaml.Scalar) entry.getKey()).getValue())) {
+                            hasDangerousTriggers = checkForDangerousTriggers(entry.getValue());
+                            break;
+                        }
                     }
                 }
             }
-        }
 
-        private boolean checkForDangerousTriggers(Yaml.Block onValue) {
-            String scalarTrigger = YamlHelper.getScalarValue(onValue);
-            if (scalarTrigger != null) {
-                return DANGEROUS_TRIGGERS.contains(scalarTrigger);
-            }
-            if (onValue instanceof Yaml.Sequence) {
-                Yaml.Sequence sequence = (Yaml.Sequence) onValue;
-                for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
-                    String trigger = YamlHelper.getScalarValue(seqEntry.getBlock());
-                    if (trigger != null && DANGEROUS_TRIGGERS.contains(trigger)) {
-                        return true;
+            private boolean checkForDangerousTriggers(Yaml.Block onValue) {
+                String scalarTrigger = YamlHelper.getScalarValue(onValue);
+                if (scalarTrigger != null) {
+                    return DANGEROUS_TRIGGERS.contains(scalarTrigger);
+                }
+                if (onValue instanceof Yaml.Sequence) {
+                    Yaml.Sequence sequence = (Yaml.Sequence) onValue;
+                    for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
+                        String trigger = YamlHelper.getScalarValue(seqEntry.getBlock());
+                        if (trigger != null && DANGEROUS_TRIGGERS.contains(trigger)) {
+                            return true;
+                        }
+                    }
+                } else if (onValue instanceof Yaml.Mapping) {
+                    Yaml.Mapping mapping = (Yaml.Mapping) onValue;
+                    for (Yaml.Mapping.Entry triggerEntry : mapping.getEntries()) {
+                        String trigger = triggerEntry.getKey().getValue();
+                        if (DANGEROUS_TRIGGERS.contains(trigger)) {
+                            return true;
+                        }
                     }
                 }
-            } else if (onValue instanceof Yaml.Mapping) {
-                Yaml.Mapping mapping = (Yaml.Mapping) onValue;
-                for (Yaml.Mapping.Entry triggerEntry : mapping.getEntries()) {
-                    String trigger = triggerEntry.getKey().getValue();
-                    if (DANGEROUS_TRIGGERS.contains(trigger)) {
-                        return true;
+                return false;
+            }
+
+            @Override
+            public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
+                Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
+
+                // Only check if we have dangerous triggers
+                if (!hasDangerousTriggers) {
+                    return mappingEntry;
+                }
+
+                // Look for run steps that write to GITHUB_ENV or GITHUB_PATH
+                if (isRunStepEntry(mappingEntry)) {
+                    String runContent = getRunContent(mappingEntry);
+                    if (runContent != null && usesGitHubEnv(runContent)) {
+                        String envVar = getEnvironmentVariable(runContent);
+                        return SearchResult.found(mappingEntry,
+                                String.format("Write to %s may allow code execution in a workflow with dangerous triggers. " +
+                                        "This can lead to code injection when the written content includes user-controlled data. " +
+                                        "Ensure any dynamic content is properly sanitized or avoid writing to environment files " +
+                                        "in workflows triggered by untrusted events.", envVar));
                     }
                 }
-            }
-            return false;
-        }
 
-        @Override
-        public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            Yaml.Mapping.Entry mappingEntry = super.visitMappingEntry(entry, ctx);
-
-            // Only check if we have dangerous triggers
-            if (!hasDangerousTriggers) {
                 return mappingEntry;
             }
 
-            // Look for run steps that write to GITHUB_ENV or GITHUB_PATH
-            if (isRunStepEntry(mappingEntry)) {
-                String runContent = getRunContent(mappingEntry);
-                if (runContent != null && usesGitHubEnv(runContent)) {
-                    String envVar = getEnvironmentVariable(runContent);
-                    return SearchResult.found(mappingEntry,
-                            String.format("Write to %s may allow code execution in a workflow with dangerous triggers. " +
-                                    "This can lead to code injection when the written content includes user-controlled data. " +
-                                    "Ensure any dynamic content is properly sanitized or avoid writing to environment files " +
-                                    "in workflows triggered by untrusted events.", envVar));
+            private boolean isRunStepEntry(Yaml.Mapping.Entry entry) {
+                return entry.getKey() instanceof Yaml.Scalar && "run".equals(((Yaml.Scalar) entry.getKey()).getValue());
+            }
+
+            private String getRunContent(Yaml.Mapping.Entry entry) {
+                return YamlHelper.getScalarValue(entry.getValue());
+            }
+
+            private boolean usesGitHubEnv(String runContent) {
+                // Check if the run content writes to GITHUB_ENV or GITHUB_PATH
+                if (!GITHUB_ENV_WRITE_PATTERN.matcher(runContent).find()) {
+                    return false;
                 }
+
+                // If it's just static echo content, it's likely safe
+                if (isStaticEcho(runContent)) {
+                    return false;
+                }
+
+                return true;
             }
 
-            return mappingEntry;
-        }
-
-        private boolean isRunStepEntry(Yaml.Mapping.Entry entry) {
-            return entry.getKey() instanceof Yaml.Scalar && "run".equals(((Yaml.Scalar) entry.getKey()).getValue());
-        }
-
-        private String getRunContent(Yaml.Mapping.Entry entry) {
-            return YamlHelper.getScalarValue(entry.getValue());
-        }
-
-        private boolean usesGitHubEnv(String runContent) {
-            // Check if the run content writes to GITHUB_ENV or GITHUB_PATH
-            if (!GITHUB_ENV_WRITE_PATTERN.matcher(runContent).find()) {
-                return false;
+            private boolean isStaticEcho(String runContent) {
+                // Simple heuristic: if all GITHUB_ENV writes are from static echo commands, consider it safe
+                // This is a simplified version of the complex tree-sitter analysis in zizmor
+                return STATIC_ECHO_PATTERN.matcher(runContent).find() &&
+                        !runContent.contains("$") &&
+                        !runContent.contains("`") &&
+                        !runContent.contains("$(");
             }
 
-            // If it's just static echo content, it's likely safe
-            if (isStaticEcho(runContent)) {
-                return false;
+            private String getEnvironmentVariable(String runContent) {
+                if (runContent.toUpperCase().contains("GITHUB_ENV")) {
+                    return "GITHUB_ENV";
+                }
+                if (runContent.toUpperCase().contains("GITHUB_PATH")) {
+                    return "GITHUB_PATH";
+                }
+                return "environment file";
             }
-
-            return true;
-        }
-
-        private boolean isStaticEcho(String runContent) {
-            // Simple heuristic: if all GITHUB_ENV writes are from static echo commands, consider it safe
-            // This is a simplified version of the complex tree-sitter analysis in zizmor
-            return STATIC_ECHO_PATTERN.matcher(runContent).find() &&
-                    !runContent.contains("$") &&
-                    !runContent.contains("`") &&
-                    !runContent.contains("$(");
-        }
-
-        private String getEnvironmentVariable(String runContent) {
-            if (runContent.toUpperCase().contains("GITHUB_ENV")) {
-                return "GITHUB_ENV";
-            }
-            if (runContent.toUpperCase().contains("GITHUB_PATH")) {
-                return "GITHUB_PATH";
-            }
-            return "environment file";
-        }
+        });
     }
+
 }
