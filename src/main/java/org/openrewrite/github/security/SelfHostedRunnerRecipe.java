@@ -18,6 +18,7 @@ package org.openrewrite.github.security;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
+import org.openrewrite.github.util.YamlScalarAccessor;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -47,7 +48,7 @@ public class SelfHostedRunnerRecipe extends Recipe {
         );
     }
 
-    private static class SelfHostedRunnerVisitor extends YamlIsoVisitor<ExecutionContext> {
+    private static class SelfHostedRunnerVisitor extends YamlIsoVisitor<ExecutionContext> implements YamlScalarAccessor {
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
@@ -87,7 +88,7 @@ public class SelfHostedRunnerRecipe extends Recipe {
         }
 
         private Yaml.Mapping.Entry checkRunsOnSequence(Yaml.Mapping.Entry entry, Yaml.Sequence sequence) {
-            String firstValue = YamlHelper.getScalarValue(sequence.getEntries().get(0).getBlock());
+            String firstValue = getScalarValue(sequence.getEntries().get(0).getBlock());
             if ("self-hosted".equals(firstValue)) {
                 return SearchResult.found(entry,
                         "Uses self-hosted runner which may have security implications in public repositories. " +
@@ -137,7 +138,7 @@ public class SelfHostedRunnerRecipe extends Recipe {
                 if (matrixEntry.getValue() instanceof Yaml.Sequence) {
                     Yaml.Sequence sequence = (Yaml.Sequence) matrixEntry.getValue();
                     for (Yaml.Sequence.Entry seqEntry : sequence.getEntries()) {
-                        String value = YamlHelper.getScalarValue(seqEntry.getBlock());
+                        String value = getScalarValue(seqEntry.getBlock());
                         if ("self-hosted".equals(value)) {
                             return true;
                         }
