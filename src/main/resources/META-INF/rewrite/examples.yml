@@ -181,6 +181,23 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.IsGitHubActionsWorkflow
+examples:
+- description: '`IsGitHubActionsWorkflowTest#detectYml`'
+  sources:
+  - before: |
+      on:
+        push:
+          branches:
+            - main
+    after: |
+      on:
+        push:
+          branches:
+            - main
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.MigrateSetupUvV6ToV7
 examples:
 - description: '`MigrateSetupUvV6ToV7Test#upgradesVersionFromV6ToV7`'
