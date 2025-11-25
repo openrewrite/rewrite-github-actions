@@ -137,8 +137,6 @@ public class AddDependabotCooldown extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        int days = cooldownDays == null ? 7 : cooldownDays;
-
         return Preconditions.check(new FindSourceFiles(".github/dependabot.{yml,yaml}"), new YamlIsoVisitor<ExecutionContext>() {
             private final JsonPathMatcher packageEcosystemMatch = new JsonPathMatcher("$.updates[*].package-ecosystem");
 
@@ -155,47 +153,19 @@ public class AddDependabotCooldown extends Recipe {
             public Yaml.Mapping visitMapping(Yaml.Mapping mapping, ExecutionContext ctx) {
                 Yaml.Mapping m = super.visitMapping(mapping, ctx);
 
-                if (Boolean.TRUE.equals(getCursor().getMessage("ADD_COOLDOWN"))) {
+                if (Boolean.TRUE.equals(getCursor().pollMessage("ADD_COOLDOWN"))) {
                     // Check if cooldown already exists
                     boolean hasCooldown = m.getEntries().stream()
                             .anyMatch(entry -> "cooldown".equals(entry.getKey().getValue()));
 
                     if (!hasCooldown) {
-                        // Build cooldown YAML structure with all configured options
-                        StringBuilder cooldownYaml = new StringBuilder();
-                        cooldownYaml.append("cooldown:\n");
-                        cooldownYaml.append("  default-days: ").append(days).append("\n");
-
-                        if (semverMajorDays != null) {
-                            cooldownYaml.append("  semver-major-days: ").append(semverMajorDays).append("\n");
-                        }
-                        if (semverMinorDays != null) {
-                            cooldownYaml.append("  semver-minor-days: ").append(semverMinorDays).append("\n");
-                        }
-                        if (semverPatchDays != null) {
-                            cooldownYaml.append("  semver-patch-days: ").append(semverPatchDays).append("\n");
-                        }
-
-                        if (include != null && !include.isEmpty()) {
-                            cooldownYaml.append("  include:\n");
-                            for (String dep : include) {
-                                cooldownYaml.append("    - ").append(dep).append("\n");
-                            }
-                        }
-
-                        if (exclude != null && !exclude.isEmpty()) {
-                            cooldownYaml.append("  exclude:\n");
-                            for (String dep : exclude) {
-                                cooldownYaml.append("    - ").append(dep).append("\n");
-                            }
-                        }
-
-                        // Parse the constructed YAML
+                        // Parse the cooldown YAML to get a proper structure
+                        String yamlToMerge = cooldownYaml();
                         Yaml.Documents documents = new YamlParser()
-                                .parse(ctx, cooldownYaml.toString())
+                                .parse(ctx, yamlToMerge)
                                 .map(Yaml.Documents.class::cast)
                                 .findFirst()
-                                .get();
+                                .orElseThrow(() -> new IllegalStateException("Failed to parse cooldown YAML"));
 
                         Yaml.Mapping cooldownMapping = (Yaml.Mapping) documents.getDocuments().get(0).getBlock();
                         Yaml.Mapping.Entry cooldownEntry = cooldownMapping.getEntries().get(0);
@@ -209,6 +179,41 @@ public class AddDependabotCooldown extends Recipe {
                 }
 
                 return m;
+            }
+
+            private String cooldownYaml() {
+                int days = cooldownDays == null ? 7 : cooldownDays;
+
+                // Build cooldown YAML structure with all configured options
+                StringBuilder cooldownYaml = new StringBuilder();
+                cooldownYaml.append("cooldown:\n");
+                cooldownYaml.append("  default-days: ").append(days).append("\n");
+
+                if (semverMajorDays != null) {
+                    cooldownYaml.append("  semver-major-days: ").append(semverMajorDays).append("\n");
+                }
+                if (semverMinorDays != null) {
+                    cooldownYaml.append("  semver-minor-days: ").append(semverMinorDays).append("\n");
+                }
+                if (semverPatchDays != null) {
+                    cooldownYaml.append("  semver-patch-days: ").append(semverPatchDays).append("\n");
+                }
+
+                if (include != null && !include.isEmpty()) {
+                    cooldownYaml.append("  include:\n");
+                    for (String dep : include) {
+                        cooldownYaml.append("    - ").append(dep).append("\n");
+                    }
+                }
+
+                if (exclude != null && !exclude.isEmpty()) {
+                    cooldownYaml.append("  exclude:\n");
+                    for (String dep : exclude) {
+                        cooldownYaml.append("    - ").append(dep).append("\n");
+                    }
+                }
+
+                return cooldownYaml.toString();
             }
         });
     }
