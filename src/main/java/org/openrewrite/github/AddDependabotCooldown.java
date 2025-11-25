@@ -28,14 +28,17 @@ import org.openrewrite.yaml.tree.Yaml;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
+
+import static org.openrewrite.Validated.test;
 
 @EqualsAndHashCode(callSuper = false)
 @Value
 public class AddDependabotCooldown extends Recipe {
     @Option(displayName = "Default cooldown days",
             description = "The number of days to wait before considering a published dependency suitable for use (1-90). " +
-                         "This delay allows security vendors time to identify potential compromises. " +
-                         "Applied to all version types unless specific semver options are set.",
+                    "This delay allows security vendors time to identify potential compromises. " +
+                    "Applied to all version types unless specific semver options are set.",
             example = "7",
             required = false)
     @Nullable
@@ -43,7 +46,7 @@ public class AddDependabotCooldown extends Recipe {
 
     @Option(displayName = "Semver major cooldown days",
             description = "The number of days to wait for major version updates (1-90). " +
-                         "Only applies to package managers that support semantic versioning.",
+                    "Only applies to package managers that support semantic versioning.",
             example = "14",
             required = false)
     @Nullable
@@ -51,7 +54,7 @@ public class AddDependabotCooldown extends Recipe {
 
     @Option(displayName = "Semver minor cooldown days",
             description = "The number of days to wait for minor version updates (1-90). " +
-                         "Only applies to package managers that support semantic versioning.",
+                    "Only applies to package managers that support semantic versioning.",
             example = "7",
             required = false)
     @Nullable
@@ -59,7 +62,7 @@ public class AddDependabotCooldown extends Recipe {
 
     @Option(displayName = "Semver patch cooldown days",
             description = "The number of days to wait for patch version updates (1-90). " +
-                         "Only applies to package managers that support semantic versioning.",
+                    "Only applies to package managers that support semantic versioning.",
             example = "3",
             required = false)
     @Nullable
@@ -67,7 +70,7 @@ public class AddDependabotCooldown extends Recipe {
 
     @Option(displayName = "Include dependencies",
             description = "List of up to 150 dependencies to apply cooldown to. Supports wildcard patterns with `*`. " +
-                         "If not specified, cooldown applies to all dependencies.",
+                    "If not specified, cooldown applies to all dependencies.",
             example = "lodash, react*",
             required = false)
     @Nullable
@@ -75,7 +78,7 @@ public class AddDependabotCooldown extends Recipe {
 
     @Option(displayName = "Exclude dependencies",
             description = "List of up to 150 dependencies to exempt from cooldown. Supports wildcard patterns with `*`. " +
-                         "Exclude list takes precedence over include list.",
+                    "Exclude list takes precedence over include list.",
             example = "critical-security-package",
             required = false)
     @Nullable
@@ -109,25 +112,32 @@ public class AddDependabotCooldown extends Recipe {
     }
 
     @Override
-    public TreeVisitor<?, ExecutionContext> getVisitor() {
-        // Validate parameters
+    public Validated<Object> validate() {
+        Validated<Object> validated = super.validate();
         int days = cooldownDays == null ? 7 : cooldownDays;
-        validateDays("cooldownDays", days);
+        Predicate<Integer> lessThanNinety = d -> d >= 1 && d <= 90;
+        validated = validated.and(test("cooldownDays", "must be between 1 and 90", days, lessThanNinety));
         if (semverMajorDays != null) {
-            validateDays("semverMajorDays", semverMajorDays);
+            validated = validated.and(test("semverMajorDays", "must be between 1 and 90", semverMajorDays, lessThanNinety));
         }
         if (semverMinorDays != null) {
-            validateDays("semverMinorDays", semverMinorDays);
+            validated = validated.and(test("semverMinorDays", "must be between 1 and 90", semverMinorDays, lessThanNinety));
         }
         if (semverPatchDays != null) {
-            validateDays("semverPatchDays", semverPatchDays);
+            validated = validated.and(test("semverPatchDays", "must be between 1 and 90", semverPatchDays, lessThanNinety));
         }
-        if (include != null && include.size() > 150) {
-            throw new IllegalArgumentException("include list limited to 150 items, got " + include.size());
+        if (include != null) {
+            validated = validated.and(test("include", "list limited to 150 items", include, i -> i.size() <= 150));
         }
-        if (exclude != null && exclude.size() > 150) {
-            throw new IllegalArgumentException("exclude list limited to 150 items, got " + exclude.size());
+        if (exclude != null) {
+            validated = validated.and(test("exclude", "list limited to 150 items", exclude, e -> e.size() <= 150));
         }
+        return validated;
+    }
+
+    @Override
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        int days = cooldownDays == null ? 7 : cooldownDays;
 
         return Preconditions.check(new FindSourceFiles(".github/dependabot.{yml,yaml}"), new YamlIsoVisitor<ExecutionContext>() {
             private final JsonPathMatcher packageEcosystemMatch = new JsonPathMatcher("$.updates[*].package-ecosystem");
@@ -201,11 +211,5 @@ public class AddDependabotCooldown extends Recipe {
                 return m;
             }
         });
-    }
-
-    private void validateDays(String paramName, int days) {
-        if (days < 1 || days > 90) {
-            throw new IllegalArgumentException(paramName + " must be between 1 and 90, got " + days);
-        }
     }
 }
