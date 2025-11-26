@@ -51,6 +51,35 @@ class ChangeActionVersionTest implements RewriteTest {
     }
 
     @Test
+    void updateNestedActionVersion() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeActionVersion("actions/nested/.*", "v4")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v2
+                    - uses: actions/nested/checkout@v2
+                    - uses: actions/nested/setup-java@main
+              """,
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v2
+                    - uses: actions/nested/checkout@v4
+                    - uses: actions/nested/setup-java@v4
+              """,
+            source -> source.path(".github/workflows/ci.yaml")
+          )
+        );
+    }
+
+    @Test
     void updateActionVersionYaml() {
         rewriteRun(
           spec -> spec.recipeFromYaml("""
