@@ -52,8 +52,8 @@ public class ChangeActionVersion extends Recipe {
                 new IsGitHubActionsWorkflow(),
                 new YamlIsoVisitor<ExecutionContext>() {
                     @Override
-                    public Yaml.Documents visitDocuments(Yaml.Documents documents, ExecutionContext executionContext) {
-                        Yaml.Documents docs = super.visitDocuments(documents, executionContext);
+                    public Yaml.Documents visitDocuments(Yaml.Documents documents, ExecutionContext ctx) {
+                        Yaml.Documents docs = super.visitDocuments(documents, ctx);
                         // Find all 'uses' entries that match the specified action
                         for (Yaml uses : FindKey.find(docs, "$.jobs..[?(@.uses =~ '" + action + "(?:@.+)?')].uses")) {
                             if (!(uses instanceof Yaml.Mapping.Entry)) {
@@ -69,7 +69,7 @@ public class ChangeActionVersion extends Recipe {
                                     "$.jobs..[?(@.uses =~ '" + oldAction + "(?:@.+)?')].uses",
                                     oldAction + '@' + version, null)
                                     .getVisitor()
-                                    .visit(docs, executionContext);
+                                    .visitNonNull(docs, ctx);
                         }
                         return docs;
                     }
