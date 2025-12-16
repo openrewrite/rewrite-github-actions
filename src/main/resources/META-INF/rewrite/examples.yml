@@ -13,6 +13,47 @@
 # limitations under the License.
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.AddDependabotCooldown
+examples:
+- description: '`AddDependabotCooldownTest#addCooldownWithDefaultDays`'
+  parameters:
+  - 'null'
+  - 'null'
+  - 'null'
+  - 'null'
+  - 'null'
+  - 'null'
+  sources:
+  - before: |
+      version: 2
+      updates:
+        - package-ecosystem: github-actions
+          directory: /
+          schedule:
+            interval: daily
+        - package-ecosystem: maven
+          directory: /
+          schedule:
+            interval: weekly
+    after: |
+      version: 2
+      updates:
+        - package-ecosystem: github-actions
+          directory: /
+          schedule:
+            interval: daily
+          cooldown:
+            default-days: 7
+        - package-ecosystem: maven
+          directory: /
+          schedule:
+            interval: weekly
+          cooldown:
+            default-days: 7
+    path: .github/dependabot.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.AddManualTrigger
 examples:
 - description: '`AddManualTriggerTest#manualTrigger`'
