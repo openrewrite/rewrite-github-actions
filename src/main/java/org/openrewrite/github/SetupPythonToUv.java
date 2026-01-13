@@ -63,6 +63,7 @@ public class SetupPythonToUv extends Recipe {
             required = false)
     @Nullable
     Boolean enableCache;
+
     String displayName = "Replace `actions/setup-python` with `astral-sh/setup-uv`";
 
     String description = "Replace `actions/setup-python` action with `astral-sh/setup-uv` action for faster Python " +
