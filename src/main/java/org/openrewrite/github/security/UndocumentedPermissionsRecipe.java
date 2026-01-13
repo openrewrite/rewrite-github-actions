@@ -27,18 +27,12 @@ import org.openrewrite.yaml.tree.Yaml;
 @EqualsAndHashCode(callSuper = false)
 public class UndocumentedPermissionsRecipe extends Recipe {
 
-    @Override
-    public String getDisplayName() {
-        return "Document permissions usage";
-    }
+    String displayName = "Document permissions usage";
 
-    @Override
-    public String getDescription() {
-        return "Add documentation comments for permissions blocks in GitHub Actions workflows. " +
+    String description = "Add documentation comments for permissions blocks in GitHub Actions workflows. " +
                 "Documenting permissions helps reviewers understand why specific permissions " +
                 "are needed and ensures security-conscious development practices. " +
                 "Based on [zizmor's undocumented-permissions audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/undocumented_permissions.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

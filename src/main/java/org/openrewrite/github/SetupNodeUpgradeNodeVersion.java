@@ -40,15 +40,9 @@ public class SetupNodeUpgradeNodeVersion extends Recipe {
     @Nullable
     Integer minimumNodeMajorVersion;
 
-    @Override
-    public String getDisplayName() {
-        return "Upgrade `actions/setup-node` `node-version`";
-    }
+    String displayName = "Upgrade `actions/setup-node` `node-version`";
 
-    @Override
-    public String getDescription() {
-        return "Update the Node.js version used by `actions/setup-node` if it is below the expected version number.";
-    }
+    String description = "Update the Node.js version used by `actions/setup-node` if it is below the expected version number.";
 
     @Override
     public Set<String> getTags() {

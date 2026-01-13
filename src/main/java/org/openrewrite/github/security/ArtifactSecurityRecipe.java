@@ -58,18 +58,12 @@ public class ArtifactSecurityRecipe extends Recipe {
             "config.json", "credentials", "token", "secret", "key", "password", "passwd"
     };
 
-    @Override
-    public String getDisplayName() {
-        return "Find credential persistence through GitHub Actions artifacts";
-    }
+    String displayName = "Find credential persistence through GitHub Actions artifacts";
 
-    @Override
-    public String getDescription() {
-        return "Find workflows that may persist credentials through artifact uploads. This occurs when checkout " +
+    String description = "Find workflows that may persist credentials through artifact uploads. This occurs when checkout " +
                 "actions don't disable credential persistence and upload actions include sensitive paths that may " +
                 "contain credentials, SSH keys, or configuration files. " +
                 "Based on [zizmor's `artipacked` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/artipacked.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

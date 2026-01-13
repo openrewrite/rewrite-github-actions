@@ -63,14 +63,10 @@ public class SetupPythonToUv extends Recipe {
             required = false)
     @Nullable
     Boolean enableCache;
-    @Override
-    public String getDisplayName() {
-        return "Replace `actions/setup-python` with `astral-sh/setup-uv`";
-    }
 
-    @Override
-    public String getDescription() {
-        return "Replace `actions/setup-python` action with `astral-sh/setup-uv` action for faster Python " +
+    String displayName = "Replace `actions/setup-python` with `astral-sh/setup-uv`";
+
+    String description = "Replace `actions/setup-python` action with `astral-sh/setup-uv` action for faster Python " +
                "environment setup and dependency management.\n\n" +
                "**Benefits of UV:**\n" +
                " - Significantly faster package installation and environment setup\n" +
@@ -88,7 +84,6 @@ public class SetupPythonToUv extends Recipe {
                " - `locked`: Use locked dependencies (`uv sync --locked`)\n" +
                " - `full`: Install all extras and dev dependencies (`uv sync --all-extras --dev`)\n\n" +
                "See the [UV GitHub integration guide](https://docs.astral.sh/uv/guides/integration/github/) for more details.";
-    }
 
     @Override
     public Duration getEstimatedEffortPerOccurrence() {

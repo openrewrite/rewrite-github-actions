@@ -31,18 +31,12 @@ import static org.openrewrite.yaml.tree.Yaml.Scalar.Style.PLAIN;
 @EqualsAndHashCode(callSuper = false)
 @Value
 public class PreferSecretsInheritWorkflow extends Recipe {
-    @Override
-    public String getDisplayName() {
-        return "Use `secrets: inherit` if possible";
-    }
+    String displayName = "Use `secrets: inherit` if possible";
 
-    @Override
-    public String getDescription() {
-        return "Pass all secrets to a reusable workflow using `secrets: inherit`. See " +
+    String description = "Pass all secrets to a reusable workflow using `secrets: inherit`. See " +
                 "[Simplify using secrets with reusable workflows]" +
                 "(https://github.blog/changelog/2022-05-03-github-actions-simplify-using-secrets-with-reusable-workflows/) " +
                 "for details.";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

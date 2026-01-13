@@ -99,17 +99,11 @@ public class ForbiddenUsesRecipe extends Recipe {
         }
     }
 
-    @Override
-    public String getDisplayName() {
-        return "Find forbidden action usage";
-    }
+    String displayName = "Find forbidden action usage";
 
-    @Override
-    public String getDescription() {
-        return "Find usage of forbidden or dangerous GitHub Actions that have known " +
+    String description = "Find usage of forbidden or dangerous GitHub Actions that have known " +
                 "security vulnerabilities or follow suspicious patterns. " +
                 "Based on [zizmor's forbidden-uses audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/forbidden_uses.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

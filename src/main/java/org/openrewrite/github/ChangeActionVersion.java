@@ -36,15 +36,9 @@ public class ChangeActionVersion extends Recipe {
             example = "v4")
     String version;
 
-    @Override
-    public String getDisplayName() {
-        return "Change GitHub Action version";
-    }
+    String displayName = "Change GitHub Action version";
 
-    @Override
-    public String getDescription() {
-        return "Change the version of a GitHub Action in any workflow.";
-    }
+    String description = "Change the version of a GitHub Action in any workflow.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

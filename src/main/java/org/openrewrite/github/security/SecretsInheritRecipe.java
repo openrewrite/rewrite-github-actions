@@ -30,18 +30,12 @@ import org.openrewrite.yaml.tree.Yaml;
 @EqualsAndHashCode(callSuper = false)
 public class SecretsInheritRecipe extends Recipe {
 
-    @Override
-    public String getDisplayName() {
-        return "Find unconditional secrets inheritance";
-    }
+    String displayName = "Find unconditional secrets inheritance";
 
-    @Override
-    public String getDescription() {
-        return "Detects when reusable workflows unconditionally inherit all parent secrets via `secrets: inherit`. " +
+    String description = "Detects when reusable workflows unconditionally inherit all parent secrets via `secrets: inherit`. " +
                 "This practice can lead to over-privileged workflows and potential secret exposure to called workflows " +
                 "that may not need access to all secrets. Consider explicitly passing only required secrets. " +
                 "Based on [zizmor's secrets-inherit audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/secrets_inherit.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

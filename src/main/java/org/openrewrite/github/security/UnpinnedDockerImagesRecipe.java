@@ -38,18 +38,12 @@ public class UnpinnedDockerImagesRecipe extends Recipe {
 
     private static final Pattern SHA256_DIGEST_PATTERN = Pattern.compile("^sha256:[a-f0-9]{64}$");
 
-    @Override
-    public String getDisplayName() {
-        return "Pin Docker images to digests";
-    }
+    String displayName = "Pin Docker images to digests";
 
-    @Override
-    public String getDescription() {
-        return "Pin Docker images to specific digest hashes for security and reproducibility. " +
+    String description = "Pin Docker images to specific digest hashes for security and reproducibility. " +
                 "Images pinned to tags can be changed by the image author, " +
                 "while digest pins are immutable. " +
                 "Based on [zizmor's unpinned-images audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/unpinned_images.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

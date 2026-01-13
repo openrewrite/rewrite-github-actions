@@ -84,14 +84,9 @@ public class AddDependabotCooldown extends Recipe {
     @Nullable
     List<String> exclude;
 
-    @Override
-    public String getDisplayName() {
-        return "Add cooldown periods to Dependabot configuration";
-    }
+    String displayName = "Add cooldown periods to Dependabot configuration";
 
-    @Override
-    public String getDescription() {
-        return "Adds a `cooldown` section to each update configuration in Dependabot files. " +
+    String description = "Adds a `cooldown` section to each update configuration in Dependabot files. " +
                 "Supports `default-days`, `semver-major-days`, `semver-minor-days`, `semver-patch-days`, " +
                 "`include`, and `exclude` options. " +
                 "This implements a security best practice where dependencies are not immediately adopted upon release, " +
@@ -99,7 +94,6 @@ public class AddDependabotCooldown extends Recipe {
                 "Cooldown applies only to version updates, not security updates. " +
                 "[Read more about dependency cooldowns](https://blog.yossarian.net/2025/11/21/We-should-all-be-using-dependency-cooldowns). " +
                 "[The available configuration options for dependabot are listed on GitHub](https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates).";
-    }
 
     @Override
     public Set<String> getTags() {

@@ -76,18 +76,12 @@ public class TemplateInjectionRecipe extends Recipe {
             "\\$\\{\\{([^}]+)\\}\\}"
     );
 
-    @Override
-    public String getDisplayName() {
-        return "Find template injection vulnerabilities";
-    }
+    String displayName = "Find template injection vulnerabilities";
 
-    @Override
-    public String getDescription() {
-        return "Find GitHub Actions workflows vulnerable to template injection attacks. These occur when user-controllable " +
+    String description = "Find GitHub Actions workflows vulnerable to template injection attacks. These occur when user-controllable " +
                 "input (like pull request titles, issue bodies, or commit messages) is used directly in `run` commands or " +
                 "`script` inputs without proper escaping. Attackers can exploit this to execute arbitrary code. " +
                 "Based on [zizmor's `template-injection` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/template_injection.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

@@ -37,16 +37,10 @@ public class AutoCancelInProgressWorkflow extends Recipe {
     @Nullable
     String accessToken;
 
-    @Override
-    public String getDisplayName() {
-        return "Cancel in-progress workflow when it is triggered again";
-    }
+    String displayName = "Cancel in-progress workflow when it is triggered again";
 
-    @Override
-    public String getDescription() {
-        return "When a workflow is already running and would be triggered again, cancel the existing workflow. " +
+    String description = "When a workflow is already running and would be triggered again, cancel the existing workflow. " +
                 "See [`styfle/cancel-workflow-action`](https://github.com/styfle/cancel-workflow-action) for details.";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

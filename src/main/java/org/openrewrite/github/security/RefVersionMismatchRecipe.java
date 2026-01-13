@@ -39,18 +39,12 @@ public class RefVersionMismatchRecipe extends Recipe {
             Pattern.compile("#\\s*tag\\s*=\\s*([vV]?\\d+)"),
     };
 
-    @Override
-    public String getDisplayName() {
-        return "Find commit SHAs with potentially mismatched version comments";
-    }
+    String displayName = "Find commit SHAs with potentially mismatched version comments";
 
-    @Override
-    public String getDescription() {
-        return "Find GitHub Actions that are pinned to commit SHAs but have version comments that may not match the actual pinned version. " +
+    String description = "Find GitHub Actions that are pinned to commit SHAs but have version comments that may not match the actual pinned version. " +
                 "This can lead to confusion about which version is actually being used and potential security issues if the comment " +
                 "misleads developers about the pinned version. " +
                 "Based on [zizmor's `ref-version-mismatch` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/ref_version_mismatch.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

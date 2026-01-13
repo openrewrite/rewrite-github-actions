@@ -27,18 +27,12 @@ import org.openrewrite.yaml.tree.Yaml;
 @EqualsAndHashCode(callSuper = false)
 public class SelfHostedRunnerRecipe extends Recipe {
 
-    @Override
-    public String getDisplayName() {
-        return "Find usage of self-hosted runners";
-    }
+    String displayName = "Find usage of self-hosted runners";
 
-    @Override
-    public String getDescription() {
-        return "Find workflows that use `self-hosted` runners, which may have security implications in public repositories " +
+    String description = "Find workflows that use `self-hosted` runners, which may have security implications in public repositories " +
                 "due to potential persistence between workflow runs and lack of isolation. Self-hosted runners should be " +
                 "properly secured and ideally ephemeral. " +
                 "Based on [zizmor's `self-hosted-runner` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/self_hosted_runner.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

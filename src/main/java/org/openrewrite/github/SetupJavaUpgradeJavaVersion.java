@@ -37,15 +37,9 @@ public class SetupJavaUpgradeJavaVersion extends Recipe {
     @Nullable
     Integer minimumJavaMajorVersion;
 
-    @Override
-    public String getDisplayName() {
-        return "Upgrade `actions/setup-java` `java-version`";
-    }
+    String displayName = "Upgrade `actions/setup-java` `java-version`";
 
-    @Override
-    public String getDescription() {
-        return "Update the Java version used by `actions/setup-java` if it is below the expected version number.";
-    }
+    String description = "Update the Java version used by `actions/setup-java` if it is below the expected version number.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

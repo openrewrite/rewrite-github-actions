@@ -27,17 +27,11 @@ import org.openrewrite.yaml.tree.Yaml;
 @EqualsAndHashCode(callSuper = false)
 public class AnonymousJobsRecipe extends Recipe {
 
-    @Override
-    public String getDisplayName() {
-        return "Find jobs without descriptive names";
-    }
+    String displayName = "Find jobs without descriptive names";
 
-    @Override
-    public String getDescription() {
-        return "Find jobs that lack descriptive names, making them harder to identify in workflow runs. " +
+    String description = "Find jobs that lack descriptive names, making them harder to identify in workflow runs. " +
                 "Jobs without `name` properties default to their job ID, which may not be descriptive. " +
                 "Based on [zizmor's anonymous-definition audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/anonymous_definition.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

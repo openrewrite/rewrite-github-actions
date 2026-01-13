@@ -58,18 +58,12 @@ public class TrustedPublishingRecipe extends Recipe {
             Pattern.compile("(?s)pdm\\s+(.+\\s+)?publish")
     };
 
-    @Override
-    public String getDisplayName() {
-        return "Find manual credentials instead of trusted publishing";
-    }
+    String displayName = "Find manual credentials instead of trusted publishing";
 
-    @Override
-    public String getDescription() {
-        return "Find workflows that use manual credentials for publishing instead of OIDC trusted publishing. " +
+    String description = "Find workflows that use manual credentials for publishing instead of OIDC trusted publishing. " +
                 "Trusted publishing eliminates the need for long-lived API tokens and provides better security " +
                 "through short-lived, automatically-rotated tokens. " +
                 "Based on [zizmor's use-trusted-publishing audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/use_trusted_publishing.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
