@@ -37,15 +37,9 @@ public class ReplaceRunners extends Recipe {
     )
     List<String> runners;
 
-    @Override
-    public String getDisplayName() {
-        return "Replace runners for a job";
-    }
+    String displayName = "Replace runners for a job";
 
-    @Override
-    public String getDescription() {
-        return "Replaces the runners of a given job.";
-    }
+    String description = "Replaces the runners of a given job.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

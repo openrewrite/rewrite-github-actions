@@ -32,17 +32,11 @@ public class InsecureCommandsRecipe extends Recipe {
 
     private static final String INSECURE_COMMANDS_VAR = "ACTIONS_ALLOW_UNSECURE_COMMANDS";
 
-    @Override
-    public String getDisplayName() {
-        return "Find insecure commands configuration";
-    }
+    String displayName = "Find insecure commands configuration";
 
-    @Override
-    public String getDescription() {
-        return "Detects when insecure workflow commands are enabled via `ACTIONS_ALLOW_UNSECURE_COMMANDS`. " +
+    String description = "Detects when insecure workflow commands are enabled via `ACTIONS_ALLOW_UNSECURE_COMMANDS`. " +
                 "This environment variable enables dangerous workflow commands that can lead to code injection vulnerabilities. " +
                 "Based on [zizmor's insecure-commands audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/insecure_commands.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

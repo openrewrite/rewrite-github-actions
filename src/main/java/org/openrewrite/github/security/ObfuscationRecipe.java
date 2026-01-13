@@ -37,18 +37,12 @@ public class ObfuscationRecipe extends Recipe {
             "\\$\\{\\{[^}]*['\"]}|['\"]{2,}|\\{\\{[^}]*\\$"
     );
 
-    @Override
-    public String getDisplayName() {
-        return "Find obfuscated GitHub Actions features";
-    }
+    String displayName = "Find obfuscated GitHub Actions features";
 
-    @Override
-    public String getDescription() {
-        return "Find workflows that use obfuscated action references or expressions that may be attempting to hide " +
+    String description = "Find workflows that use obfuscated action references or expressions that may be attempting to hide " +
                 "malicious behavior. This includes action paths with `'.'`, `'..'`, empty components, or expressions " +
                 "that use quote manipulation to hide their true intent. " +
                 "Based on [zizmor's `obfuscation` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/obfuscation.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

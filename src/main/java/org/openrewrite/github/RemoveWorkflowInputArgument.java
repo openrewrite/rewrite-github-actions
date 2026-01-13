@@ -47,15 +47,9 @@ public class RemoveWorkflowInputArgument extends Recipe {
             example = "myInputToRemove")
     String inputArgumentName;
 
-    @Override
-    public String getDisplayName() {
-        return "Remove workflow input argument";
-    }
+    String displayName = "Remove workflow input argument";
 
-    @Override
-    public String getDescription() {
-        return "Remove a specific input argument from calls to a reusable workflow.";
-    }
+    String description = "Remove a specific input argument from calls to a reusable workflow.";
 
     @Override
     public Duration getEstimatedEffortPerOccurrence() {

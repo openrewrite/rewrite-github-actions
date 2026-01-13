@@ -39,18 +39,12 @@ public class DangerousTriggersRecipe extends Recipe {
             "workflow_run"
     ));
 
-    @Override
-    public String getDisplayName() {
-        return "Find dangerous workflow triggers";
-    }
+    String displayName = "Find dangerous workflow triggers";
 
-    @Override
-    public String getDescription() {
-        return "Detects use of fundamentally insecure workflow triggers like `pull_request_target` and `workflow_run`. " +
+    String description = "Detects use of fundamentally insecure workflow triggers like `pull_request_target` and `workflow_run`. " +
                 "These triggers run with elevated privileges and are almost always used insecurely, " +
                 "potentially allowing code injection from untrusted sources. " +
                 "Based on [zizmor's dangerous-triggers audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/dangerous_triggers.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

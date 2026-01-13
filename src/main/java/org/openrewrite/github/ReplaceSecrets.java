@@ -42,15 +42,9 @@ public class ReplaceSecrets extends Recipe {
     @Nullable
     String fileMatcher;
 
-    @Override
-    public String getDisplayName() {
-        return "Replace GitHub Action secret names";
-    }
+    String displayName = "Replace GitHub Action secret names";
 
-    @Override
-    public String getDescription() {
-        return "Replace references to GitHub Action secrets in workflow files.";
-    }
+    String description = "Replace references to GitHub Action secrets in workflow files.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

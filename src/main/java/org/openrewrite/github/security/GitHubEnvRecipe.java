@@ -59,18 +59,12 @@ public class GitHubEnvRecipe extends Recipe {
             "^\\s*echo\\s+[\"']?[^$`]*[\"']?\\s*>>", Pattern.MULTILINE
     );
 
-    @Override
-    public String getDisplayName() {
-        return "Find dangerous GITHUB_ENV usage";
-    }
+    String displayName = "Find dangerous GITHUB_ENV usage";
 
-    @Override
-    public String getDescription() {
-        return "Detects dangerous usage of `GITHUB_ENV` and `GITHUB_PATH` environment files in workflows with " +
+    String description = "Detects dangerous usage of `GITHUB_ENV` and `GITHUB_PATH` environment files in workflows with " +
                 "risky triggers like `pull_request_target` or `workflow_run`. Writing to these files can " +
                 "allow code injection when the content includes user-controlled data. " +
                 "Based on [zizmor's github-env audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/github_env.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

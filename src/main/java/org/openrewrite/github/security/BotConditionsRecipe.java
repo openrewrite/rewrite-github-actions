@@ -63,18 +63,12 @@ public class BotConditionsRecipe extends Recipe {
             "github\\.(actor_id|event\\.pull_request\\.sender\\.id)\\s*==\\s*['\"]\\d+['\"]"
     );
 
-    @Override
-    public String getDisplayName() {
-        return "Find spoofable bot actor checks";
-    }
+    String displayName = "Find spoofable bot actor checks";
 
-    @Override
-    public String getDescription() {
-        return "Find workflow conditions that check for bot actors in ways that can be spoofed. " +
+    String description = "Find workflow conditions that check for bot actors in ways that can be spoofed. " +
                 "Bot actor names (like `dependabot[bot]`) can be easily spoofed by creating accounts with similar names. " +
                 "Use `actor_id` with numeric comparison instead for secure bot validation. " +
                 "Based on [zizmor's `bot-conditions` audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/bot_conditions.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

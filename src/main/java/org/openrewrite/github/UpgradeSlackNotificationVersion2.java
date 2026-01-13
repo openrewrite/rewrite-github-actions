@@ -35,15 +35,9 @@ import java.util.Set;
 @EqualsAndHashCode(callSuper = false)
 @Value
 public class UpgradeSlackNotificationVersion2 extends Recipe {
-    @Override
-    public String getDisplayName() {
-        return "Upgrade `slackapi/slack-github-action`";
-    }
+    String displayName = "Upgrade `slackapi/slack-github-action`";
 
-    @Override
-    public String getDescription() {
-        return "Update the Slack GitHub Action to use version 2.0.";
-    }
+    String description = "Update the Slack GitHub Action to use version 2.0.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

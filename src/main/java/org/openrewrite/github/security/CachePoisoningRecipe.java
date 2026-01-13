@@ -74,18 +74,12 @@ public class CachePoisoningRecipe extends Recipe {
 
     private static final Pattern RELEASE_BRANCH_PATTERN = Pattern.compile(".*release.*", Pattern.CASE_INSENSITIVE);
 
-    @Override
-    public String getDisplayName() {
-        return "Find cache poisoning vulnerabilities";
-    }
+    String displayName = "Find cache poisoning vulnerabilities";
 
-    @Override
-    public String getDescription() {
-        return "Detects potential cache poisoning vulnerabilities in workflows that use caching and publish artifacts. " +
+    String description = "Detects potential cache poisoning vulnerabilities in workflows that use caching and publish artifacts. " +
                 "When workflows use caches during artifact publishing, attackers may be able to poison the cache " +
                 "with malicious content that gets included in published artifacts. " +
                 "Based on [zizmor's cache-poisoning audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/cache_poisoning.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

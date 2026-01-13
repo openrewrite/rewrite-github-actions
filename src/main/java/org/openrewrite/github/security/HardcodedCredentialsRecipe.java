@@ -34,17 +34,11 @@ public class HardcodedCredentialsRecipe extends Recipe {
 
     private static final Pattern GITHUB_EXPRESSION_PATTERN = Pattern.compile("\\$\\{\\{.*?\\}\\}");
 
-    @Override
-    public String getDisplayName() {
-        return "Find hardcoded container credentials";
-    }
+    String displayName = "Find hardcoded container credentials";
 
-    @Override
-    public String getDescription() {
-        return "Detects hardcoded credentials in GitHub Actions container configurations. " +
+    String description = "Detects hardcoded credentials in GitHub Actions container configurations. " +
                 "Container registry passwords should use secrets instead of hardcoded values. " +
                 "Based on [zizmor's hardcoded-container-credentials audit](https://github.com/woodruffw/zizmor/blob/main/crates/zizmor/src/audit/hardcoded_container_credentials.rs).";
-    }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
