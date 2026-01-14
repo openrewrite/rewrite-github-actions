@@ -15,6 +15,7 @@
  */
 package org.openrewrite.github;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -26,15 +27,11 @@ import org.openrewrite.yaml.search.FindKey;
 import org.openrewrite.yaml.tree.Yaml;
 
 public class FindMissingTimeout extends Recipe {
-    @Override
-    public String getDisplayName() {
-        return "Find jobs missing timeout";
-    }
+    @Getter
+    final String displayName = "Find jobs missing timeout";
 
-    @Override
-    public String getDescription() {
-        return "Find GitHub Actions jobs missing a timeout.";
-    }
+    @Getter
+    final String description = "Find GitHub Actions jobs missing a timeout.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

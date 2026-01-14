@@ -15,6 +15,7 @@
  */
 package org.openrewrite.github;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -25,15 +26,11 @@ import java.time.Duration;
 
 public class RemoveAllCronTriggers extends Recipe {
 
-    @Override
-    public String getDisplayName() {
-        return "Remove all cron triggers";
-    }
+    @Getter
+    final String displayName = "Remove all cron triggers";
 
-    @Override
-    public String getDescription() {
-        return "Removes all cron triggers from a workflow.";
-    }
+    @Getter
+    final String description = "Removes all cron triggers from a workflow.";
 
     @Override
     public Duration getEstimatedEffortPerOccurrence() {

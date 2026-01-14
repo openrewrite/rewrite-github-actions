@@ -82,15 +82,11 @@ public class AddCronTrigger extends Recipe {
         }
     }
 
-    @Override
-    public String getDisplayName() {
-        return "Add cron workflow trigger";
-    }
+    @Getter
+    final String displayName = "Add cron workflow trigger";
 
-    @Override
-    public String getDescription() {
-        return "The `schedule` [event](https://docs.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events) allows you to trigger a workflow at a scheduled time.";
-    }
+    @Getter
+    final String description = "The `schedule` [event](https://docs.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events) allows you to trigger a workflow at a scheduled time.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

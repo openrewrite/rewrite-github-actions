@@ -15,6 +15,7 @@
  */
 package org.openrewrite.github;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.FindSourceFiles;
 import org.openrewrite.Recipe;
@@ -22,15 +23,11 @@ import org.openrewrite.TreeVisitor;
 
 public class IsGitHubActionsWorkflow extends Recipe {
 
-    @Override
-    public String getDisplayName() {
-        return "Is GitHub Actions Workflow";
-    }
+    @Getter
+    final String displayName = "Is GitHub Actions Workflow";
 
-    @Override
-    public String getDescription() {
-        return "Checks if the file is a GitHub Actions workflow file.";
-    }
+    @Getter
+    final String description = "Checks if the file is a GitHub Actions workflow file.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

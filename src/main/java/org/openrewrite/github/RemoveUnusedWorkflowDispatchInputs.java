@@ -15,6 +15,7 @@
  */
 package org.openrewrite.github;
 
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
@@ -40,15 +41,11 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
     private static final Pattern INPUT_USAGE_PATTERN = Pattern.compile("(?:github *[.] *event *[.] *inputs *[.] *([A-Za-z_][A-Za-z0-9_-]*)|inputs *[.] *([A-Za-z_][A-Za-z0-9_-]*))");
     private static final JsonPathMatcher WORKFLOW_DISPATCH_INPUTS_MATCHER = new JsonPathMatcher("$.on.workflow_dispatch.inputs");
 
-    @Override
-    public String getDisplayName() {
-        return "Remove unused workflow dispatch inputs";
-    }
+    @Getter
+    final String displayName = "Remove unused workflow dispatch inputs";
 
-    @Override
-    public String getDescription() {
-        return "Remove workflow_dispatch inputs that are not referenced anywhere in the workflow file.";
-    }
+    @Getter
+    final String description = "Remove workflow_dispatch inputs that are not referenced anywhere in the workflow file.";
 
     @Override
     public Duration getEstimatedEffortPerOccurrence() {

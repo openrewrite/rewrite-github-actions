@@ -15,6 +15,7 @@
  */
 package org.openrewrite.github;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -26,15 +27,11 @@ import org.openrewrite.yaml.search.FindKey;
 import org.openrewrite.yaml.tree.Yaml;
 
 public class SetupJavaCaching extends Recipe {
-    @Override
-    public String getDisplayName() {
-        return "Setup Java dependency caching";
-    }
+    @Getter
+    final String displayName = "Setup Java dependency caching";
 
-    @Override
-    public String getDescription() {
-        return "GitHub actions supports dependency caching on Maven and Gradle projects. See the [blog post](https://github.blog/changelog/2021-08-30-github-actions-setup-java-now-supports-dependency-caching/).";
-    }
+    @Getter
+    final String description = "GitHub actions supports dependency caching on Maven and Gradle projects. See the [blog post](https://github.blog/changelog/2021-08-30-github-actions-setup-java-now-supports-dependency-caching/).";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
