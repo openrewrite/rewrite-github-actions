@@ -19,6 +19,8 @@ import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RewriteTest;
 
+import java.util.List;
+
 import static org.openrewrite.yaml.Assertions.yaml;
 
 class AddDependabotCooldownTest implements RewriteTest {
@@ -223,7 +225,7 @@ class AddDependabotCooldownTest implements RewriteTest {
     void addsIncludeList() {
         rewriteRun(
           spec -> spec.recipe(new AddDependabotCooldown(7, null, null, null,
-            java.util.Arrays.asList("lodash", "react*"), null)),
+            List.of("lodash", "react*"), null)),
           //language=yaml
           yaml(
             """
@@ -256,7 +258,7 @@ class AddDependabotCooldownTest implements RewriteTest {
     void addsExcludeList() {
         rewriteRun(
           spec -> spec.recipe(new AddDependabotCooldown(7, null, null, null,
-            null, java.util.Arrays.asList("critical-security-package"))),
+            null, List.of("critical-security-package"))),
           //language=yaml
           yaml(
             """
@@ -288,8 +290,8 @@ class AddDependabotCooldownTest implements RewriteTest {
     void addsAllCooldownOptions() {
         rewriteRun(
           spec -> spec.recipe(new AddDependabotCooldown(7, 14, 7, 3,
-            java.util.Arrays.asList("lodash", "express"),
-            java.util.Arrays.asList("security-lib"))),
+            List.of("lodash", "express"),
+            List.of("security-lib"))),
           //language=yaml
           yaml(
             """

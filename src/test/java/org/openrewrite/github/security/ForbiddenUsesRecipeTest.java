@@ -20,7 +20,7 @@ import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
-import java.util.Arrays;
+import java.util.List;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
@@ -242,7 +242,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
     void shouldFlagAdditionalDangerousActions() {
         rewriteRun(
           spec -> spec.recipe(new ForbiddenUsesRecipe(
-            Arrays.asList("custom-org/dangerous-action@v1", "another-org/risky-action@v2"),
+            List.of("custom-org/dangerous-action@v1", "another-org/risky-action@v2"),
             null
           )),
           //language=yaml
@@ -281,7 +281,7 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
         rewriteRun(
           spec -> spec.recipe(new ForbiddenUsesRecipe(
             null,
-            Arrays.asList("crypto-miner", "backdoor")
+            List.of("crypto-miner", "backdoor")
           )),
           //language=yaml
           yaml(
@@ -318,8 +318,8 @@ class ForbiddenUsesRecipeTest implements RewriteTest {
     void shouldFlagCombinedAdditionalOptions() {
         rewriteRun(
           spec -> spec.recipe(new ForbiddenUsesRecipe(
-            Arrays.asList("custom-org/dangerous-action@v1"),
-            Arrays.asList("malware")
+            List.of("custom-org/dangerous-action@v1"),
+            List.of("malware")
           )),
           //language=yaml
           yaml(
