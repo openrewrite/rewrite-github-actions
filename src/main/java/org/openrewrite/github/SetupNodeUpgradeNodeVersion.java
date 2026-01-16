@@ -44,10 +44,7 @@ public class SetupNodeUpgradeNodeVersion extends Recipe {
 
     String description = "Update the Node.js version used by `actions/setup-node` if it is below the expected version number.";
 
-    @Override
-    public Set<String> getTags() {
-        return new LinkedHashSet<>(Arrays.asList("github", "nodejs", "deprecation"));
-    }
+    Set<String> tags = new LinkedHashSet<>( Arrays.asList( "github", "nodejs", "deprecation" ) );
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

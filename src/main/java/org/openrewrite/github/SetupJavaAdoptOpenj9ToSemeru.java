@@ -42,10 +42,8 @@ public class SetupJavaAdoptOpenj9ToSemeru extends Recipe {
         return Duration.ofMinutes(5);
     }
 
-    @Override
-    public Set<String> getTags() {
-        return singleton("security");
-    }
+    @Getter
+    final Set<String> tags = singleton( "security" );
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

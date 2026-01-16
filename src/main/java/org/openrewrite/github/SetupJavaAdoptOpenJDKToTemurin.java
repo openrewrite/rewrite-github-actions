@@ -37,10 +37,8 @@ public class SetupJavaAdoptOpenJDKToTemurin extends Recipe {
                 "It is highly recommended to migrate workflows from adopt to temurin to keep receiving software and security updates. " +
                 "See more details in the [Good-bye AdoptOpenJDK post](https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/).";
 
-    @Override
-    public Set<String> getTags() {
-        return singleton("security");
-    }
+    @Getter
+    final Set<String> tags = singleton( "security" );
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
