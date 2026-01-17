@@ -47,10 +47,8 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
     @Getter
     final String description = "Remove workflow_dispatch inputs that are not referenced anywhere in the workflow file.";
 
-    @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
+    @Getter
+    final Duration estimatedEffortPerOccurrence = Duration.ofMinutes( 5 );
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

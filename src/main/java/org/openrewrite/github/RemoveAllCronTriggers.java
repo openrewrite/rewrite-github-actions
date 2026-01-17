@@ -32,10 +32,8 @@ public class RemoveAllCronTriggers extends Recipe {
     @Getter
     final String description = "Removes all cron triggers from a workflow.";
 
-    @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(1);
-    }
+    @Getter
+    final Duration estimatedEffortPerOccurrence = Duration.ofMinutes( 1 );
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

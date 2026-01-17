@@ -51,10 +51,7 @@ public class RemoveWorkflowInputArgument extends Recipe {
 
     String description = "Remove a specific input argument from calls to a reusable workflow.";
 
-    @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
+    Duration estimatedEffortPerOccurrence = Duration.ofMinutes( 5 );
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

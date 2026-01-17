@@ -85,10 +85,7 @@ public class SetupPythonToUv extends Recipe {
                " - `full`: Install all extras and dev dependencies (`uv sync --all-extras --dev`)\n\n" +
                "See the [UV GitHub integration guide](https://docs.astral.sh/uv/guides/integration/github/) for more details.";
 
-    @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
+    Duration estimatedEffortPerOccurrence = Duration.ofMinutes( 5 );
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

@@ -37,10 +37,8 @@ public class SetupJavaAdoptOpenj9ToSemeru extends Recipe {
                 "It is highly recommended to migrate workflows from adopt-openj9 to IBM semeru to keep receiving software and security updates. " +
                 "See more details in the [Good-bye AdoptOpenJDK post](https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/).";
 
-    @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
+    @Getter
+    final Duration estimatedEffortPerOccurrence = Duration.ofMinutes( 5 );
 
     @Getter
     final Set<String> tags = singleton( "security" );
