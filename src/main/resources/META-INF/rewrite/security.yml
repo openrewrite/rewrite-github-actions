@@ -19,6 +19,8 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.security.GitHubActionsSecurity
 displayName: GitHub Actions security insights
 description: Finds potential security issues in GitHub Actions workflows, based on [Zizmor](https://docs.zizmor.sh) security analysis rules.
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - github
   - security

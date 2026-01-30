@@ -19,6 +19,8 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.AddManualTrigger
 displayName: Add manual workflow trigger
 description: You can manually trigger workflow runs. To trigger specific workflows in a repository, use the `workflow_dispatch` event.
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - github
 recipeList:
@@ -33,6 +35,8 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.DependabotCheckForGithubActionsUpdatesDaily
 displayName: Check for github-actions updates daily
 description: Set dependabot to check for github-actions updates daily.
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - demo
   - dependabot
@@ -47,6 +51,8 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.DependabotCheckForGithubActionsUpdatesWeekly
 displayName: Check for github-actions updates weekly
 description: Set dependabot to check for github-actions updates weekly.
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - demo
   - dependabot
@@ -61,6 +67,8 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.FindGitHubActionSecretReferences
 displayName: Find GitHub action secret references
 description: Help identify and inventory your GitHub secrets that are being used in GitHub actions.
+preconditions:
+  - org.openrewrite.Singleton
 recipeList:
   - org.openrewrite.text.Find:
       find: secrets\.\w*
@@ -73,6 +81,8 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.MigrateTibdexGitHubAppTokenToActions
 displayName: Migrate from tibdex/github-app-token to actions/create-github-app-token
 description: Migrates from tibdex/github-app-token@v2 to actions/create-github-app-token@v2 and updates parameter names from snake_case to kebab-case.
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - github
   - actions
@@ -99,6 +109,8 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.MigrateSetupUvV6ToV7
 displayName: Migrate `astral-sh/setup-uv` from v6 to v7
 description: Migrates `astral-sh/setup-uv` from v6 to v7. Updates the action version and removes the deprecated `server-url` input. See the [v7.0.0 release notes](https://github.com/astral-sh/setup-uv/releases/tag/v7.0.0) for breaking changes.
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - github
   - actions

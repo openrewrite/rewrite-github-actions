@@ -19,6 +19,8 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.gradle.RenameWrapperValidationAction
 displayName: Rename `gradle/wrapper-validation-action` to `gradle/actions/wrapper-validation`
 description: Rename the deprecated `gradle/wrapper-validation-action` to `gradle/actions/wrapper-validation@v3`.
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - github
   - gradle
@@ -32,6 +34,8 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.gradle.RenameGradleBuildActionToSetupGradle
 displayName: Rename `gradle/gradle-build-action` to `gradle/actions/setup-gradle`
 description: Rename the deprecated `gradle/gradle-build-action` to `gradle/actions/setup-gradle@v3`.
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - github
   - gradle
