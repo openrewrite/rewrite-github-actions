@@ -16,6 +16,7 @@
 package org.openrewrite.github;
 
 import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
@@ -112,6 +113,7 @@ public class SetupPythonToUv extends Recipe {
         }
     }
 
+    @RequiredArgsConstructor
     private static class SetupPythonToUvVisitor extends YamlIsoVisitor<ExecutionContext> {
 
         private static final Pattern SETUP_PYTHON_PATTERN = Pattern.compile("^actions/setup-python(@.*)?$");
@@ -125,13 +127,6 @@ public class SetupPythonToUv extends Recipe {
         private final String syncStrategy;
         private final boolean transformPipCommands;
         private final boolean enableCache;
-
-        public SetupPythonToUvVisitor(String uvVersion, String syncStrategy, boolean transformPipCommands, boolean enableCache) {
-            this.uvVersion = uvVersion;
-            this.syncStrategy = syncStrategy;
-            this.transformPipCommands = transformPipCommands;
-            this.enableCache = enableCache;
-        }
 
         @Override
         public  Yaml.Mapping.@Nullable Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {

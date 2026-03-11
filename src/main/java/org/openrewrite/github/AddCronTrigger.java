@@ -17,6 +17,7 @@ package org.openrewrite.github;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
@@ -101,12 +102,9 @@ public class AddCronTrigger extends Recipe {
                 null, null, null, null, null).getVisitor());
     }
 
+    @RequiredArgsConstructor
     static class RandomCronExpression {
         private final Random random;
-
-        public RandomCronExpression(Random random) {
-            this.random = random;
-        }
 
         public int random(int min, int max) {
             return random.nextInt(max + 1 - min) + min;

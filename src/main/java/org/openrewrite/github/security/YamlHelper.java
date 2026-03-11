@@ -15,6 +15,8 @@
  */
 package org.openrewrite.github.security;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -22,11 +24,8 @@ import org.openrewrite.yaml.tree.Yaml;
  * Utility class containing common patterns for working with YAML LST in OpenRewrite recipes.
  * These methods help eliminate code duplication and provide idiomatic ways to work with YAML structures.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class YamlHelper {
-
-    private YamlHelper() {
-        // Utility class - prevent instantiation
-    }
 
     /**
      * Safely extracts the string value from a YAML block if it's a scalar.

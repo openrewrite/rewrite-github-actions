@@ -17,6 +17,7 @@ package org.openrewrite.github.security;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
@@ -113,15 +114,11 @@ public class ForbiddenUsesRecipe extends Recipe {
         );
     }
 
+    @RequiredArgsConstructor
     private static class ForbiddenUsesVisitor extends YamlIsoVisitor<ExecutionContext> {
 
         private final Set<String> dangerousActions;
         private final Set<String> suspiciousPatterns;
-
-        public ForbiddenUsesVisitor(Set<String> dangerousActions, Set<String> suspiciousPatterns) {
-            this.dangerousActions = dangerousActions;
-            this.suspiciousPatterns = suspiciousPatterns;
-        }
 
         @Override
         public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
