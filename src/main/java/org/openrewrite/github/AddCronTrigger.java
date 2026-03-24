@@ -15,6 +15,7 @@
  */
 package org.openrewrite.github;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,7 @@ public class AddCronTrigger extends Recipe {
         this.workflowFileMatcher = workflowFileMatcher;
     }
 
+    @JsonCreator
     public AddCronTrigger(String cron, @Nullable String fileMatcher) {
         this(cron, fileMatcher, ThreadLocalRandom.current());
     }
