@@ -29,7 +29,7 @@ class AddDependabotCooldownTest implements RewriteTest {
     @Test
     void addCooldownWithDefaultDays() {
         rewriteRun(
-          spec -> spec.recipe(new AddDependabotCooldown(null, null, null, null, null, null)),
+          spec -> spec.recipe(new AddDependabotCooldown(null, null, null, null, null, null, null)),
           //language=yaml
           yaml(
             """
@@ -68,7 +68,7 @@ class AddDependabotCooldownTest implements RewriteTest {
     @Test
     void addCooldownWithCustomDays() {
         rewriteRun(
-          spec -> spec.recipe(new AddDependabotCooldown(14, null, null, null, null, null)),
+          spec -> spec.recipe(new AddDependabotCooldown(14, null, null, null, null, null, null)),
           //language=yaml
           yaml(
             """
@@ -97,7 +97,7 @@ class AddDependabotCooldownTest implements RewriteTest {
     @Test
     void cooldownAlreadyExists() {
         rewriteRun(
-          spec -> spec.recipe(new AddDependabotCooldown(7, null, null, null, null, null)),
+          spec -> spec.recipe(new AddDependabotCooldown(7, null, null, null, null, null, null)),
           //language=yaml
           yaml(
             """
@@ -118,7 +118,7 @@ class AddDependabotCooldownTest implements RewriteTest {
     @Test
     void multipleEcosystemsWithExistingOptions() {
         rewriteRun(
-          spec -> spec.recipe(new AddDependabotCooldown(null, null, null, null, null, null)),
+          spec -> spec.recipe(new AddDependabotCooldown(null, null, null, null, null, null, null)),
           //language=yaml
           yaml(
             """
@@ -163,7 +163,7 @@ class AddDependabotCooldownTest implements RewriteTest {
     @Test
     void worksWithDependabotYamlExtension() {
         rewriteRun(
-          spec -> spec.recipe(new AddDependabotCooldown(null, null, null, null, null, null)),
+          spec -> spec.recipe(new AddDependabotCooldown(null, null, null, null, null, null, null)),
           //language=yaml
           yaml(
             """
@@ -192,7 +192,7 @@ class AddDependabotCooldownTest implements RewriteTest {
     @Test
     void addsSemverSpecificCooldowns() {
         rewriteRun(
-          spec -> spec.recipe(new AddDependabotCooldown(7, 14, 7, 3, null, null)),
+          spec -> spec.recipe(new AddDependabotCooldown(7, 14, 7, 3, null, null, null)),
           //language=yaml
           yaml(
             """
@@ -225,7 +225,7 @@ class AddDependabotCooldownTest implements RewriteTest {
     void addsIncludeList() {
         rewriteRun(
           spec -> spec.recipe(new AddDependabotCooldown(7, null, null, null,
-            List.of("lodash", "react*"), null)),
+            List.of("lodash", "react*"), null, null)),
           //language=yaml
           yaml(
             """
@@ -258,7 +258,7 @@ class AddDependabotCooldownTest implements RewriteTest {
     void addsExcludeList() {
         rewriteRun(
           spec -> spec.recipe(new AddDependabotCooldown(7, null, null, null,
-            null, List.of("critical-security-package"))),
+            null, List.of("critical-security-package"), null)),
           //language=yaml
           yaml(
             """
@@ -291,7 +291,7 @@ class AddDependabotCooldownTest implements RewriteTest {
         rewriteRun(
           spec -> spec.recipe(new AddDependabotCooldown(7, 14, 7, 3,
             List.of("lodash", "express"),
-            List.of("security-lib"))),
+            List.of("security-lib"), null)),
           //language=yaml
           yaml(
             """
@@ -328,7 +328,7 @@ class AddDependabotCooldownTest implements RewriteTest {
     @Test
     void addsToMultipleEcosystemsWithDifferentConfigurations() {
         rewriteRun(
-          spec -> spec.recipe(new AddDependabotCooldown(7, 14, null, null, null, null)),
+          spec -> spec.recipe(new AddDependabotCooldown(7, 14, null, null, null, null, null)),
           //language=yaml
           yaml(
             """
@@ -371,6 +371,120 @@ class AddDependabotCooldownTest implements RewriteTest {
                   cooldown:
                     default-days: 7
                     semver-major-days: 14
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          )
+        );
+    }
+
+    @Test
+    void addCooldownWithExcludeOneEcosystem() {
+        rewriteRun(
+          spec -> spec.recipe(new AddDependabotCooldown(9, null, null,
+            null, null, null, List.of("npm"))),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+                    interval: daily
+                - package-ecosystem: npm
+                  directory: /
+                  schedule:
+                    interval: weekly
+                - package-ecosystem: pip
+                  directory: /
+                  schedule:
+                    interval: daily
+                - package-ecosystem: gradle
+                  directory: /
+                  schedule:
+                    interval: monthly
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+                    interval: daily
+                  cooldown:
+                    default-days: 9
+                - package-ecosystem: npm
+                  directory: /
+                  schedule:
+                    interval: weekly
+                - package-ecosystem: pip
+                  directory: /
+                  schedule:
+                    interval: daily
+                  cooldown:
+                    default-days: 9
+                - package-ecosystem: gradle
+                  directory: /
+                  schedule:
+                    interval: monthly
+                  cooldown:
+                    default-days: 9
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          )
+        );
+    }
+
+    @Test
+    void addCooldownWithExcludeManyEcosystems() {
+        rewriteRun(
+          spec -> spec.recipe(new AddDependabotCooldown(11, null, null,
+            null, null, null, List.of("npm", "github-actions"))),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+                    interval: daily
+                - package-ecosystem: npm
+                  directory: /
+                  schedule:
+                    interval: weekly
+                - package-ecosystem: pip
+                  directory: /
+                  schedule:
+                    interval: daily
+                - package-ecosystem: gradle
+                  directory: /
+                  schedule:
+                    interval: monthly
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+                    interval: daily
+                - package-ecosystem: npm
+                  directory: /
+                  schedule:
+                    interval: weekly
+                - package-ecosystem: pip
+                  directory: /
+                  schedule:
+                    interval: daily
+                  cooldown:
+                    default-days: 11
+                - package-ecosystem: gradle
+                  directory: /
+                  schedule:
+                    interval: monthly
+                  cooldown:
+                    default-days: 11
               """,
             spec -> spec.path(".github/dependabot.yml")
           )
