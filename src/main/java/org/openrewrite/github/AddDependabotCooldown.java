@@ -84,6 +84,13 @@ public class AddDependabotCooldown extends Recipe {
     @Nullable
     List<String> exclude;
 
+    @Option(displayName = "Exclude ecosystems",
+            description = "List of ecosystems to be excluded",
+            example = "github-actions",
+            required = false)
+    @Nullable
+    List<String> excludeEcosystems;
+
     String displayName = "Add cooldown periods to Dependabot configuration";
 
     String description = "Adds a `cooldown` section to each update configuration in Dependabot files. " +
@@ -148,6 +155,13 @@ public class AddDependabotCooldown extends Recipe {
                 Yaml.Mapping m = super.visitMapping(mapping, ctx);
 
                 if (Boolean.TRUE.equals(getCursor().pollMessage("ADD_COOLDOWN"))) {
+                    final boolean ecosystemIsExcluded = excludeEcosystems != null && m.getEntries()
+                            .stream()
+                            .anyMatch(entry -> "package-ecosystem".equals(entry.getKey().getValue())
+                            && entry.getValue() instanceof Yaml.Scalar && excludeEcosystems.contains(((Yaml.Scalar)entry.getValue()).getValue()));
+                    if (ecosystemIsExcluded) {
+                        return m;
+                    }
                     // Check if cooldown already exists
                     boolean hasCooldown = m.getEntries().stream()
                             .anyMatch(entry -> "cooldown".equals(entry.getKey().getValue()));
