@@ -1,0 +1,137 @@
+---
+name: update-known-shas
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: 0 6 * * 1
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve new action SHAs and update known-action-shas.json
+        id: update
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          JSON_FILE="src/main/resources/META-INF/rewrite/known-action-shas.json"
+
+          # ----------------------------------------------------------------
+          # 1. Extract every "uses:" value from this repo's workflow files
+          # ----------------------------------------------------------------
+          mapfile -t USES_REFS < <(
+            grep -rh 'uses:' .github/workflows/ \
+              | sed 's/.*uses:[[:space:]]*//' \
+              | tr -d '"'"'" \
+              | sed 's/#.*//' \
+              | tr -d '[:space:]' \
+              | sort -u
+          )
+
+          SHA_RE='^[a-f0-9]{40}$'
+
+          NEW_ENTRIES='{}'
+          ADDED_KEYS=()
+
+          for ref in "${USES_REFS[@]}"; do
+            # Skip blanks, local actions, docker refs
+            [[ -z "$ref" ]] && continue
+            [[ "$ref" == ./* ]] && continue
+            [[ "$ref" == docker://* ]] && continue
+
+            # Must match owner/repo@something or owner/repo/subpath@something
+            if ! [[ "$ref" =~ ^([^/@]+/[^/@]+(/[^@]+)?)@(.+)$ ]]; then
+              continue
+            fi
+
+            action_path="${BASH_REMATCH[1]}"
+            tag="${BASH_REMATCH[3]}"
+
+            # Skip already-pinned SHAs
+            if [[ "$tag" =~ $SHA_RE ]]; then
+              continue
+            fi
+
+            # Skip if already present in the JSON file
+            if jq -e --arg k "$ref" 'has($k)' "$JSON_FILE" > /dev/null 2>&1; then
+              continue
+            fi
+
+            # Extract owner/repo (strip subpath)
+            owner_repo="$action_path"
+            if [[ "$action_path" =~ ^([^/]+/[^/]+)/.+ ]]; then
+              owner_repo="${BASH_REMATCH[1]}"
+            fi
+
+            # Resolve tag → commit SHA via GitHub API
+            sha=$(gh api "repos/${owner_repo}/commits/${tag}" \
+                    --jq '.sha' 2>/dev/null || true)
+
+            if [[ -z "$sha" ]] || ! [[ "$sha" =~ $SHA_RE ]]; then
+              echo "::warning::Could not resolve ${ref} — skipping"
+              continue
+            fi
+
+            echo "Resolved: ${ref} → ${sha}"
+            NEW_ENTRIES=$(echo "$NEW_ENTRIES" | jq --arg k "$ref" --arg v "$sha" '. + {($k): $v}')
+            ADDED_KEYS+=("$ref")
+          done
+
+          if [[ ${#ADDED_KEYS[@]} -eq 0 ]]; then
+            echo "No new entries to add."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # ----------------------------------------------------------------
+          # 2. Merge new entries into the JSON file (append-only, sorted)
+          # ----------------------------------------------------------------
+          jq -s '.[0] * .[1] | to_entries | sort_by(.key) | from_entries' \
+            "$JSON_FILE" <(echo "$NEW_ENTRIES") > /tmp/merged.json
+          mv /tmp/merged.json "$JSON_FILE"
+
+          # ----------------------------------------------------------------
+          # 3. Build PR body listing new entries
+          # ----------------------------------------------------------------
+          BODY="Adds the following new action SHA mappings (existing entries unchanged):"$'\n\n'
+          for k in "${ADDED_KEYS[@]}"; do
+            sha=$(jq -r --arg k "$k" '.[$k]' "$JSON_FILE")
+            BODY+="- \`${k}\` → \`${sha}\`"$'\n'
+          done
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          # Pass multi-line body via env
+          {
+            echo "pr_body<<EOF_PR_BODY"
+            echo "$BODY"
+            echo "EOF_PR_BODY"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open pull request
+        if: steps.update.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="automation/update-known-shas-$(date +%Y%m%d)"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add src/main/resources/META-INF/rewrite/known-action-shas.json
+          git commit -m "Update known action SHAs"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --title "Update known action SHAs" \
+            --body "${{ steps.update.outputs.pr_body }}" \
+            --base main \
+            --head "$BRANCH" \
+            --label "dependencies" || true
