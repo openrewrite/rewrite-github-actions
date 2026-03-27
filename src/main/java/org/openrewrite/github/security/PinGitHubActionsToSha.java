@@ -45,7 +45,7 @@ import static java.util.Collections.unmodifiableMap;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
-public class PinGitHubActionsToSha extends Recipe {
+public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
 
     private static final Pattern SHA_PATTERN = Pattern.compile("^[a-f0-9]{40}$");
     private static final Pattern USES_PATTERN = Pattern.compile("^([^/@]+/[^/@]+(?:/[^@]+)?)@(.+)$");
@@ -56,13 +56,6 @@ public class PinGitHubActionsToSha extends Recipe {
      */
     private static final Set<String> OFFICIAL_ORGS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList("actions", "github")));
-
-    /**
-     * Static mapping of well-known third-party action references to their commit SHAs.
-     * Checked first before falling back to the GitHub API.
-     * Format: "owner/repo@ref" -> "sha"
-     */
-    private static final Map<String, String> KNOWN_SHAS = loadKnownShas();
 
     @Option(displayName = "Pin official actions",
             description = "When set to `true`, also pins actions from official GitHub organizations " +
@@ -100,19 +93,7 @@ public class PinGitHubActionsToSha extends Recipe {
     }
 
     @Override
-    public TreeVisitor<?, ExecutionContext> getVisitor() {
-        boolean pinOfficial = Boolean.TRUE.equals(pinOfficialActions);
-        return Preconditions.check(
-                new IsGitHubActionsWorkflow(),
-                new PinActionsVisitor(pinOfficial, githubApiToken)
-        );
-    }
-
-    /**
-     * Loads the static SHA mapping from the bundled JSON resource file.
-     * Returns an empty map if the resource cannot be loaded.
-     */
-    private static Map<String, String> loadKnownShas() {
+    public Map<String, String> getInitialValue(ExecutionContext ctx) {
         try (InputStream is = PinGitHubActionsToSha.class
                 .getResourceAsStream("/META-INF/rewrite/known-action-shas.json")) {
             if (is != null) {
@@ -125,14 +106,30 @@ public class PinGitHubActionsToSha extends Recipe {
         return emptyMap();
     }
 
+    @Override
+    public TreeVisitor<?, ExecutionContext> getScanner(Map<String, String> acc) {
+        return TreeVisitor.noop();
+    }
+
+    @Override
+    public TreeVisitor<?, ExecutionContext> getVisitor(Map<String, String> knownShas) {
+        boolean pinOfficial = Boolean.TRUE.equals(pinOfficialActions);
+        return Preconditions.check(
+                new IsGitHubActionsWorkflow(),
+                new PinActionsVisitor(pinOfficial, githubApiToken, knownShas)
+        );
+    }
+
     private static class PinActionsVisitor extends YamlIsoVisitor<ExecutionContext> {
 
         private final boolean pinOfficial;
         private final @Nullable String apiToken;
+        private final Map<String, String> knownShas;
 
-        PinActionsVisitor(boolean pinOfficial, @Nullable String apiToken) {
+        PinActionsVisitor(boolean pinOfficial, @Nullable String apiToken, Map<String, String> knownShas) {
             this.pinOfficial = pinOfficial;
             this.apiToken = apiToken;
+            this.knownShas = knownShas;
         }
 
         @Override
@@ -197,8 +194,8 @@ public class PinGitHubActionsToSha extends Recipe {
         private @Nullable String resolveToSha(String actionPath, String ref, ExecutionContext ctx) {
             String key = actionPath + "@" + ref;
 
-            // 1. Check static map
-            String sha = KNOWN_SHAS.get(key);
+            // 1. Check known SHAs map
+            String sha = knownShas.get(key);
             if (sha != null) {
                 return sha;
             }
