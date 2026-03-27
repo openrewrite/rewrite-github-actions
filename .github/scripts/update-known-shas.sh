@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# Resolves GitHub Action tag references to commit SHAs and appends any
-# new mappings to the known-action-shas.properties file.
+# Resolves GitHub Action tag references to commit SHAs and updates the
+# known-action-shas.properties file. Adds new mappings and refreshes
+# any existing entries whose floating tags have moved.
 #
 # Prerequisites: gh CLI authenticated (GH_TOKEN or `gh auth login`)
 #
@@ -21,9 +22,63 @@ if [[ ! -f "$PROPS_FILE" ]]; then
   exit 1
 fi
 
+# Helper: extract owner/repo from an action path (strips subpath)
+owner_repo_of() {
+  local action_path="$1"
+  if [[ "$action_path" =~ ^([^/]+/[^/]+)/.+ ]]; then
+    echo "${BASH_REMATCH[1]}"
+  else
+    echo "$action_path"
+  fi
+}
+
+# Helper: resolve a tag to a commit SHA via the GitHub API
+resolve_sha() {
+  local owner_repo="$1" tag="$2"
+  gh api "repos/${owner_repo}/commits/${tag}" --jq '.sha' 2>/dev/null || true
+}
+
+ADDED=()
+UPDATED=()
+
 # ------------------------------------------------------------------
-# 1. Extract every "uses:" value from workflow files
+# 1. Refresh existing entries whose SHAs may have drifted
 # ------------------------------------------------------------------
+echo "Checking existing entries for drifted SHAs..."
+
+TMP_PROPS=$(mktemp)
+while IFS= read -r line; do
+  # Pass through comments and blank lines
+  if [[ "$line" =~ ^# ]] || [[ -z "$line" ]]; then
+    echo "$line" >> "$TMP_PROPS"
+    continue
+  fi
+
+  ref="${line%%=*}"
+  old_sha="${line#*=}"
+  action_path="${ref%%@*}"
+  tag="${ref#*@}"
+  owner_repo=$(owner_repo_of "$action_path")
+
+  new_sha=$(resolve_sha "$owner_repo" "$tag")
+
+  if [[ -n "$new_sha" ]] && [[ "$new_sha" =~ $SHA_RE ]] && [[ "$new_sha" != "$old_sha" ]]; then
+    echo "Updated: ${ref} ${old_sha} → ${new_sha}"
+    echo "${ref}=${new_sha}" >> "$TMP_PROPS"
+    UPDATED+=("${ref}")
+  else
+    echo "$line" >> "$TMP_PROPS"
+  fi
+done < "$PROPS_FILE"
+
+mv "$TMP_PROPS" "$PROPS_FILE"
+
+# ------------------------------------------------------------------
+# 2. Add new entries from workflow files
+# ------------------------------------------------------------------
+echo ""
+echo "Scanning ${WORKFLOW_DIR} for new action references..."
+
 mapfile -t USES_REFS < <(
   grep -rh 'uses:' "$WORKFLOW_DIR" \
     | sed 's/.*uses:[[:space:]]*//' \
@@ -32,8 +87,6 @@ mapfile -t USES_REFS < <(
     | tr -d '[:space:]' \
     | sort -u
 )
-
-ADDED_KEYS=()
 
 for ref in "${USES_REFS[@]}"; do
   # Skip blanks, local actions, docker refs
@@ -65,15 +118,8 @@ for ref in "${USES_REFS[@]}"; do
     continue
   fi
 
-  # Extract owner/repo (strip subpath)
-  owner_repo="$action_path"
-  if [[ "$action_path" =~ ^([^/]+/[^/]+)/.+ ]]; then
-    owner_repo="${BASH_REMATCH[1]}"
-  fi
-
-  # Resolve tag → commit SHA via GitHub API
-  sha=$(gh api "repos/${owner_repo}/commits/${tag}" \
-          --jq '.sha' 2>/dev/null || true)
+  owner_repo=$(owner_repo_of "$action_path")
+  sha=$(resolve_sha "$owner_repo" "$tag")
 
   if [[ -z "$sha" ]] || ! [[ "$sha" =~ $SHA_RE ]]; then
     echo "Warning: Could not resolve ${ref} — skipping"
@@ -82,16 +128,11 @@ for ref in "${USES_REFS[@]}"; do
 
   echo "Resolved: ${ref} → ${sha}"
   echo "${ref}=${sha}" >> "$PROPS_FILE"
-  ADDED_KEYS+=("${ref}=${sha}")
+  ADDED+=("${ref}=${sha}")
 done
 
-if [[ ${#ADDED_KEYS[@]} -eq 0 ]]; then
-  echo "No new entries to add."
-  exit 0
-fi
-
 # ------------------------------------------------------------------
-# 2. Sort the properties file (preserve header comments)
+# 3. Sort the properties file (preserve header comments)
 # ------------------------------------------------------------------
 {
   grep '^#' "$PROPS_FILE" || true
@@ -100,8 +141,24 @@ fi
 } > /tmp/sorted.properties
 mv /tmp/sorted.properties "$PROPS_FILE"
 
+# ------------------------------------------------------------------
+# 4. Summary
+# ------------------------------------------------------------------
 echo ""
-echo "Added ${#ADDED_KEYS[@]} new entries:"
-for entry in "${ADDED_KEYS[@]}"; do
-  echo "  ${entry}"
-done
+if [[ ${#UPDATED[@]} -gt 0 ]]; then
+  echo "Updated ${#UPDATED[@]} drifted entries:"
+  for entry in "${UPDATED[@]}"; do
+    echo "  ${entry}"
+  done
+else
+  echo "No drifted entries found."
+fi
+
+if [[ ${#ADDED[@]} -gt 0 ]]; then
+  echo "Added ${#ADDED[@]} new entries:"
+  for entry in "${ADDED[@]}"; do
+    echo "  ${entry}"
+  done
+else
+  echo "No new entries to add."
+fi

@@ -29,15 +29,29 @@ jobs:
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
 
-            BODY="Adds the following new action SHA mappings (existing entries unchanged):"$'\n\n'
+            ADDED=""
+            UPDATED=""
             while IFS= read -r line; do
               if [[ "$line" == +* && "$line" != +++* && "$line" == *=* ]]; then
-                key="${line:1}"
-                key="${key%%=*}"
-                sha="${line#*=}"
-                BODY+="- \`${key}\` → \`${sha}\`"$'\n'
+                new_key="${line:1}"
+                new_key="${new_key%%=*}"
+                new_sha="${line#*=}"
+                # Check if this key also appears in removed lines (i.e. updated)
+                if git diff "$PROPS_FILE" | grep -qF -- "-${new_key}="; then
+                  UPDATED+="- \`${new_key}\` → \`${new_sha}\`"$'\n'
+                else
+                  ADDED+="- \`${new_key}\` → \`${new_sha}\`"$'\n'
+                fi
               fi
             done < <(git diff "$PROPS_FILE")
+
+            BODY=""
+            if [[ -n "$UPDATED" ]]; then
+              BODY+="### Updated (drifted tags)"$'\n\n'"${UPDATED}"$'\n'
+            fi
+            if [[ -n "$ADDED" ]]; then
+              BODY+="### Added"$'\n\n'"${ADDED}"$'\n'
+            fi
 
             {
               echo "pr_body<<EOF_PR_BODY"
