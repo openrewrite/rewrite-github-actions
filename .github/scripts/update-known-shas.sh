@@ -74,12 +74,47 @@ done < "$PROPS_FILE"
 mv "$TMP_PROPS" "$PROPS_FILE"
 
 # ------------------------------------------------------------------
-# 2. Add new entries from workflow files
+# 2. Expand: resolve all version tags for actions already in the file
+# ------------------------------------------------------------------
+echo ""
+echo "Expanding all version tags for known actions..."
+
+# Collect unique action paths (without @tag) from existing entries
+KNOWN_ACTIONS=$(grep -v '^#' "$PROPS_FILE" | grep -v '^$' | sed 's/@.*//' | sort -u)
+
+while IFS= read -r action_path; do
+  [[ -z "$action_path" ]] && continue
+  owner_repo=$(owner_repo_of "$action_path")
+
+  # Fetch all version tags: v1, v1.2, v1.2.3 (not pre-release or non-numeric suffixes)
+  TAGS=$(gh api "repos/${owner_repo}/tags" --paginate --jq '.[].name' 2>/dev/null \
+    | grep -E '^v[0-9]+(\.[0-9]+){0,2}$' | sort -V)
+
+  while IFS= read -r tag; do
+    [[ -z "$tag" ]] && continue
+    ref="${action_path}@${tag}"
+
+    # Skip if already present
+    if grep -qF "${ref}=" "$PROPS_FILE" 2>/dev/null; then
+      continue
+    fi
+
+    sha=$(resolve_sha "$owner_repo" "$tag")
+    if [[ -n "$sha" ]] && [[ "$sha" =~ $SHA_RE ]]; then
+      echo "Resolved: ${ref} → ${sha}"
+      echo "${ref}=${sha}" >> "$PROPS_FILE"
+      ADDED+=("${ref}=${sha}")
+    fi
+  done <<< "$TAGS"
+done <<< "$KNOWN_ACTIONS"
+
+# ------------------------------------------------------------------
+# 3. Add new entries from workflow files
 # ------------------------------------------------------------------
 echo ""
 echo "Scanning ${WORKFLOW_DIR} for new action references..."
 
-mapfile -t USES_REFS < <(
+USES_REFS=$(
   grep -rh 'uses:' "$WORKFLOW_DIR" \
     | sed 's/.*uses:[[:space:]]*//' \
     | tr -d '"'"'" \
@@ -88,7 +123,7 @@ mapfile -t USES_REFS < <(
     | sort -u
 )
 
-for ref in "${USES_REFS[@]}"; do
+while IFS= read -r ref; do
   # Skip blanks, local actions, docker refs
   [[ -z "$ref" ]] && continue
   [[ "$ref" == ./* ]] && continue
@@ -129,10 +164,10 @@ for ref in "${USES_REFS[@]}"; do
   echo "Resolved: ${ref} → ${sha}"
   echo "${ref}=${sha}" >> "$PROPS_FILE"
   ADDED+=("${ref}=${sha}")
-done
+done <<< "$USES_REFS"
 
 # ------------------------------------------------------------------
-# 3. Sort the properties file (preserve header comments)
+# 4. Sort the properties file (preserve header comments)
 # ------------------------------------------------------------------
 {
   grep '^#' "$PROPS_FILE" || true
@@ -142,7 +177,7 @@ done
 mv /tmp/sorted.properties "$PROPS_FILE"
 
 # ------------------------------------------------------------------
-# 4. Summary
+# 5. Summary
 # ------------------------------------------------------------------
 echo ""
 if [[ ${#UPDATED[@]} -gt 0 ]]; then
