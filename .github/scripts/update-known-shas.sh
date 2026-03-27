@@ -58,6 +58,13 @@ while IFS= read -r line; do
   old_sha="${line#*=}"
   action_path="${ref%%@*}"
   tag="${ref#*@}"
+
+  # Only check drift on major version tags (v1, v2, ...) since minor/patch tags are immutable
+  if ! [[ "$tag" =~ ^v[0-9]+$ ]]; then
+    echo "$line" >> "$TMP_PROPS"
+    continue
+  fi
+
   owner_repo=$(owner_repo_of "$action_path")
 
   new_sha=$(resolve_sha "$owner_repo" "$tag")
