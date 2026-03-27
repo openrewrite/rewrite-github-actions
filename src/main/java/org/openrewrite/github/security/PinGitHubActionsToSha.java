@@ -40,6 +40,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.unmodifiableMap;
+
 @Value
 @EqualsAndHashCode(callSuper = false)
 public class PinGitHubActionsToSha extends Recipe {
@@ -114,12 +117,12 @@ public class PinGitHubActionsToSha extends Recipe {
                 .getResourceAsStream("/META-INF/rewrite/known-action-shas.json")) {
             if (is != null) {
                 ObjectMapper mapper = new ObjectMapper();
-                return Collections.unmodifiableMap(mapper.readValue(is,
-                        new TypeReference<Map<String, String>>() {}));
+                return unmodifiableMap(mapper.readValue(is, new TypeReference<Map<String, String>>() {
+                }));
             }
         } catch (IOException ignored) {
         }
-        return Collections.emptyMap();
+        return emptyMap();
     }
 
     private static class PinActionsVisitor extends YamlIsoVisitor<ExecutionContext> {
