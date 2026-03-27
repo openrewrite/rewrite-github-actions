@@ -110,160 +110,221 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor(Map<String, String> knownShas) {
         boolean pinOfficial = Boolean.TRUE.equals(pinOfficialActions);
+        String apiToken = githubApiToken;
         return Preconditions.check(
                 new IsGitHubActionsWorkflow(),
-                new PinActionsVisitor(pinOfficial, githubApiToken, knownShas)
+                new YamlIsoVisitor<ExecutionContext>() {
+
+                    @Override
+                    public Yaml.Mapping visitMapping(Yaml.Mapping mapping, ExecutionContext ctx) {
+                        Yaml.Mapping m = super.visitMapping(mapping, ctx);
+                        List<Yaml.Mapping.Entry> entries = m.getEntries();
+                        List<Yaml.Mapping.Entry> newEntries = new ArrayList<>(entries);
+                        boolean changed = false;
+
+                        for (int i = 0; i < newEntries.size(); i++) {
+                            Yaml.Mapping.Entry e = newEntries.get(i);
+                            PinResult result = pinEntry(e);
+                            if (result != null) {
+                                newEntries.set(i, result.entry);
+                                String comment = " # " + result.originalRef;
+                                if (i + 1 < newEntries.size()) {
+                                    // Append tag comment to the prefix of the next sibling
+                                    Yaml.Mapping.Entry next = newEntries.get(i + 1);
+                                    newEntries.set(i + 1, next.withPrefix(comment + next.getPrefix()));
+                                } else {
+                                    // Last entry — use doAfterVisit to place comment on the next printed node
+                                    scheduleCommentAfterEntry(result.entry.getId(), comment);
+                                }
+                                changed = true;
+                            }
+                        }
+
+                        return changed ? m.withEntries(newEntries) : m;
+                    }
+
+                    private void scheduleCommentAfterEntry(UUID pinnedEntryId, String comment) {
+                        doAfterVisit(new YamlIsoVisitor<ExecutionContext>() {
+                            private boolean found;
+
+                            @Override
+                            public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
+                                Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
+                                if (e.getId().equals(pinnedEntryId)) {
+                                    found = true;
+                                }
+                                return e;
+                            }
+
+                            @Override
+                            public Yaml.Mapping visitMapping(Yaml.Mapping mapping, ExecutionContext ctx) {
+                                Yaml.Mapping m = super.visitMapping(mapping, ctx);
+                                if (!found) {
+                                    return m;
+                                }
+                                // Check if the pinned entry is in this mapping and find its successor
+                                List<Yaml.Mapping.Entry> entries = m.getEntries();
+                                for (int i = 0; i < entries.size() - 1; i++) {
+                                    if (containsEntry(entries.get(i), pinnedEntryId)) {
+                                        Yaml.Mapping.Entry next = entries.get(i + 1);
+                                        List<Yaml.Mapping.Entry> updated = new ArrayList<>(entries);
+                                        updated.set(i + 1, next.withPrefix(comment + next.getPrefix()));
+                                        found = false; // consumed
+                                        return m.withEntries(updated);
+                                    }
+                                }
+                                return m;
+                            }
+
+                            @Override
+                            public Yaml.Document.End visitDocumentEnd(Yaml.Document.End end, ExecutionContext ctx) {
+                                Yaml.Document.End e = super.visitDocumentEnd(end, ctx);
+                                if (found) {
+                                    e = e.withPrefix(comment + e.getPrefix());
+                                    found = false;
+                                }
+                                return e;
+                            }
+
+                            private boolean containsEntry(Yaml.Mapping.Entry entry, UUID targetId) {
+                                if (entry.getId().equals(targetId)) {
+                                    return true;
+                                }
+                                if (entry.getValue() instanceof Yaml.Mapping) {
+                                    for (Yaml.Mapping.Entry child : ((Yaml.Mapping) entry.getValue()).getEntries()) {
+                                        if (containsEntry(child, targetId)) {
+                                            return true;
+                                        }
+                                    }
+                                }
+                                return false;
+                            }
+                        });
+                    }
+
+                    private @Nullable PinResult pinEntry(Yaml.Mapping.Entry e) {
+                        if (!(e.getKey() instanceof Yaml.Scalar) ||
+                                !"uses".equals(((Yaml.Scalar) e.getKey()).getValue())) {
+                            return null;
+                        }
+
+                        if (!(e.getValue() instanceof Yaml.Scalar)) {
+                            return null;
+                        }
+                        String usesValue = ((Yaml.Scalar) e.getValue()).getValue();
+
+                        // Skip local actions and docker references
+                        if (usesValue.startsWith("./") || usesValue.startsWith("docker://")) {
+                            return null;
+                        }
+
+                        Matcher m = USES_PATTERN.matcher(usesValue);
+                        if (!m.matches()) {
+                            return null;
+                        }
+
+                        String actionPath = m.group(1);   // e.g. "actions/checkout" or "owner/repo/subpath"
+                        String ref = m.group(2);           // e.g. "v4" or "main"
+
+                        // Already pinned to a SHA
+                        if (SHA_PATTERN.matcher(ref).matches()) {
+                            return null;
+                        }
+
+                        // Determine the org from the action path
+                        String org = actionPath.contains("/") ? actionPath.substring(0, actionPath.indexOf('/')) : actionPath;
+
+                        // Skip official actions unless opted in
+                        if (!pinOfficial && OFFICIAL_ORGS.contains(org)) {
+                            return null;
+                        }
+
+                        // Resolve SHA: static map first, then API fallback
+                        String sha = resolveToSha(actionPath, ref);
+                        if (sha == null) {
+                            return null;
+                        }
+
+                        // Replace the scalar value, retain the original ref as a comment
+                        Yaml.Scalar originalScalar = (Yaml.Scalar) e.getValue();
+                        return new PinResult(
+                                e.withValue(originalScalar.withValue(actionPath + "@" + sha)),
+                                ref
+                        );
+                    }
+
+                    private @Nullable String resolveToSha(String actionPath, String ref) {
+                        String key = actionPath + "@" + ref;
+
+                        // 1. Check known SHAs map
+                        String sha = knownShas.get(key);
+                        if (sha != null) {
+                            return sha;
+                        }
+
+                        // 2. Fall back to GitHub API
+                        return resolveViaGitHubApi(actionPath, ref);
+                    }
+
+                    private @Nullable String resolveViaGitHubApi(String actionPath, String ref) {
+                        // Extract owner/repo from the action path (strip subpath if present)
+                        String ownerRepo = actionPath;
+                        int thirdSlash = ownerRepo.indexOf('/', ownerRepo.indexOf('/') + 1);
+                        if (thirdSlash > 0) {
+                            ownerRepo = ownerRepo.substring(0, thirdSlash);
+                        }
+
+                        String apiUrl = "https://api.github.com/repos/" + ownerRepo + "/commits/" + ref;
+
+                        try {
+                            HttpURLConnection conn = (HttpURLConnection) new URL(apiUrl).openConnection();
+                            conn.setRequestMethod("GET");
+                            conn.setRequestProperty("Accept", "application/vnd.github.v3+json");
+                            conn.setRequestProperty("X-GitHub-Api-Version", "2022-11-28");
+
+                            if (apiToken != null && !apiToken.trim().isEmpty()) {
+                                conn.setRequestProperty("Authorization", "Bearer " + apiToken);
+                            }
+
+                            conn.setConnectTimeout(10_000);
+                            conn.setReadTimeout(10_000);
+
+                            if (conn.getResponseCode() != 200) {
+                                return null;
+                            }
+
+                            try (BufferedReader reader = new BufferedReader(
+                                    new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                                StringBuilder sb = new StringBuilder();
+                                String line;
+                                while ((line = reader.readLine()) != null) {
+                                    sb.append(line);
+                                }
+                                Matcher shaMatcher = SHA_RESPONSE_PATTERN.matcher(sb.toString());
+                                if (shaMatcher.find()) {
+                                    String sha = shaMatcher.group(1);
+                                    if (SHA_PATTERN.matcher(sha).matches()) {
+                                        return sha;
+                                    }
+                                }
+                            }
+                        } catch (IOException e) {
+                            // Silently skip actions we can't resolve — don't break the build
+                        }
+
+                        return null;
+                    }
+                }
         );
     }
 
-    private static class PinActionsVisitor extends YamlIsoVisitor<ExecutionContext> {
+    private static class PinResult {
+        final Yaml.Mapping.Entry entry;
+        final String originalRef;
 
-        private final boolean pinOfficial;
-        private final @Nullable String apiToken;
-        private final Map<String, String> knownShas;
-
-        PinActionsVisitor(boolean pinOfficial, @Nullable String apiToken, Map<String, String> knownShas) {
-            this.pinOfficial = pinOfficial;
-            this.apiToken = apiToken;
-            this.knownShas = knownShas;
-        }
-
-        @Override
-        public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
-
-            if (!isUsesKey(e)) {
-                return e;
-            }
-
-            String usesValue = scalarValue(e.getValue());
-            if (usesValue == null) {
-                return e;
-            }
-
-            // Skip local actions and docker references
-            if (usesValue.startsWith("./") || usesValue.startsWith("docker://")) {
-                return e;
-            }
-
-            Matcher m = USES_PATTERN.matcher(usesValue);
-            if (!m.matches()) {
-                return e;
-            }
-
-            String actionPath = m.group(1);   // e.g. "actions/checkout" or "owner/repo/subpath"
-            String ref = m.group(2);           // e.g. "v4" or "main"
-
-            // Already pinned to a SHA
-            if (SHA_PATTERN.matcher(ref).matches()) {
-                return e;
-            }
-
-            // Determine the org from the action path
-            String org = actionPath.contains("/") ? actionPath.substring(0, actionPath.indexOf('/')) : actionPath;
-
-            // Skip official actions unless opted in
-            if (!pinOfficial && OFFICIAL_ORGS.contains(org)) {
-                return e;
-            }
-
-            // Resolve SHA: static map first, then API fallback
-            String sha = resolveToSha(actionPath, ref, ctx);
-            if (sha == null) {
-                return e;
-            }
-
-            // Build the new value: "owner/repo@<sha>"
-            String newValue = actionPath + "@" + sha;
-
-            // Replace the scalar value
-            Yaml.Scalar originalScalar = (Yaml.Scalar) e.getValue();
-            Yaml.Scalar newScalar = originalScalar.withValue(newValue);
-
-            return e.withValue(newScalar);
-        }
-
-        /**
-         * Resolves an action reference to a commit SHA.
-         * Checks the static mapping first; if not found, queries the GitHub API.
-         */
-        private @Nullable String resolveToSha(String actionPath, String ref, ExecutionContext ctx) {
-            String key = actionPath + "@" + ref;
-
-            // 1. Check known SHAs map
-            String sha = knownShas.get(key);
-            if (sha != null) {
-                return sha;
-            }
-
-            // 2. Fall back to GitHub API
-            return resolveViaGitHubApi(actionPath, ref, ctx);
-        }
-
-        /**
-         * Queries the GitHub API to resolve a git ref (tag or branch) to its commit SHA.
-         * Uses the repos/{owner}/{repo}/commits/{ref} endpoint.
-         */
-        private @Nullable String resolveViaGitHubApi(String actionPath, String ref, ExecutionContext ctx) {
-            // Extract owner/repo from the action path (strip subpath if present)
-            String ownerRepo = actionPath;
-            int thirdSlash = ownerRepo.indexOf('/', ownerRepo.indexOf('/') + 1);
-            if (thirdSlash > 0) {
-                ownerRepo = ownerRepo.substring(0, thirdSlash);
-            }
-
-            String apiUrl = "https://api.github.com/repos/" + ownerRepo + "/commits/" + ref;
-
-            try {
-                HttpURLConnection conn = (HttpURLConnection) new URL(apiUrl).openConnection();
-                conn.setRequestMethod("GET");
-                conn.setRequestProperty("Accept", "application/vnd.github.v3+json");
-                conn.setRequestProperty("X-GitHub-Api-Version", "2022-11-28");
-
-                if (apiToken != null && !apiToken.trim().isEmpty()) {
-                    conn.setRequestProperty("Authorization", "Bearer " + apiToken);
-                }
-
-                conn.setConnectTimeout(10_000);
-                conn.setReadTimeout(10_000);
-
-                if (conn.getResponseCode() != 200) {
-                    return null;
-                }
-
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        sb.append(line);
-                    }
-                    Matcher shaMatcher = SHA_RESPONSE_PATTERN.matcher(sb.toString());
-                    if (shaMatcher.find()) {
-                        String sha = shaMatcher.group(1);
-                        if (SHA_PATTERN.matcher(sha).matches()) {
-                            return sha;
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                // Silently skip actions we can't resolve — don't break the build
-            }
-
-            return null;
-        }
-
-
-        private boolean isUsesKey(Yaml.Mapping.Entry entry) {
-            return entry.getKey() instanceof Yaml.Scalar &&
-                    "uses".equals(((Yaml.Scalar) entry.getKey()).getValue());
-        }
-
-        private @Nullable String scalarValue(Yaml.Block value) {
-            if (value instanceof Yaml.Scalar) {
-                return ((Yaml.Scalar) value).getValue();
-            }
-            return null;
+        PinResult(Yaml.Mapping.Entry entry, String originalRef) {
+            this.entry = entry;
+            this.originalRef = originalRef;
         }
     }
 }

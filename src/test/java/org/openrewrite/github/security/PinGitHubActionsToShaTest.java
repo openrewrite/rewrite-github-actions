@@ -51,7 +51,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238
+                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
                       name: Upload coverage
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -100,7 +100,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+                    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
                       name: Checkout
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -149,7 +149,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 scan:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: github/codeql-action/init@ebcb5b36ded6beda4ceefea6a8bc4cc885255bb3
+                    - uses: github/codeql-action/init@ebcb5b36ded6beda4ceefea6a8bc4cc885255bb3 # v3
                       name: Init CodeQL
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/security.yml")
@@ -241,9 +241,9 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                   steps:
                     - uses: actions/checkout@v4
                       name: Checkout
-                    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+                    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
                       name: Setup Buildx
-                    - uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25
+                    - uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
                       name: Build image
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -286,10 +286,39 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70
+                    - uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3
                       name: Setup Gradle
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void shouldPinReusableWorkflowAsOnlyEntry() {
+        rewriteRun(
+          yaml(
+            """
+              name: stale
+              on:
+                workflow_dispatch: {}
+                schedule:
+                  - cron: 36 4 * * 1
+              jobs:
+                build:
+                  uses: openrewrite/gh-automation/.github/workflows/stale.yml@main
+              """,
+            """
+              name: stale
+              on:
+                workflow_dispatch: {}
+                schedule:
+                  - cron: 36 4 * * 1
+              jobs:
+                build:
+                  uses: openrewrite/gh-automation/.github/workflows/stale.yml@d6aced963546db2a678be824f4f0f237ae968910 # main
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/stale.yml")
           )
         );
     }
@@ -322,13 +351,13 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+                    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
                       name: Checkout
                     - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238
                       name: Already pinned
                     - uses: ./local-action
                       name: Local
-                    - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+                    - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
                       name: Docker login
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
