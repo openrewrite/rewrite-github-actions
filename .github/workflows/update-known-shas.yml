@@ -16,14 +16,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve new action SHAs and update known-action-shas.json
+      - name: Resolve new action SHAs and update known-action-shas.properties
         id: update
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
-          JSON_FILE="src/main/resources/META-INF/rewrite/known-action-shas.json"
+          PROPS_FILE="src/main/resources/META-INF/rewrite/known-action-shas.properties"
+          TAG_RE='^v[0-9]'
+          SHA_RE='^[a-f0-9]{40}$'
 
           # ----------------------------------------------------------------
           # 1. Extract every "uses:" value from this repo's workflow files
@@ -37,9 +39,6 @@ jobs:
               | sort -u
           )
 
-          SHA_RE='^[a-f0-9]{40}$'
-
-          NEW_ENTRIES='{}'
           ADDED_KEYS=()
 
           for ref in "${USES_REFS[@]}"; do
@@ -61,8 +60,14 @@ jobs:
               continue
             fi
 
-            # Skip if already present in the JSON file
-            if jq -e --arg k "$ref" 'has($k)' "$JSON_FILE" > /dev/null 2>&1; then
+            # Only include tags (e.g. v1, v2.3), skip branches
+            if ! [[ "$tag" =~ $TAG_RE ]]; then
+              echo "::notice::Skipping branch ref ${ref}"
+              continue
+            fi
+
+            # Skip if already present in the properties file
+            if grep -qF "${ref}=" "$PROPS_FILE" 2>/dev/null; then
               continue
             fi
 
@@ -82,8 +87,8 @@ jobs:
             fi
 
             echo "Resolved: ${ref} → ${sha}"
-            NEW_ENTRIES=$(echo "$NEW_ENTRIES" | jq --arg k "$ref" --arg v "$sha" '. + {($k): $v}')
-            ADDED_KEYS+=("$ref")
+            echo "${ref}=${sha}" >> "$PROPS_FILE"
+            ADDED_KEYS+=("${ref}=${sha}")
           done
 
           if [[ ${#ADDED_KEYS[@]} -eq 0 ]]; then
@@ -93,19 +98,23 @@ jobs:
           fi
 
           # ----------------------------------------------------------------
-          # 2. Merge new entries into the JSON file (append-only, sorted)
+          # 2. Sort the properties file (preserve header comments)
           # ----------------------------------------------------------------
-          jq -s '.[0] * .[1] | to_entries | sort_by(.key) | from_entries' \
-            "$JSON_FILE" <(echo "$NEW_ENTRIES") > /tmp/merged.json
-          mv /tmp/merged.json "$JSON_FILE"
+          {
+            grep '^#' "$PROPS_FILE" || true
+            echo ""
+            grep -v '^#' "$PROPS_FILE" | grep -v '^$' | sort
+          } > /tmp/sorted.properties
+          mv /tmp/sorted.properties "$PROPS_FILE"
 
           # ----------------------------------------------------------------
           # 3. Build PR body listing new entries
           # ----------------------------------------------------------------
           BODY="Adds the following new action SHA mappings (existing entries unchanged):"$'\n\n'
-          for k in "${ADDED_KEYS[@]}"; do
-            sha=$(jq -r --arg k "$k" '.[$k]' "$JSON_FILE")
-            BODY+="- \`${k}\` → \`${sha}\`"$'\n'
+          for entry in "${ADDED_KEYS[@]}"; do
+            key="${entry%%=*}"
+            sha="${entry#*=}"
+            BODY+="- \`${key}\` → \`${sha}\`"$'\n'
           done
 
           echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -125,7 +134,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add src/main/resources/META-INF/rewrite/known-action-shas.json
+          git add src/main/resources/META-INF/rewrite/known-action-shas.properties
           git commit -m "Update known action SHAs"
           git push origin "$BRANCH"
 

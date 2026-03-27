@@ -15,9 +15,6 @@
  */
 package org.openrewrite.github.security;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
@@ -26,22 +23,16 @@ import org.openrewrite.github.IsGitHubActionsWorkflow;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.unmodifiableMap;
 
 @Value
 @EqualsAndHashCode(callSuper = false)
@@ -49,6 +40,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
 
     private static final Pattern SHA_PATTERN = Pattern.compile("^[a-f0-9]{40}$");
     private static final Pattern USES_PATTERN = Pattern.compile("^([^/@]+/[^/@]+(?:/[^@]+)?)@(.+)$");
+    private static final Pattern SHA_RESPONSE_PATTERN = Pattern.compile("\"sha\"\\s*:\\s*\"([a-f0-9]{40})\"");
 
     /**
      * Official GitHub-maintained action organizations.
@@ -95,15 +87,19 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     @Override
     public Map<String, String> getInitialValue(ExecutionContext ctx) {
         try (InputStream is = PinGitHubActionsToSha.class
-                .getResourceAsStream("/META-INF/rewrite/known-action-shas.json")) {
+                .getResourceAsStream("/META-INF/rewrite/known-action-shas.properties")) {
             if (is != null) {
-                ObjectMapper mapper = new ObjectMapper();
-                return unmodifiableMap(mapper.readValue(is, new TypeReference<Map<String, String>>() {
-                }));
+                Properties props = new Properties();
+                props.load(is);
+                Map<String, String> map = new LinkedHashMap<>();
+                for (String key : props.stringPropertyNames()) {
+                    map.put(key, props.getProperty(key));
+                }
+                return Collections.unmodifiableMap(map);
             }
         } catch (IOException ignored) {
         }
-        return emptyMap();
+        return Collections.emptyMap();
     }
 
     @Override
@@ -235,21 +231,19 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                     return null;
                 }
 
-                try (InputStream is = conn.getInputStream()) {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    byte[] buf = new byte[8192];
-                    int n;
-                    while ((n = is.read(buf)) != -1) {
-                        baos.write(buf, 0, n);
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
                     }
-                    String body = baos.toString(StandardCharsets.UTF_8.name());
-                    ObjectMapper mapper = new ObjectMapper();
-                    JsonNode node = mapper.readTree(body);
-                    String sha = node.path("sha").asText(null);
-
-                    // Validate that it looks like a SHA
-                    if (sha != null && SHA_PATTERN.matcher(sha).matches()) {
-                        return sha;
+                    Matcher shaMatcher = SHA_RESPONSE_PATTERN.matcher(sb.toString());
+                    if (shaMatcher.find()) {
+                        String sha = shaMatcher.group(1);
+                        if (SHA_PATTERN.matcher(sha).matches()) {
+                            return sha;
+                        }
                     }
                 }
             } catch (IOException e) {
