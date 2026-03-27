@@ -26,12 +26,15 @@ import org.openrewrite.github.IsGitHubActionsWorkflow;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -48,10 +51,8 @@ public class PinGitHubActionsToSha extends Recipe {
      * Official GitHub-maintained action organizations.
      * These are skipped by default unless {@code pinOfficialActions} is set.
      */
-    private static final Set<String> OFFICIAL_ORGS = Set.of(
-            "actions",
-            "github"
-    );
+    private static final Set<String> OFFICIAL_ORGS = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList("actions", "github")));
 
     /**
      * Static mapping of well-known third-party action references to their commit SHAs.
@@ -92,7 +93,7 @@ public class PinGitHubActionsToSha extends Recipe {
 
     @Override
     public Set<String> getTags() {
-        return Set.of("github", "actions", "security", "supply-chain");
+        return Collections.unmodifiableSet(new HashSet<>(Arrays.asList("github", "actions", "security", "supply-chain")));
     }
 
     @Override
@@ -183,15 +184,6 @@ public class PinGitHubActionsToSha extends Recipe {
             Yaml.Scalar originalScalar = (Yaml.Scalar) e.getValue();
             Yaml.Scalar newScalar = originalScalar.withValue(newValue);
 
-            // Add the original tag as an inline comment for readability.
-            // Convention: uses: owner/repo@<sha> # <original-ref>
-            //
-            // TODO: The inline comment approach depends on the YAML LST's handling
-            // of trailing comments. If Yaml.Scalar supports a suffix/comment field,
-            // use that. Otherwise, use AddOrUpdateComment or a Yaml.Comment marker.
-            // For now, we use the Yaml.Comment approach via the Markers API.
-            newScalar = addTrailingComment(newScalar, ref);
-
             return e.withValue(newScalar);
         }
 
@@ -232,7 +224,7 @@ public class PinGitHubActionsToSha extends Recipe {
                 conn.setRequestProperty("Accept", "application/vnd.github.v3+json");
                 conn.setRequestProperty("X-GitHub-Api-Version", "2022-11-28");
 
-                if (apiToken != null && !apiToken.isBlank()) {
+                if (apiToken != null && !apiToken.trim().isEmpty()) {
                     conn.setRequestProperty("Authorization", "Bearer " + apiToken);
                 }
 
@@ -244,7 +236,13 @@ public class PinGitHubActionsToSha extends Recipe {
                 }
 
                 try (InputStream is = conn.getInputStream()) {
-                    String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buf = new byte[8192];
+                    int n;
+                    while ((n = is.read(buf)) != -1) {
+                        baos.write(buf, 0, n);
+                    }
+                    String body = baos.toString(StandardCharsets.UTF_8.name());
                     ObjectMapper mapper = new ObjectMapper();
                     JsonNode node = mapper.readTree(body);
                     String sha = node.path("sha").asText(null);
@@ -261,17 +259,6 @@ public class PinGitHubActionsToSha extends Recipe {
             return null;
         }
 
-        /**
-         * Adds a trailing inline comment to a YAML scalar.
-         * The comment preserves the original tag/branch ref for human readability.
-         */
-        private Yaml.Scalar addTrailingComment(Yaml.Scalar scalar, String originalRef) {
-            try {
-                return scalar.withSuffix(" # " + originalRef);
-            } catch (Exception e) {
-                return scalar;
-            }
-        }
 
         private boolean isUsesKey(Yaml.Mapping.Entry entry) {
             return entry.getKey() instanceof Yaml.Scalar &&
