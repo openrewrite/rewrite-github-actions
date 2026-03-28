@@ -76,4 +76,32 @@ class ReplaceRunnersTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void replaceRunnersForEveryJob() {
+        rewriteRun(
+          spec -> spec.recipe(new ReplaceRunners(
+            "*",
+            List.of("ubuntu-latest", "mac", "windows")
+          )),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                other:
+                  runs-on: ubuntu-latest
+              """,
+            """
+              jobs:
+                build:
+                  runs-on: [ubuntu-latest, mac, windows]
+                other:
+                  runs-on: [ubuntu-latest, mac, windows]
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
 }
