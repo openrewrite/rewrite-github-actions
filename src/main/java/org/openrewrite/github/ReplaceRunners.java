@@ -27,7 +27,7 @@ import java.util.List;
 @Value
 public class ReplaceRunners extends Recipe {
     @Option(displayName = "Job Name",
-            description = "The name of the job to update",
+            description = "The name of the job to update, use * to affect all the workflow jobs",
             example = "build")
     String jobName;
 
@@ -43,8 +43,12 @@ public class ReplaceRunners extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
+        String localJobName = jobName;
+        if ("*".equals(localJobName)) {
+            localJobName = ""; // in order to produce a jsonpath like '$.jobs..runs-on' to affect all the jobs
+        }
         return Preconditions.check(new IsGitHubActionsWorkflow(),
-                new ChangeValue(String.format("$.jobs.%s.runs-on", jobName), Arrays.toString(runners.toArray()), null)
+                new ChangeValue(String.format("$.jobs.%s.runs-on", localJobName), Arrays.toString(runners.toArray()), null)
                         .getVisitor());
     }
 }
