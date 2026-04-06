@@ -295,30 +295,30 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     }
 
     @Test
-    void shouldPinReusableWorkflowAsOnlyEntry() {
+    void shouldPinActionAsLastEntryInMapping() {
         rewriteRun(
           yaml(
             """
-              name: stale
-              on:
-                workflow_dispatch: {}
-                schedule:
-                  - cron: 36 4 * * 1
+              name: CI
+              on: push
               jobs:
                 build:
-                  uses: openrewrite/gh-automation/.github/workflows/stale.yml@main
+                  runs-on: ubuntu-latest
+                  steps:
+                    - name: Upload coverage
+                      uses: codecov/codecov-action@v4
               """,
             """
-              name: stale
-              on:
-                workflow_dispatch: {}
-                schedule:
-                  - cron: 36 4 * * 1
+              name: CI
+              on: push
               jobs:
                 build:
-                  uses: openrewrite/gh-automation/.github/workflows/stale.yml@d6aced963546db2a678be824f4f0f237ae968910 # main
+                  runs-on: ubuntu-latest
+                  steps:
+                    - name: Upload coverage
+                      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
               """,
-            sourceSpecs -> sourceSpecs.path(".github/workflows/stale.yml")
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
           )
         );
     }
