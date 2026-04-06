@@ -157,8 +157,8 @@ public class AddDependabotCooldown extends Recipe {
                 if (Boolean.TRUE.equals(getCursor().pollMessage("ADD_COOLDOWN"))) {
                     final boolean ecosystemIsExcluded = excludeEcosystems != null && m.getEntries()
                             .stream()
-                            .anyMatch(entry -> "package-ecosystem".equals(entry.getKey().getValue())
-                            && entry.getValue() instanceof Yaml.Scalar && excludeEcosystems.contains(((Yaml.Scalar)entry.getValue()).getValue()));
+                            .anyMatch(entry -> "package-ecosystem".equals(entry.getKey().getValue()) &&
+                            entry.getValue() instanceof Yaml.Scalar && excludeEcosystems.contains(((Yaml.Scalar)entry.getValue()).getValue()));
                     if (ecosystemIsExcluded) {
                         return m;
                     }
