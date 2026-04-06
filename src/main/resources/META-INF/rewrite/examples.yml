@@ -784,7 +784,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.AnonymousJobsRecipe
+recipeName: org.openrewrite.github.security.AnonymousJobs
 examples:
 - description: '`AnonymousJobsRecipeTest#shouldFlagJobWithoutName`'
   sources:
@@ -818,7 +818,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.ArtifactSecurityRecipe
+recipeName: org.openrewrite.github.security.ArtifactSecurity
 examples:
 - description: '`ArtifactSecurityRecipeTest#shouldFlagCredentialPersistenceRisk`'
   sources:
@@ -856,7 +856,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.BotConditionsRecipe
+recipeName: org.openrewrite.github.security.BotConditions
 examples:
 - description: '`BotConditionsRecipeTest#shouldFlagSpoofableActorNameCheck`'
   sources:
@@ -882,7 +882,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.CachePoisoningRecipe
+recipeName: org.openrewrite.github.security.CachePoisoning
 examples:
 - description: '`CachePoisoningRecipeTest#shouldDetectCacheInReleaseWorkflow`'
   sources:
@@ -918,7 +918,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.DangerousTriggersRecipe
+recipeName: org.openrewrite.github.security.DangerousTriggers
 examples:
 - description: '`DangerousTriggersRecipeTest#shouldDetectPullRequestTarget`'
   sources:
@@ -940,7 +940,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.ExcessivePermissionsRecipe
+recipeName: org.openrewrite.github.security.ExcessivePermissions
 examples:
 - description: '`ExcessivePermissionsRecipeTest#shouldFlagWriteAllPermissions`'
   sources:
@@ -966,7 +966,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.ForbiddenUsesRecipe
+recipeName: org.openrewrite.github.security.ForbiddenUses
 examples:
 - description: '`ForbiddenUsesRecipeTest#shouldFlagDangerousAction`'
   sources:
@@ -992,7 +992,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.GitHubEnvRecipe
+recipeName: org.openrewrite.github.security.GitHubEnv
 examples:
 - description: '`GitHubEnvRecipeTest#shouldDetectGitHubEnvInPullRequestTarget`'
   sources:
@@ -1022,7 +1022,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.HardcodedCredentialsRecipe
+recipeName: org.openrewrite.github.security.HardcodedCredentials
 examples:
 - description: '`HardcodedCredentialsRecipeTest#shouldDetectHardcodedContainerPassword`'
   sources:
@@ -1054,7 +1054,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.InsecureCommandsRecipe
+recipeName: org.openrewrite.github.security.InsecureCommands
 examples:
 - description: '`InsecureCommandsRecipeTest#shouldDetectInsecureCommandsAtWorkflowLevel`'
   sources:
@@ -1082,7 +1082,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.ObfuscationRecipe
+recipeName: org.openrewrite.github.security.Obfuscation
 examples:
 - description: '`ObfuscationRecipeTest#shouldFlagObfuscatedUsesWithDot`'
   sources:
@@ -1106,7 +1106,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.RefVersionMismatchRecipe
+recipeName: org.openrewrite.github.security.RefVersionMismatch
 examples:
 - description: '`RefVersionMismatchRecipeTest#shouldFlagMismatchedVersionComment`'
   sources:
@@ -1132,7 +1132,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.SecretsInheritRecipe
+recipeName: org.openrewrite.github.security.SecretsInherit
 examples:
 - description: '`SecretsInheritRecipeTest#shouldDetectSecretsInherit`'
   sources:
@@ -1156,7 +1156,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.SelfHostedRunnerRecipe
+recipeName: org.openrewrite.github.security.SelfHostedRunner
 examples:
 - description: '`SelfHostedRunnerRecipeTest#shouldFlagSelfHostedRunner`'
   sources:
@@ -1180,7 +1180,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.TemplateInjectionRecipe
+recipeName: org.openrewrite.github.security.TemplateInjection
 examples:
 - description: '`TemplateInjectionRecipeTest#shouldFlagPullRequestTitleInjection`'
   sources:
@@ -1204,7 +1204,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.TrustedPublishingRecipe
+recipeName: org.openrewrite.github.security.TrustedPublishing
 examples:
 - description: '`TrustedPublishingRecipeTest#shouldFlagPyPIPublishWithPassword`'
   sources:
@@ -1234,7 +1234,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.UndocumentedPermissionsRecipe
+recipeName: org.openrewrite.github.security.UndocumentedPermissions
 examples:
 - description: '`UndocumentedPermissionsRecipeTest#shouldFlagUndocumentedWorkflowPermissions`'
   sources:
@@ -1264,7 +1264,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.UnpinnedActionsRecipe
+recipeName: org.openrewrite.github.security.UnpinnedActions
 examples:
 - description: '`UnpinnedActionsRecipeTest#shouldFlagUnpinnedActionWithTagVersion`'
   sources:
@@ -1290,7 +1290,7 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.github.security.UnpinnedDockerImagesRecipe
+recipeName: org.openrewrite.github.security.UnpinnedDockerImages
 examples:
 - description: '`UnpinnedDockerImagesRecipeTest#shouldFlagUnpinnedContainerImage`'
   sources:
