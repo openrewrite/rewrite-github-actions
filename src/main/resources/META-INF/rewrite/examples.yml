@@ -786,7 +786,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.AnonymousJobs
 examples:
-- description: '`AnonymousJobsRecipeTest#shouldFlagJobWithoutName`'
+- description: '`AnonymousJobsTest#shouldFlagJobWithoutName`'
   sources:
   - before: |
       name: Test Workflow
@@ -820,7 +820,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.ArtifactSecurity
 examples:
-- description: '`ArtifactSecurityRecipeTest#shouldFlagCredentialPersistenceRisk`'
+- description: '`ArtifactSecurityTest#shouldFlagCredentialPersistenceRisk`'
   sources:
   - before: |
       name: Build and Upload
@@ -858,7 +858,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.BotConditions
 examples:
-- description: '`BotConditionsRecipeTest#shouldFlagSpoofableActorNameCheck`'
+- description: '`BotConditionsTest#shouldFlagSpoofableActorNameCheck`'
   sources:
   - before: |
       name: Test Workflow
@@ -884,7 +884,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.CachePoisoning
 examples:
-- description: '`CachePoisoningRecipeTest#shouldDetectCacheInReleaseWorkflow`'
+- description: '`CachePoisoningTest#shouldDetectCacheInReleaseWorkflow`'
   sources:
   - before: |
       on: release
@@ -920,7 +920,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.DangerousTriggers
 examples:
-- description: '`DangerousTriggersRecipeTest#shouldDetectPullRequestTarget`'
+- description: '`DangerousTriggersTest#shouldDetectPullRequestTarget`'
   sources:
   - before: |
       on: pull_request_target
@@ -942,7 +942,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.ExcessivePermissions
 examples:
-- description: '`ExcessivePermissionsRecipeTest#shouldFlagWriteAllPermissions`'
+- description: '`ExcessivePermissionsTest#shouldFlagWriteAllPermissions`'
   sources:
   - before: |
       name: Test Workflow
@@ -968,7 +968,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.ForbiddenUses
 examples:
-- description: '`ForbiddenUsesRecipeTest#shouldFlagDangerousAction`'
+- description: '`ForbiddenUsesTest#shouldFlagDangerousAction`'
   sources:
   - before: |
       name: Test Workflow
@@ -994,7 +994,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.GitHubEnv
 examples:
-- description: '`GitHubEnvRecipeTest#shouldDetectGitHubEnvInPullRequestTarget`'
+- description: '`GitHubEnvTest#shouldDetectGitHubEnvInPullRequestTarget`'
   sources:
   - before: |
       on: pull_request_target
@@ -1024,7 +1024,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.HardcodedCredentials
 examples:
-- description: '`HardcodedCredentialsRecipeTest#shouldDetectHardcodedContainerPassword`'
+- description: '`HardcodedCredentialsTest#shouldDetectHardcodedContainerPassword`'
   sources:
   - before: |
       on: push
@@ -1056,7 +1056,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.InsecureCommands
 examples:
-- description: '`InsecureCommandsRecipeTest#shouldDetectInsecureCommandsAtWorkflowLevel`'
+- description: '`InsecureCommandsTest#shouldDetectInsecureCommandsAtWorkflowLevel`'
   sources:
   - before: |
       on: push
@@ -1084,7 +1084,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.Obfuscation
 examples:
-- description: '`ObfuscationRecipeTest#shouldFlagObfuscatedUsesWithDot`'
+- description: '`ObfuscationTest#shouldFlagObfuscatedUsesWithDot`'
   sources:
   - before: |
       name: Test Workflow
@@ -1108,7 +1108,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.RefVersionMismatch
 examples:
-- description: '`RefVersionMismatchRecipeTest#shouldFlagMismatchedVersionComment`'
+- description: '`RefVersionMismatchTest#shouldFlagMismatchedVersionComment`'
   sources:
   - before: |
       name: Test Workflow
@@ -1134,7 +1134,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.SecretsInherit
 examples:
-- description: '`SecretsInheritRecipeTest#shouldDetectSecretsInherit`'
+- description: '`SecretsInheritTest#shouldDetectSecretsInherit`'
   sources:
   - before: |
       on: push
@@ -1158,7 +1158,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.SelfHostedRunner
 examples:
-- description: '`SelfHostedRunnerRecipeTest#shouldFlagSelfHostedRunner`'
+- description: '`SelfHostedRunnerTest#shouldFlagSelfHostedRunner`'
   sources:
   - before: |
       name: Test Workflow
@@ -1182,7 +1182,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.TemplateInjection
 examples:
-- description: '`TemplateInjectionRecipeTest#shouldFlagPullRequestTitleInjection`'
+- description: '`TemplateInjectionTest#shouldFlagPullRequestTitleInjection`'
   sources:
   - before: |
       name: Test Workflow
@@ -1206,7 +1206,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.TrustedPublishing
 examples:
-- description: '`TrustedPublishingRecipeTest#shouldFlagPyPIPublishWithPassword`'
+- description: '`TrustedPublishingTest#shouldFlagPyPIPublishWithPassword`'
   sources:
   - before: |
       name: Publish to PyPI
@@ -1236,7 +1236,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.UndocumentedPermissions
 examples:
-- description: '`UndocumentedPermissionsRecipeTest#shouldFlagUndocumentedWorkflowPermissions`'
+- description: '`UndocumentedPermissionsTest#shouldFlagUndocumentedWorkflowPermissions`'
   sources:
   - before: |
       name: Test Workflow
@@ -1266,7 +1266,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.UnpinnedActions
 examples:
-- description: '`UnpinnedActionsRecipeTest#shouldFlagUnpinnedActionWithTagVersion`'
+- description: '`UnpinnedActionsTest#shouldFlagUnpinnedActionWithTagVersion`'
   sources:
   - before: |
       name: Test Workflow
@@ -1292,7 +1292,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.UnpinnedDockerImages
 examples:
-- description: '`UnpinnedDockerImagesRecipeTest#shouldFlagUnpinnedContainerImage`'
+- description: '`UnpinnedDockerImagesTest#shouldFlagUnpinnedContainerImage`'
   sources:
   - before: |
       name: Test Workflow
