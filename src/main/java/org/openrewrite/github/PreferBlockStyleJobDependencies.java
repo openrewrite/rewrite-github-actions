@@ -20,11 +20,10 @@ import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
+import org.openrewrite.internal.ListUtils;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
-
-import java.util.stream.Collectors;
 
 public class PreferBlockStyleJobDependencies extends Recipe {
     @Getter
@@ -49,12 +48,10 @@ public class PreferBlockStyleJobDependencies extends Recipe {
                         Yaml.Sequence blockSequence = sequence
                                 .withOpeningBracketPrefix(null)
                                 .withClosingBracketPrefix(null)
-                                .withEntries(sequence.getEntries().stream()
-                                        .map(seqEntry -> seqEntry
-                                                .withDash(true)
-                                                .withTrailingCommaPrefix(null)
-                                                .withBlock(seqEntry.getBlock().withPrefix(" ")))
-                                        .collect(Collectors.toList()));
+                                .withEntries(ListUtils.map(sequence.getEntries(), seqEntry -> seqEntry
+                                        .withDash(true)
+                                        .withTrailingCommaPrefix(null)
+                                        .withBlock(seqEntry.getBlock().withPrefix(" "))));
                         return autoFormat(e.withValue(blockSequence), ctx, getCursor().getParentOrThrow());
                     }
                 }
