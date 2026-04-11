@@ -105,7 +105,7 @@ class ChangeActionTest implements RewriteTest {
                   steps:
                     - name: Checkout
                       uses: actions/checkout@v4
-                    - uses: gradle/actions/setup-gradle@v3
+                    - uses: gradle/actions/setup-gradle@v6
               """,
             source -> source.path(".github/workflows/ci.yml")
           )
