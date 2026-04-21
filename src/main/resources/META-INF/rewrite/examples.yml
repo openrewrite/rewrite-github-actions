@@ -262,6 +262,33 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.PreferBlockStyleJobDependencies
+examples:
+- description: '`PreferBlockStyleJobDependenciesTest#convertsFlowToBlockWithMultipleDeps`'
+  sources:
+  - before: |
+      on: push
+      jobs:
+        deploy:
+          needs: [build, test, lint]
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+    after: |
+      on: push
+      jobs:
+        deploy:
+          needs:
+            - build
+            - test
+            - lint
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+    path: .github/workflows/ci.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.PreferTemurinDistributions
 examples:
 - description: '`PreferTemurinDistributionsTest#changesWhenAllAreHosted`'
