@@ -1,0 +1,82 @@
+---
+name: update-known-shas
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: 0 6 * * 1
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve new action SHAs
+        id: update
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          .github/scripts/update-known-shas.sh
+
+          PROPS_FILE="src/main/resources/META-INF/rewrite/known-action-shas.properties"
+          if git diff --quiet "$PROPS_FILE"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+
+            ADDED=""
+            UPDATED=""
+            while IFS= read -r line; do
+              if [[ "$line" == +* && "$line" != +++* && "$line" == *=* ]]; then
+                new_key="${line:1}"
+                new_key="${new_key%%=*}"
+                new_sha="${line#*=}"
+                # Check if this key also appears in removed lines (i.e. updated)
+                if git diff "$PROPS_FILE" | grep -qF -- "-${new_key}="; then
+                  UPDATED+="- \`${new_key}\` → \`${new_sha}\`"$'\n'
+                else
+                  ADDED+="- \`${new_key}\` → \`${new_sha}\`"$'\n'
+                fi
+              fi
+            done < <(git diff "$PROPS_FILE")
+
+            BODY=""
+            if [[ -n "$UPDATED" ]]; then
+              BODY+="### Updated (drifted tags)"$'\n\n'"${UPDATED}"$'\n'
+            fi
+            if [[ -n "$ADDED" ]]; then
+              BODY+="### Added"$'\n\n'"${ADDED}"$'\n'
+            fi
+
+            {
+              echo "pr_body<<EOF_PR_BODY"
+              echo "$BODY"
+              echo "EOF_PR_BODY"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open pull request
+        if: steps.update.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_BODY: ${{ steps.update.outputs.pr_body }}
+        run: |
+          BRANCH="automation/update-known-shas-${GITHUB_RUN_ID}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add src/main/resources/META-INF/rewrite/known-action-shas.properties
+          git commit -m "Update known action SHAs"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --title "Update known action SHAs" \
+            --body "$PR_BODY" \
+            --base main \
+            --head "$BRANCH" \
+            --label "dependencies" || true
