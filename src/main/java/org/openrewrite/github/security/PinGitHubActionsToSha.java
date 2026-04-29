@@ -20,15 +20,12 @@ import lombok.Value;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.github.IsGitHubActionsWorkflow;
+import org.openrewrite.ipc.http.HttpSender;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -138,7 +135,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
 
                         for (int i = 0; i < newEntries.size(); i++) {
                             Yaml.Mapping.Entry e = newEntries.get(i);
-                            PinResult result = pinEntry(e);
+                            PinResult result = pinEntry(e, ctx);
                             if (result != null) {
                                 newEntries.set(i, result.entry);
                                 String comment = " # " + result.originalRef;
@@ -216,7 +213,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                         });
                     }
 
-                    private @Nullable PinResult pinEntry(Yaml.Mapping.Entry e) {
+                    private @Nullable PinResult pinEntry(Yaml.Mapping.Entry e, ExecutionContext ctx) {
                         if (!(e.getKey() instanceof Yaml.Scalar) ||
                                 !"uses".equals(((Yaml.Scalar) e.getKey()).getValue())) {
                             return null;
@@ -260,7 +257,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                         }
 
                         // Resolve SHA: static map first, then API fallback
-                        String sha = resolveToSha(actionPath, ref);
+                        String sha = resolveToSha(actionPath, ref, ctx);
                         if (sha == null) {
                             return null;
                         }
@@ -273,7 +270,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                         );
                     }
 
-                    private @Nullable String resolveToSha(String actionPath, String ref) {
+                    private @Nullable String resolveToSha(String actionPath, String ref, ExecutionContext ctx) {
                         String key = actionPath + "@" + ref;
 
                         // 1. Check known SHAs map
@@ -283,10 +280,10 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                         }
 
                         // 2. Fall back to GitHub API
-                        return resolveViaGitHubApi(actionPath, ref);
+                        return resolveViaGitHubApi(actionPath, ref, ctx);
                     }
 
-                    private @Nullable String resolveViaGitHubApi(String actionPath, String ref) {
+                    private @Nullable String resolveViaGitHubApi(String actionPath, String ref, ExecutionContext ctx) {
                         // Extract owner/repo from the action path (strip subpath if present)
                         String ownerRepo = actionPath;
                         int thirdSlash = ownerRepo.indexOf('/', ownerRepo.indexOf('/') + 1);
@@ -296,39 +293,25 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
 
                         String apiUrl = "https://api.github.com/repos/" + ownerRepo + "/commits/" + ref;
 
-                        try {
-                            HttpURLConnection conn = (HttpURLConnection) new URL(apiUrl).openConnection();
-                            conn.setRequestMethod("GET");
-                            conn.setRequestProperty("Accept", "application/vnd.github.v3+json");
-                            conn.setRequestProperty("X-GitHub-Api-Version", "2022-11-28");
+                        HttpSender httpSender = HttpSenderExecutionContextView.view(ctx).getHttpSender();
+                        HttpSender.Request.Builder request = httpSender.get(apiUrl)
+                                .withHeader("Accept", "application/vnd.github.v3+json")
+                                .withHeader("X-GitHub-Api-Version", "2022-11-28")
+                                .withAuthentication("Bearer", apiToken);
 
-                            if (apiToken != null && !apiToken.trim().isEmpty()) {
-                                conn.setRequestProperty("Authorization", "Bearer " + apiToken);
-                            }
-
-                            conn.setConnectTimeout(10_000);
-                            conn.setReadTimeout(10_000);
-
-                            if (conn.getResponseCode() != 200) {
+                        try (HttpSender.Response response = httpSender.send(request.build())) {
+                            if (!response.isSuccessful()) {
                                 return null;
                             }
-
-                            try (BufferedReader reader = new BufferedReader(
-                                    new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-                                StringBuilder sb = new StringBuilder();
-                                String line;
-                                while ((line = reader.readLine()) != null) {
-                                    sb.append(line);
-                                }
-                                Matcher shaMatcher = SHA_RESPONSE_PATTERN.matcher(sb.toString());
-                                if (shaMatcher.find()) {
-                                    String sha = shaMatcher.group(1);
-                                    if (SHA_PATTERN.matcher(sha).matches()) {
-                                        return sha;
-                                    }
+                            String responseBody = new String(response.getBodyAsBytes(), StandardCharsets.UTF_8);
+                            Matcher shaMatcher = SHA_RESPONSE_PATTERN.matcher(responseBody);
+                            if (shaMatcher.find()) {
+                                String sha = shaMatcher.group(1);
+                                if (SHA_PATTERN.matcher(sha).matches()) {
+                                    return sha;
                                 }
                             }
-                        } catch (IOException e) {
+                        } catch (RuntimeException e) {
                             // Silently skip actions we can't resolve — don't break the build
                         }
 
