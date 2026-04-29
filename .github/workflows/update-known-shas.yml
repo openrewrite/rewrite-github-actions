@@ -64,8 +64,9 @@ jobs:
         if: steps.update.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_BODY: ${{ steps.update.outputs.pr_body }}
         run: |
-          BRANCH="automation/update-known-shas-$(date +%Y%m%d)"
+          BRANCH="automation/update-known-shas-${GITHUB_RUN_ID}"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
@@ -75,7 +76,7 @@ jobs:
 
           gh pr create \
             --title "Update known action SHAs" \
-            --body "${{ steps.update.outputs.pr_body }}" \
+            --body "$PR_BODY" \
             --base main \
             --head "$BRANCH" \
             --label "dependencies" || true

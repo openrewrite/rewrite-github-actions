@@ -37,7 +37,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
 
     private static final Pattern SHA_PATTERN = Pattern.compile("^[a-f0-9]{40}$");
     private static final Pattern USES_PATTERN = Pattern.compile("^([^/@]+/[^/@]+(?:/[^@]+)?)@(.+)$");
-    private static final Pattern SHA_RESPONSE_PATTERN = Pattern.compile("\"sha\"\\s*:\\s*\"([a-f0-9]{40})\"");
+    private static final Pattern SHA_RESPONSE_PATTERN = Pattern.compile("\\A\\s*\\{\\s*\"sha\"\\s*:\\s*\"([a-f0-9]{40})\"");
 
     /**
      * Official GitHub-maintained action organizations.
