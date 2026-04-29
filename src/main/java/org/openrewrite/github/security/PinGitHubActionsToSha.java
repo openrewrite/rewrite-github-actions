@@ -27,6 +27,8 @@ import org.openrewrite.yaml.tree.Yaml;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,6 +40,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     private static final Pattern SHA_PATTERN = Pattern.compile("^[a-f0-9]{40}$");
     private static final Pattern USES_PATTERN = Pattern.compile("^([^/@]+/[^/@]+(?:/[^@]+)?)@(.+)$");
     private static final Pattern SHA_RESPONSE_PATTERN = Pattern.compile("\\A\\s*\\{\\s*\"sha\"\\s*:\\s*\"([a-f0-9]{40})\"");
+    private static final Pattern TAG_REF_PATTERN = Pattern.compile("^v?\\d.*");
 
     /**
      * Official GitHub-maintained action organizations.
@@ -141,10 +144,10 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                                 if (i + 1 < newEntries.size()) {
                                     // Append tag comment to the prefix of the next sibling
                                     Yaml.Mapping.Entry next = newEntries.get(i + 1);
-                                    newEntries.set(i + 1, next.withPrefix(mergeTagCommentIntoPrefix(next.getPrefix(), result.originalRef)));
+                                    newEntries.set(i + 1, next.withPrefix(mergeTagCommentIntoPrefix(next.getPrefix(), result.commentText)));
                                 } else {
                                     // Last entry — use doAfterVisit to place comment on the next printed node
-                                    scheduleCommentAfterEntry(result.entry.getId(), result.originalRef);
+                                    scheduleCommentAfterEntry(result.entry.getId(), result.commentText);
                                 }
                                 changed = true;
                             }
@@ -153,7 +156,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                         return changed ? m.withEntries(newEntries) : m;
                     }
 
-                    private void scheduleCommentAfterEntry(UUID pinnedEntryId, String tag) {
+                    private void scheduleCommentAfterEntry(UUID pinnedEntryId, String commentText) {
                         doAfterVisit(new YamlIsoVisitor<ExecutionContext>() {
                             private boolean found;
 
@@ -178,7 +181,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                                     if (containsEntry(entries.get(i), pinnedEntryId)) {
                                         Yaml.Mapping.Entry next = entries.get(i + 1);
                                         List<Yaml.Mapping.Entry> updated = new ArrayList<>(entries);
-                                        updated.set(i + 1, next.withPrefix(mergeTagCommentIntoPrefix(next.getPrefix(), tag)));
+                                        updated.set(i + 1, next.withPrefix(mergeTagCommentIntoPrefix(next.getPrefix(), commentText)));
                                         found = false; // consumed
                                         return m.withEntries(updated);
                                     }
@@ -190,7 +193,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                             public Yaml.Document.End visitDocumentEnd(Yaml.Document.End end, ExecutionContext ctx) {
                                 Yaml.Document.End e = super.visitDocumentEnd(end, ctx);
                                 if (found) {
-                                    e = e.withPrefix(mergeTagCommentIntoPrefix(e.getPrefix(), tag));
+                                    e = e.withPrefix(mergeTagCommentIntoPrefix(e.getPrefix(), commentText));
                                     found = false;
                                 }
                                 return e;
@@ -265,7 +268,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                         Yaml.Scalar originalScalar = (Yaml.Scalar) e.getValue();
                         return new PinResult(
                                 e.withValue(originalScalar.withValue(actionPath + "@" + sha)),
-                                ref
+                                formatRefComment(ref)
                         );
                     }
 
@@ -321,24 +324,38 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     }
 
     /**
-     * Insert a {@code # <tag>} marker onto the line of the pinned {@code uses:} value, replacing any
-     * pre-existing inline comment on that line. The tag comment lives in the prefix of the next
-     * sibling node (or the document end), preceded by whatever same-line whitespace + comment the
-     * prefix may already start with. Anything after the first newline is preserved unchanged so the
-     * indentation of the next entry stays intact.
+     * Insert a {@code # <commentText>} marker onto the line of the pinned {@code uses:} value,
+     * replacing any pre-existing inline comment on that line. The comment lives in the prefix of
+     * the next sibling node (or the document end), preceded by whatever same-line whitespace +
+     * comment the prefix may already start with. Anything after the first newline is preserved
+     * unchanged so the indentation of the next entry stays intact.
      *
-     * <p>Replacing rather than appending matches the convention used by Dependabot and Renovate, which
-     * read the first {@code #} comment after the SHA as the version tag for future updates.
+     * <p>Replacing rather than appending matches the convention used by Dependabot and Renovate,
+     * which read the first {@code #} comment after the SHA as the version tag for future updates.
      */
-    static String mergeTagCommentIntoPrefix(String existingPrefix, String tag) {
-        String tagComment = " # " + tag;
+    static String mergeTagCommentIntoPrefix(String existingPrefix, String commentText) {
+        String formatted = " # " + commentText;
         int newlineIdx = existingPrefix.indexOf('\n');
         String onSameLine = newlineIdx < 0 ? existingPrefix : existingPrefix.substring(0, newlineIdx);
         if (onSameLine.contains("#")) {
             String afterNewline = newlineIdx < 0 ? "" : existingPrefix.substring(newlineIdx);
-            return tagComment + afterNewline;
+            return formatted + afterNewline;
         }
-        return tagComment + existingPrefix;
+        return formatted + existingPrefix;
+    }
+
+    /**
+     * Format the comment text that will be written next to the pinned SHA. Tag-like refs
+     * (anything starting with {@code v?\d}, e.g. {@code v4}, {@code v1.2.3}, {@code 2.1.0}) are
+     * emitted as-is so they remain stable identifiers for tooling like Dependabot and Renovate.
+     * Branch-like refs (e.g. {@code main}, {@code master}, {@code develop}) are stamped with the
+     * resolution date in UTC, since the SHA they point at can change at any time.
+     */
+    static String formatRefComment(String ref) {
+        if (TAG_REF_PATTERN.matcher(ref).matches()) {
+            return ref;
+        }
+        return ref + " @ " + LocalDate.now(ZoneOffset.UTC);
     }
 
     private static boolean matchesAllowList(String actionPath, List<String> allowList) {
@@ -381,11 +398,11 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
 
     private static class PinResult {
         final Yaml.Mapping.Entry entry;
-        final String originalRef;
+        final String commentText;
 
-        PinResult(Yaml.Mapping.Entry entry, String originalRef) {
+        PinResult(Yaml.Mapping.Entry entry, String commentText) {
             this.entry = entry;
-            this.originalRef = originalRef;
+            this.commentText = commentText;
         }
     }
 }

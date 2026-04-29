@@ -20,9 +20,12 @@ import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.openrewrite.yaml.Assertions.yaml;
 
 class PinGitHubActionsToShaTest implements RewriteTest {
@@ -661,6 +664,23 @@ class PinGitHubActionsToShaTest implements RewriteTest {
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
           )
         );
+    }
+
+    @Test
+    void formatRefCommentEmitsTagRefsUnchanged() {
+        assertEquals("v4", PinGitHubActionsToSha.formatRefComment("v4"));
+        assertEquals("v1.2.3", PinGitHubActionsToSha.formatRefComment("v1.2.3"));
+        assertEquals("2.1.0", PinGitHubActionsToSha.formatRefComment("2.1.0"));
+        assertEquals("v2024.01", PinGitHubActionsToSha.formatRefComment("v2024.01"));
+    }
+
+    @Test
+    void formatRefCommentStampsDateOnBranchRefs() {
+        String today = LocalDate.now(ZoneOffset.UTC).toString();
+        assertEquals("main @ " + today, PinGitHubActionsToSha.formatRefComment("main"));
+        assertEquals("master @ " + today, PinGitHubActionsToSha.formatRefComment("master"));
+        assertEquals("develop @ " + today, PinGitHubActionsToSha.formatRefComment("develop"));
+        assertEquals("release/foo @ " + today, PinGitHubActionsToSha.formatRefComment("release/foo"));
     }
 
     @Test
