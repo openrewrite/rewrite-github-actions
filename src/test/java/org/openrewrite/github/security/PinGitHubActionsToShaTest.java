@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 the original author or authors.
+ * Copyright 2026 the original author or authors.
  * <p>
  * Licensed under the Moderne Source Available License (the "License");
  * you may not use this file except in compliance with the License.
@@ -322,6 +322,134 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                       uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void shouldReplaceExistingInlineCommentWithVersionTag() {
+        rewriteRun(
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: codecov/codecov-action@v4 # uploads coverage
+                      name: Coverage
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                      name: Coverage
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void shouldReplaceExistingInlineCommentWhenUsesIsLastEntry() {
+        rewriteRun(
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - name: Coverage
+                      uses: codecov/codecov-action@v4 # uploads coverage
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - name: Coverage
+                      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void shouldPreserveCommentOnDifferentLine() {
+        rewriteRun(
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    # uploads coverage to codecov.io
+                    - uses: codecov/codecov-action@v4
+                      name: Coverage
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    # uploads coverage to codecov.io
+                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                      name: Coverage
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void shouldPinReusableWorkflowReference() {
+        rewriteRun(
+          yaml(
+            """
+              name: Release
+              on:
+                push:
+                  tags: ['v*']
+              jobs:
+                provenance:
+                  permissions:
+                    actions: read
+                    id-token: write
+                    contents: write
+                  uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+                  with:
+                    base64-subjects: ${{ needs.build.outputs.hashes }}
+              """,
+            """
+              name: Release
+              on:
+                push:
+                  tags: ['v*']
+              jobs:
+                provenance:
+                  permissions:
+                    actions: read
+                    id-token: write
+                    contents: write
+                  uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # v2.1.0
+                  with:
+                    base64-subjects: ${{ needs.build.outputs.hashes }}
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/release.yml")
           )
         );
     }

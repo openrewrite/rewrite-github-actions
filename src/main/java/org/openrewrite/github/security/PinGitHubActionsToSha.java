@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 the original author or authors.
+ * Copyright 2026 the original author or authors.
  * <p>
  * Licensed under the Moderne Source Available License (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,14 +138,13 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                             PinResult result = pinEntry(e, ctx);
                             if (result != null) {
                                 newEntries.set(i, result.entry);
-                                String comment = " # " + result.originalRef;
                                 if (i + 1 < newEntries.size()) {
                                     // Append tag comment to the prefix of the next sibling
                                     Yaml.Mapping.Entry next = newEntries.get(i + 1);
-                                    newEntries.set(i + 1, next.withPrefix(comment + next.getPrefix()));
+                                    newEntries.set(i + 1, next.withPrefix(mergeTagCommentIntoPrefix(next.getPrefix(), result.originalRef)));
                                 } else {
                                     // Last entry — use doAfterVisit to place comment on the next printed node
-                                    scheduleCommentAfterEntry(result.entry.getId(), comment);
+                                    scheduleCommentAfterEntry(result.entry.getId(), result.originalRef);
                                 }
                                 changed = true;
                             }
@@ -154,7 +153,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                         return changed ? m.withEntries(newEntries) : m;
                     }
 
-                    private void scheduleCommentAfterEntry(UUID pinnedEntryId, String comment) {
+                    private void scheduleCommentAfterEntry(UUID pinnedEntryId, String tag) {
                         doAfterVisit(new YamlIsoVisitor<ExecutionContext>() {
                             private boolean found;
 
@@ -179,7 +178,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                                     if (containsEntry(entries.get(i), pinnedEntryId)) {
                                         Yaml.Mapping.Entry next = entries.get(i + 1);
                                         List<Yaml.Mapping.Entry> updated = new ArrayList<>(entries);
-                                        updated.set(i + 1, next.withPrefix(comment + next.getPrefix()));
+                                        updated.set(i + 1, next.withPrefix(mergeTagCommentIntoPrefix(next.getPrefix(), tag)));
                                         found = false; // consumed
                                         return m.withEntries(updated);
                                     }
@@ -191,7 +190,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                             public Yaml.Document.End visitDocumentEnd(Yaml.Document.End end, ExecutionContext ctx) {
                                 Yaml.Document.End e = super.visitDocumentEnd(end, ctx);
                                 if (found) {
-                                    e = e.withPrefix(comment + e.getPrefix());
+                                    e = e.withPrefix(mergeTagCommentIntoPrefix(e.getPrefix(), tag));
                                     found = false;
                                 }
                                 return e;
@@ -295,7 +294,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
 
                         HttpSender httpSender = HttpSenderExecutionContextView.view(ctx).getHttpSender();
                         HttpSender.Request.Builder request = httpSender.get(apiUrl)
-                                .withHeader("Accept", "application/vnd.github.v3+json")
+                                .withHeader("Accept", "application/vnd.github+json")
                                 .withHeader("X-GitHub-Api-Version", "2022-11-28")
                                 .withAuthentication("Bearer", apiToken);
 
@@ -319,6 +318,27 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                     }
                 }
         );
+    }
+
+    /**
+     * Insert a {@code # <tag>} marker onto the line of the pinned {@code uses:} value, replacing any
+     * pre-existing inline comment on that line. The tag comment lives in the prefix of the next
+     * sibling node (or the document end), preceded by whatever same-line whitespace + comment the
+     * prefix may already start with. Anything after the first newline is preserved unchanged so the
+     * indentation of the next entry stays intact.
+     *
+     * <p>Replacing rather than appending matches the convention used by Dependabot and Renovate, which
+     * read the first {@code #} comment after the SHA as the version tag for future updates.
+     */
+    static String mergeTagCommentIntoPrefix(String existingPrefix, String tag) {
+        String tagComment = " # " + tag;
+        int newlineIdx = existingPrefix.indexOf('\n');
+        String onSameLine = newlineIdx < 0 ? existingPrefix : existingPrefix.substring(0, newlineIdx);
+        if (onSameLine.contains("#")) {
+            String afterNewline = newlineIdx < 0 ? "" : existingPrefix.substring(newlineIdx);
+            return tagComment + afterNewline;
+        }
+        return tagComment + existingPrefix;
     }
 
     private static boolean matchesAllowList(String actionPath, List<String> allowList) {
