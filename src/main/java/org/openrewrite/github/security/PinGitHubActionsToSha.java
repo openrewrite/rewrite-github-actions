@@ -65,6 +65,18 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     @Nullable
     String githubApiToken;
 
+    @Option(displayName = "Included actions",
+            description = "Optional allow-list of actions to pin. When provided, only `uses:` references " +
+                    "matching one of these patterns are pinned; all other actions are left untouched. " +
+                    "Patterns may be `owner/repo` (exact match), `owner/*` (any repo in an org), or " +
+                    "`owner/repo/subpath` (exact match including a subpath). When omitted or empty, all " +
+                    "third-party actions (and optionally official actions, per `pinOfficialActions`) are " +
+                    "pinned.",
+            required = false,
+            example = "codecov/codecov-action")
+    @Nullable
+    List<String> includedActions;
+
     @Override
     public String getDisplayName() {
         return "Pin GitHub Actions to commit SHAs";
@@ -76,7 +88,8 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                 "immutable commit SHAs. A static mapping of well-known actions is checked first; if " +
                 "the action is not found, the GitHub API is used to resolve the reference at recipe " +
                 "run time. By default only third-party actions are pinned; set `pinOfficialActions` " +
-                "to include actions from the `actions` and `github` organizations.";
+                "to include actions from the `actions` and `github` organizations. To pin only a " +
+                "specific allow-list of actions, set `includedActions`.";
     }
 
     @Override
@@ -111,6 +124,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     public TreeVisitor<?, ExecutionContext> getVisitor(Map<String, String> knownShas) {
         boolean pinOfficial = Boolean.TRUE.equals(pinOfficialActions);
         String apiToken = githubApiToken;
+        List<String> allowList = includedActions == null ? Collections.emptyList() : includedActions;
         return Preconditions.check(
                 new IsGitHubActionsWorkflow(),
                 new YamlIsoVisitor<ExecutionContext>() {
@@ -234,8 +248,14 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                         // Determine the org from the action path
                         String org = actionPath.contains("/") ? actionPath.substring(0, actionPath.indexOf('/')) : actionPath;
 
-                        // Skip official actions unless opted in
-                        if (!pinOfficial && OFFICIAL_ORGS.contains(org)) {
+                        if (!allowList.isEmpty()) {
+                            // Allow-list mode: only pin actions matching an entry in the list.
+                            // pinOfficialActions is bypassed — explicit allow always wins.
+                            if (!matchesAllowList(actionPath, allowList)) {
+                                return null;
+                            }
+                        } else if (!pinOfficial && OFFICIAL_ORGS.contains(org)) {
+                            // Default mode: skip official actions unless opted in
                             return null;
                         }
 
@@ -316,6 +336,44 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                     }
                 }
         );
+    }
+
+    private static boolean matchesAllowList(String actionPath, List<String> allowList) {
+        // actionPath may be "owner/repo" or "owner/repo/subpath".
+        int firstSlash = actionPath.indexOf('/');
+        String owner = firstSlash > 0 ? actionPath.substring(0, firstSlash) : actionPath;
+        int secondSlash = actionPath.indexOf('/', firstSlash + 1);
+        String ownerRepo = secondSlash > 0 ? actionPath.substring(0, secondSlash) : actionPath;
+
+        for (String pattern : allowList) {
+            if (pattern == null) {
+                continue;
+            }
+            String p = pattern.trim();
+            if (p.isEmpty()) {
+                continue;
+            }
+            // owner/* — match any repo within the org
+            if (p.endsWith("/*")) {
+                String allowedOwner = p.substring(0, p.length() - 2);
+                if (allowedOwner.equals(owner)) {
+                    return true;
+                }
+                continue;
+            }
+            // owner/repo/subpath — exact match against the full path
+            if (p.indexOf('/') != p.lastIndexOf('/')) {
+                if (p.equals(actionPath)) {
+                    return true;
+                }
+                continue;
+            }
+            // owner/repo — match against owner/repo, ignoring any subpath on the action
+            if (p.equals(ownerRepo)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static class PinResult {

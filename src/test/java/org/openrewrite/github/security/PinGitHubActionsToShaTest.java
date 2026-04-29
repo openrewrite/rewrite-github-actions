@@ -20,13 +20,16 @@ import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 import static org.openrewrite.yaml.Assertions.yaml;
 
 class PinGitHubActionsToShaTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new PinGitHubActionsToSha(false, null));
+        spec.recipe(new PinGitHubActionsToSha(false, null, null));
     }
 
     @DocumentExample
@@ -81,7 +84,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldPinOfficialActionsWhenOptedIn() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(true, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null)),
           yaml(
             """
               name: CI
@@ -130,7 +133,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldPinGitHubOrgWhenOptedIn() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(true, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null)),
           yaml(
             """
               name: Security
@@ -267,7 +270,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldPinActionWithSubpath() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(false, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, null)),
           yaml(
             """
               name: CI
@@ -324,9 +327,218 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     }
 
     @Test
+    void shouldOnlyPinAllowListedActions() {
+        rewriteRun(
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
+            Arrays.asList("codecov/codecov-action", "docker/login-action"))),
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: codecov/codecov-action@v4
+                      name: Coverage
+                    - uses: docker/login-action@v3
+                      name: Docker login
+                    - uses: docker/setup-buildx-action@v3
+                      name: Setup Buildx (not allow-listed)
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                      name: Coverage
+                    - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+                      name: Docker login
+                    - uses: docker/setup-buildx-action@v3
+                      name: Setup Buildx (not allow-listed)
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void shouldSupportOrgWildcardInAllowList() {
+        rewriteRun(
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
+            Collections.singletonList("docker/*"))),
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: docker/login-action@v3
+                      name: Docker login
+                    - uses: docker/setup-buildx-action@v3
+                      name: Setup Buildx
+                    - uses: codecov/codecov-action@v4
+                      name: Not in docker org
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+                      name: Docker login
+                    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+                      name: Setup Buildx
+                    - uses: codecov/codecov-action@v4
+                      name: Not in docker org
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void allowListMatchesActionWithSubpathByOwnerRepo() {
+        rewriteRun(
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
+            Collections.singletonList("gradle/actions"))),
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/actions/setup-gradle@v3
+                      name: Setup Gradle
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3
+                      name: Setup Gradle
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void allowListWithSubpathPatternIsExact() {
+        rewriteRun(
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
+            Collections.singletonList("gradle/actions/setup-gradle"))),
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/actions/setup-gradle@v3
+                      name: Allowed
+                    - uses: gradle/actions/wrapper-validation@v3
+                      name: Different subpath, not allow-listed
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3
+                      name: Allowed
+                    - uses: gradle/actions/wrapper-validation@v3
+                      name: Different subpath, not allow-listed
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void allowListPinsOfficialActionWithoutPinOfficialFlag() {
+        rewriteRun(
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
+            Collections.singletonList("actions/checkout"))),
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                      name: Checkout
+                    - uses: actions/setup-java@v4
+                      name: Not on allow list
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+                      name: Checkout
+                    - uses: actions/setup-java@v4
+                      name: Not on allow list
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void emptyAllowListBehavesAsDefault() {
+        rewriteRun(
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, Collections.emptyList())),
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: codecov/codecov-action@v4
+                      name: Coverage
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                      name: Coverage
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
     void shouldMixPinnedAndUnpinnedActions() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(true, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null)),
           yaml(
             """
               name: Full Pipeline
