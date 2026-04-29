@@ -16,6 +16,20 @@
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.github.GitHubActionsBestPractices
+displayName: GitHub Actions best practices
+description: Applies best practices to GitHub Actions workflows, including enabling dependency caching, using cached distributions, finding missing timeouts, removing unused inputs, and preferring block-style job dependencies.
+tags:
+  - github
+  - actions
+recipeList:
+  - org.openrewrite.github.FindMissingTimeout
+  - org.openrewrite.github.PreferBlockStyleJobDependencies
+  - org.openrewrite.github.PreferTemurinDistributions
+  - org.openrewrite.github.RemoveUnusedWorkflowDispatchInputs
+  - org.openrewrite.github.SetupJavaCaching
+---
+type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.AddManualTrigger
 displayName: Add manual workflow trigger
 description: You can manually trigger workflow runs. To trigger specific workflows in a repository, use the `workflow_dispatch` event.

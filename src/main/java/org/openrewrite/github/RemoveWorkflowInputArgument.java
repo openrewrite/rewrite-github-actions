@@ -65,7 +65,7 @@ public class RemoveWorkflowInputArgument extends Recipe {
 
                 boolean matchingWorkflow = false;
                 boolean argumentIsUsed = false;
-                if (jobsMatcher.matches(getCursor().getParent().getParent())) {
+                if (jobsMatcher.matches(getCursor().getParent())) {
                     Optional<Yaml.Mapping.Entry> usesEntry = m.getEntries()
                             .stream()
                             .filter(e -> e.getKey() instanceof Yaml.Scalar && "uses".equals((e.getKey().getValue())))
