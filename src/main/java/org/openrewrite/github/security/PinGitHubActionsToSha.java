@@ -129,90 +129,52 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                 new IsGitHubActionsWorkflow(),
                 new YamlIsoVisitor<ExecutionContext>() {
 
+                    /**
+                     * When a {@code uses:} entry is pinned, the formatted ref comment is stashed
+                     * here so the very next syntactic node visited (in document order) can have it
+                     * merged into its prefix as a {@code # vX} marker on the same line as the
+                     * pinned value. Consumed and cleared by whichever of {@link #visitMappingEntry},
+                     * {@link #visitSequenceEntry}, or {@link #visitDocumentEnd} fires next.
+                     */
+                    @Nullable
+                    String pendingComment;
+
                     @Override
-                    public Yaml.Mapping visitMapping(Yaml.Mapping mapping, ExecutionContext ctx) {
-                        Yaml.Mapping m = super.visitMapping(mapping, ctx);
-                        List<Yaml.Mapping.Entry> entries = m.getEntries();
-                        List<Yaml.Mapping.Entry> newEntries = new ArrayList<>(entries);
-                        boolean changed = false;
-
-                        for (int i = 0; i < newEntries.size(); i++) {
-                            Yaml.Mapping.Entry e = newEntries.get(i);
-                            PinResult result = pinEntry(e, ctx);
-                            if (result != null) {
-                                newEntries.set(i, result.entry);
-                                if (i + 1 < newEntries.size()) {
-                                    // Append tag comment to the prefix of the next sibling
-                                    Yaml.Mapping.Entry next = newEntries.get(i + 1);
-                                    newEntries.set(i + 1, next.withPrefix(mergeTagCommentIntoPrefix(next.getPrefix(), result.commentText)));
-                                } else {
-                                    // Last entry — use doAfterVisit to place comment on the next printed node
-                                    scheduleCommentAfterEntry(result.entry.getId(), result.commentText);
-                                }
-                                changed = true;
-                            }
-                        }
-
-                        return changed ? m.withEntries(newEntries) : m;
+                    public Yaml.Documents visitDocuments(Yaml.Documents documents, ExecutionContext ctx) {
+                        pendingComment = null;
+                        return super.visitDocuments(documents, ctx);
                     }
 
-                    private void scheduleCommentAfterEntry(UUID pinnedEntryId, String commentText) {
-                        doAfterVisit(new YamlIsoVisitor<ExecutionContext>() {
-                            private boolean found;
+                    @Override
+                    public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
+                        if (pendingComment != null) {
+                            entry = entry.withPrefix(mergeTagCommentIntoPrefix(entry.getPrefix(), pendingComment));
+                            pendingComment = null;
+                        }
+                        PinResult result = pinEntry(entry, ctx);
+                        if (result != null) {
+                            entry = result.entry;
+                            pendingComment = result.commentText;
+                        }
+                        return super.visitMappingEntry(entry, ctx);
+                    }
 
-                            @Override
-                            public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-                                Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
-                                if (e.getId().equals(pinnedEntryId)) {
-                                    found = true;
-                                }
-                                return e;
-                            }
+                    @Override
+                    public Yaml.Sequence.Entry visitSequenceEntry(Yaml.Sequence.Entry entry, ExecutionContext ctx) {
+                        if (pendingComment != null) {
+                            entry = entry.withPrefix(mergeTagCommentIntoPrefix(entry.getPrefix(), pendingComment));
+                            pendingComment = null;
+                        }
+                        return super.visitSequenceEntry(entry, ctx);
+                    }
 
-                            @Override
-                            public Yaml.Mapping visitMapping(Yaml.Mapping mapping, ExecutionContext ctx) {
-                                Yaml.Mapping m = super.visitMapping(mapping, ctx);
-                                if (!found) {
-                                    return m;
-                                }
-                                // Check if the pinned entry is in this mapping and find its successor
-                                List<Yaml.Mapping.Entry> entries = m.getEntries();
-                                for (int i = 0; i < entries.size() - 1; i++) {
-                                    if (containsEntry(entries.get(i), pinnedEntryId)) {
-                                        Yaml.Mapping.Entry next = entries.get(i + 1);
-                                        List<Yaml.Mapping.Entry> updated = new ArrayList<>(entries);
-                                        updated.set(i + 1, next.withPrefix(mergeTagCommentIntoPrefix(next.getPrefix(), commentText)));
-                                        found = false; // consumed
-                                        return m.withEntries(updated);
-                                    }
-                                }
-                                return m;
-                            }
-
-                            @Override
-                            public Yaml.Document.End visitDocumentEnd(Yaml.Document.End end, ExecutionContext ctx) {
-                                Yaml.Document.End e = super.visitDocumentEnd(end, ctx);
-                                if (found) {
-                                    e = e.withPrefix(mergeTagCommentIntoPrefix(e.getPrefix(), commentText));
-                                    found = false;
-                                }
-                                return e;
-                            }
-
-                            private boolean containsEntry(Yaml.Mapping.Entry entry, UUID targetId) {
-                                if (entry.getId().equals(targetId)) {
-                                    return true;
-                                }
-                                if (entry.getValue() instanceof Yaml.Mapping) {
-                                    for (Yaml.Mapping.Entry child : ((Yaml.Mapping) entry.getValue()).getEntries()) {
-                                        if (containsEntry(child, targetId)) {
-                                            return true;
-                                        }
-                                    }
-                                }
-                                return false;
-                            }
-                        });
+                    @Override
+                    public Yaml.Document.End visitDocumentEnd(Yaml.Document.End end, ExecutionContext ctx) {
+                        if (pendingComment != null) {
+                            end = end.withPrefix(mergeTagCommentIntoPrefix(end.getPrefix(), pendingComment));
+                            pendingComment = null;
+                        }
+                        return super.visitDocumentEnd(end, ctx);
                     }
 
                     private @Nullable PinResult pinEntry(Yaml.Mapping.Entry e, ExecutionContext ctx) {
