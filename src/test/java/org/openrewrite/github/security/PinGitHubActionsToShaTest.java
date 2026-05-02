@@ -330,6 +330,72 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     }
 
     @Test
+    void shouldPlaceCommentOnSameLineWhenUsesIsLastEntryAndAnotherStepFollows() {
+        rewriteRun(
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - name: Coverage
+                      uses: codecov/codecov-action@v4
+                    - uses: docker/setup-buildx-action@v3
+                      name: Buildx
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - name: Coverage
+                      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+                      name: Buildx
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void shouldPlaceCommentOnSameLineWhenTopLevelEntryFollowsJobs() {
+        rewriteRun(
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - name: Coverage
+                      uses: codecov/codecov-action@v4
+              env:
+                FOO: bar
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - name: Coverage
+                      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+              env:
+                FOO: bar
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
     void shouldReplaceExistingInlineCommentWithVersionTag() {
         rewriteRun(
           yaml(
