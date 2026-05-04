@@ -241,8 +241,10 @@ while IFS= read -r action_path; do
   owner_repo=$(owner_repo_of "$action_path")
 
   # Fetch all version tags: v1, v1.2, v1.2.3 (not pre-release or non-numeric suffixes)
+  # `|| true` keeps the script alive when the action has no matching tags
+  # (grep exits 1 on no matches, which would otherwise trip `pipefail`).
   TAGS=$(gh api "repos/${owner_repo}/tags" --paginate --jq '.[].name' 2>/dev/null \
-    | grep -E '^v[0-9]+(\.[0-9]+){0,2}$' | sort -V)
+    | grep -E '^v[0-9]+(\.[0-9]+){0,2}$' | sort -V) || true
 
   while IFS= read -r tag; do
     [[ -z "$tag" ]] && continue
