@@ -65,6 +65,14 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     @Nullable
     String githubApiToken;
 
+    @Option(displayName = "Trusted owners",
+            description = "Optional list of trusted owners/organizations, actions that belong to these organizations " +
+                    "will not be pinned. This option overrides the 'Included actions' list.",
+            required = false,
+            example = "my-organization, my-other-organization")
+    @Nullable
+    List<String> trustedOwners;
+
     @Option(displayName = "Included actions",
             description = "Optional allow-list of actions to pin. When provided, only `uses:` references " +
                     "matching one of these patterns are pinned; all other actions are left untouched. " +
@@ -208,7 +216,10 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
 
                         // Determine the org from the action path
                         String org = actionPath.contains("/") ? actionPath.substring(0, actionPath.indexOf('/')) : actionPath;
-
+                        if (trustedOwners != null && trustedOwners.contains(org)) {
+                            // Do not pin SHA for trusted orgs
+                            return null;
+                        }
                         if (!allowList.isEmpty()) {
                             // Allow-list mode: only pin actions matching an entry in the list.
                             // pinOfficialActions is bypassed — explicit allow always wins.

@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.openrewrite.yaml.Assertions.yaml;
@@ -32,7 +33,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new PinGitHubActionsToSha(false, null, null));
+        spec.recipe(new PinGitHubActionsToSha(false, null, null, null));
     }
 
     @DocumentExample
@@ -87,7 +88,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldPinOfficialActionsWhenOptedIn() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null, null)),
           yaml(
             """
               name: CI
@@ -136,7 +137,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldPinGitHubOrgWhenOptedIn() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null, null)),
           yaml(
             """
               name: Security
@@ -273,7 +274,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldPinActionWithSubpath() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, null, null)),
           yaml(
             """
               name: CI
@@ -527,7 +528,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     void shouldOnlyPinAllowListedActions() {
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            Arrays.asList("codecov/codecov-action", "docker/login-action"))),
+            null, Arrays.asList("codecov/codecov-action", "docker/login-action"))),
           yaml(
             """
               name: CI
@@ -566,7 +567,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     void shouldSupportOrgWildcardInAllowList() {
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            Collections.singletonList("docker/*"))),
+            null, Collections.singletonList("docker/*"))),
           yaml(
             """
               name: CI
@@ -605,7 +606,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     void allowListMatchesActionWithSubpathByOwnerRepo() {
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            Collections.singletonList("gradle/actions"))),
+            null, Collections.singletonList("gradle/actions"))),
           yaml(
             """
               name: CI
@@ -636,7 +637,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     void allowListWithSubpathPatternIsExact() {
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            Collections.singletonList("gradle/actions/setup-gradle"))),
+            null, Collections.singletonList("gradle/actions/setup-gradle"))),
           yaml(
             """
               name: CI
@@ -671,7 +672,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     void allowListPinsOfficialActionWithoutPinOfficialFlag() {
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            Collections.singletonList("actions/checkout"))),
+            null, Collections.singletonList("actions/checkout"))),
           yaml(
             """
               name: CI
@@ -705,7 +706,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void emptyAllowListBehavesAsDefault() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, Collections.emptyList())),
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, null, Collections.emptyList())),
           yaml(
             """
               name: CI
@@ -752,7 +753,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldMixPinnedAndUnpinnedActions() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null, null)),
           yaml(
             """
               name: Full Pipeline
@@ -786,6 +787,100 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                     - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
                       name: Docker login
               """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void shouldSkipActionsFromTrustedOwners() {
+        final List<String> trustedOwners = List.of("docker");
+        final boolean pinOfficialActions = true;
+        rewriteRun(
+          spec -> spec.recipe(new PinGitHubActionsToSha(pinOfficialActions,
+            null,
+            trustedOwners, null
+          )),
+          yaml(
+            //language=yaml
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                      name: Checkout
+                     # should be skipped because 'docker' is a trusted owner
+                    - uses: docker/login-action@v3
+                      name: Login to Docker
+                    - uses: codecov/codecov-action@v4
+                      name: Upload coverage
+              """,
+            //language=yaml
+            """
+             name: CI
+             on: push
+             jobs:
+               build:
+                 runs-on: ubuntu-latest
+                 steps:
+                   - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+                     name: Checkout
+                    # should be skipped because 'docker' is a trusted owner
+                   - uses: docker/login-action@v3
+                     name: Login to Docker
+                   - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                     name: Upload coverage
+             """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void shouldSkipActionFromTrustedOwnersAndOverrideIncludedActions() {
+        final List<String> trustedOwners = List.of("docker");
+        final List<String> includedActions = Arrays.asList("codecov/codecov-action", "docker/login-action");
+        rewriteRun(
+          spec -> spec.recipe(new PinGitHubActionsToSha(false,
+            null,
+            trustedOwners, includedActions
+          )),
+          yaml(
+            //language=yaml
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                      name: Checkout
+                     # should be skipped because 'docker' is a trusted owner, though it's included
+                    - uses: docker/login-action@v3
+                      name: Login to Docker
+                    - uses: codecov/codecov-action@v4
+                      name: Upload coverage
+              """,
+            //language=yaml
+            """
+             name: CI
+             on: push
+             jobs:
+               build:
+                 runs-on: ubuntu-latest
+                 steps:
+                   - uses: actions/checkout@v4
+                     name: Checkout
+                    # should be skipped because 'docker' is a trusted owner, though it's included
+                   - uses: docker/login-action@v3
+                     name: Login to Docker
+                   - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                     name: Upload coverage
+             """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
           )
         );
