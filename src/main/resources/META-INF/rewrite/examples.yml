@@ -1110,6 +1110,37 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.security.PinGitHubActionsToSha
+examples:
+- description: '`PinGitHubActionsToShaTest#shouldPinThirdPartyActionFromStaticMap`'
+  parameters:
+  - 'false'
+  - 'null'
+  - 'null'
+  - 'null'
+  sources:
+  - before: |
+      name: CI
+      on: push
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: codecov/codecov-action@v4
+              name: Upload coverage
+    after: |
+      name: CI
+      on: push
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+              name: Upload coverage
+    path: .github/workflows/ci.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.security.RefVersionMismatch
 examples:
 - description: '`RefVersionMismatchTest#shouldFlagMismatchedVersionComment`'

@@ -22,11 +22,9 @@ import org.openrewrite.test.RewriteTest;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.openrewrite.yaml.Assertions.yaml;
 
 class PinGitHubActionsToShaTest implements RewriteTest {
@@ -528,7 +526,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     void shouldOnlyPinAllowListedActions() {
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            null, Arrays.asList("codecov/codecov-action", "docker/login-action"))),
+            null, List.of("codecov/codecov-action", "docker/login-action"))),
           yaml(
             """
               name: CI
@@ -567,7 +565,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     void shouldSupportOrgWildcardInAllowList() {
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            null, Collections.singletonList("docker/*"))),
+            null, List.of("docker/*"))),
           yaml(
             """
               name: CI
@@ -606,7 +604,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     void allowListMatchesActionWithSubpathByOwnerRepo() {
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            null, Collections.singletonList("gradle/actions"))),
+            null, List.of("gradle/actions"))),
           yaml(
             """
               name: CI
@@ -637,7 +635,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     void allowListWithSubpathPatternIsExact() {
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            null, Collections.singletonList("gradle/actions/setup-gradle"))),
+            null, List.of("gradle/actions/setup-gradle"))),
           yaml(
             """
               name: CI
@@ -672,7 +670,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     void allowListPinsOfficialActionWithoutPinOfficialFlag() {
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            null, Collections.singletonList("actions/checkout"))),
+            null, List.of("actions/checkout"))),
           yaml(
             """
               name: CI
@@ -706,7 +704,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void emptyAllowListBehavesAsDefault() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, null, Collections.emptyList())),
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, null, List.of())),
           yaml(
             """
               name: CI
@@ -735,19 +733,19 @@ class PinGitHubActionsToShaTest implements RewriteTest {
 
     @Test
     void formatRefCommentEmitsTagRefsUnchanged() {
-        assertEquals("v4", PinGitHubActionsToSha.formatRefComment("v4"));
-        assertEquals("v1.2.3", PinGitHubActionsToSha.formatRefComment("v1.2.3"));
-        assertEquals("2.1.0", PinGitHubActionsToSha.formatRefComment("2.1.0"));
-        assertEquals("v2024.01", PinGitHubActionsToSha.formatRefComment("v2024.01"));
+        assertThat( PinGitHubActionsToSha.formatRefComment( "v4" ) ).isEqualTo( "v4" );
+        assertThat( PinGitHubActionsToSha.formatRefComment( "v1.2.3" ) ).isEqualTo( "v1.2.3" );
+        assertThat( PinGitHubActionsToSha.formatRefComment( "2.1.0" ) ).isEqualTo( "2.1.0" );
+        assertThat( PinGitHubActionsToSha.formatRefComment( "v2024.01" ) ).isEqualTo( "v2024.01" );
     }
 
     @Test
     void formatRefCommentStampsDateOnBranchRefs() {
         String today = LocalDate.now(ZoneOffset.UTC).toString();
-        assertEquals("main @ " + today, PinGitHubActionsToSha.formatRefComment("main"));
-        assertEquals("master @ " + today, PinGitHubActionsToSha.formatRefComment("master"));
-        assertEquals("develop @ " + today, PinGitHubActionsToSha.formatRefComment("develop"));
-        assertEquals("release/foo @ " + today, PinGitHubActionsToSha.formatRefComment("release/foo"));
+        assertThat( PinGitHubActionsToSha.formatRefComment( "main" ) ).isEqualTo( "main @ " + today );
+        assertThat( PinGitHubActionsToSha.formatRefComment( "master" ) ).isEqualTo( "master @ " + today );
+        assertThat( PinGitHubActionsToSha.formatRefComment( "develop" ) ).isEqualTo( "develop @ " + today );
+        assertThat( PinGitHubActionsToSha.formatRefComment( "release/foo" ) ).isEqualTo( "release/foo @ " + today );
     }
 
     @Test
@@ -794,8 +792,8 @@ class PinGitHubActionsToShaTest implements RewriteTest {
 
     @Test
     void shouldSkipActionsFromTrustedOwners() {
-        final List<String> trustedOwners = List.of("docker");
-        final boolean pinOfficialActions = true;
+        final var trustedOwners = List.of("docker");
+        final var pinOfficialActions = true;
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(pinOfficialActions,
             null,
@@ -841,8 +839,8 @@ class PinGitHubActionsToShaTest implements RewriteTest {
 
     @Test
     void shouldSkipActionFromTrustedOwnersAndOverrideIncludedActions() {
-        final List<String> trustedOwners = List.of("docker");
-        final List<String> includedActions = Arrays.asList("codecov/codecov-action", "docker/login-action");
+        final var trustedOwners = List.of("docker");
+        final var includedActions = List.of("codecov/codecov-action", "docker/login-action");
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false,
             null,

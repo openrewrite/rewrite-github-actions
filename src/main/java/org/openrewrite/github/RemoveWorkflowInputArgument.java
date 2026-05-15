@@ -68,7 +68,7 @@ public class RemoveWorkflowInputArgument extends Recipe {
                 if (jobsMatcher.matches(getCursor().getParent())) {
                     Optional<Yaml.Mapping.Entry> usesEntry = m.getEntries()
                             .stream()
-                            .filter(e -> e.getKey() instanceof Yaml.Scalar && "uses".equals((e.getKey().getValue())))
+                            .filter(e -> e.getKey() instanceof Yaml.Scalar && "uses".equals(e.getKey().getValue()))
                             .findAny();
                     if (usesEntry.isPresent()) {
                         Yaml.Block usesValue = usesEntry.get().getValue();
@@ -80,7 +80,7 @@ public class RemoveWorkflowInputArgument extends Recipe {
                     }
                     Optional<Yaml.Mapping.Entry> withEntry = m.getEntries()
                             .stream()
-                            .filter(e -> e.getKey() instanceof Yaml.Scalar && "with".equals((e.getKey().getValue())))
+                            .filter(e -> e.getKey() instanceof Yaml.Scalar && "with".equals(e.getKey().getValue()))
                             .findAny();
                     if (withEntry.isPresent()) {
                         Yaml.Block withValue = withEntry.get().getValue();

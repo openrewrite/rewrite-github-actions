@@ -68,7 +68,7 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                                 Yaml.Mapping inputs = (Yaml.Mapping) value;
                                 for (Yaml.Mapping.Entry inputEntry : inputs.getEntries()) {
                                     if (inputEntry.getKey() instanceof Yaml.Scalar) {
-                                        definedInputs.add((inputEntry.getKey()).getValue());
+                                        definedInputs.add(inputEntry.getKey().getValue());
                                     }
                                 }
                             }
@@ -104,7 +104,7 @@ public class RemoveUnusedWorkflowDispatchInputs extends Recipe {
                     public Yaml.Mapping.@Nullable Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                         if (WORKFLOW_DISPATCH_INPUTS_MATCHER.matches(getCursor().getParent().getParent())) {
                             if (entry.getKey() instanceof Yaml.Scalar) {
-                                String inputName = (entry.getKey()).getValue();
+                                String inputName = entry.getKey().getValue();
                                 if (definedInputs.contains(inputName) && !usedInputs.contains(inputName)) {
                                     return null;
                                 }

@@ -33,6 +33,11 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.unmodifiableMap;
+import static java.util.Collections.unmodifiableSet;
+
 @Value
 @EqualsAndHashCode(callSuper = false)
 public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
@@ -46,7 +51,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
      * Official GitHub-maintained action organizations.
      * These are skipped by default unless {@code pinOfficialActions} is set.
      */
-    private static final Set<String> OFFICIAL_ORGS = Collections.unmodifiableSet(
+    private static final Set<String> OFFICIAL_ORGS = unmodifiableSet(
             new HashSet<>(Arrays.asList("actions", "github")));
 
     @Option(displayName = "Pin official actions",
@@ -57,11 +62,11 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     @Nullable
     Boolean pinOfficialActions;
 
-    @Option(displayName = "GitHub API token",
-            description = "A GitHub personal access token used to resolve tags/branches to commit SHAs " +
-                    "via the GitHub API. Only needed for actions not found in the built-in static mapping. " +
-                    "Without a token, unauthenticated requests are rate-limited to 60/hour.",
-            required = false)
+    @Option(example = "TODO Provide a usage example for the docs", displayName = "GitHub API token",
+                description = "A GitHub personal access token used to resolve tags/branches to commit SHAs " +
+                            "via the GitHub API. Only needed for actions not found in the built-in static mapping. " +
+                            "Without a token, unauthenticated requests are rate-limited to 60/hour.",
+                required = false)
     @Nullable
     String githubApiToken;
 
@@ -85,25 +90,16 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     @Nullable
     List<String> includedActions;
 
-    @Override
-    public String getDisplayName() {
-        return "Pin GitHub Actions to commit SHAs";
-    }
+    String displayName = "Pin GitHub Actions to commit SHAs";
 
-    @Override
-    public String getDescription() {
-        return "Replaces mutable tag or branch references in GitHub Actions `uses:` declarations with " +
+    String description = "Replaces mutable tag or branch references in GitHub Actions `uses:` declarations with " +
                 "immutable commit SHAs. A static mapping of well-known actions is checked first; if " +
                 "the action is not found, the GitHub API is used to resolve the reference at recipe " +
                 "run time. By default only third-party actions are pinned; set `pinOfficialActions` " +
                 "to include actions from the `actions` and `github` organizations. To pin only a " +
                 "specific allow-list of actions, set `includedActions`.";
-    }
 
-    @Override
-    public Set<String> getTags() {
-        return Collections.unmodifiableSet(new HashSet<>(Arrays.asList("github", "actions", "security", "supply-chain")));
-    }
+    Set<String> tags = unmodifiableSet( new HashSet<>( Arrays.asList( "github", "actions", "security", "supply-chain" ) ) );
 
     @Override
     public Map<String, String> getInitialValue(ExecutionContext ctx) {
@@ -116,11 +112,11 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                 for (String key : props.stringPropertyNames()) {
                     map.put(key, props.getProperty(key));
                 }
-                return Collections.unmodifiableMap(map);
+                return unmodifiableMap(map);
             }
         } catch (IOException ignored) {
         }
-        return Collections.emptyMap();
+        return emptyMap();
     }
 
     @Override
@@ -132,7 +128,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     public TreeVisitor<?, ExecutionContext> getVisitor(Map<String, String> knownShas) {
         boolean pinOfficial = Boolean.TRUE.equals(pinOfficialActions);
         String apiToken = githubApiToken;
-        List<String> allowList = includedActions == null ? Collections.emptyList() : includedActions;
+        List<String> allowList = includedActions == null ? emptyList() : includedActions;
         return Preconditions.check(
                 new IsGitHubActionsWorkflow(),
                 new YamlIsoVisitor<ExecutionContext>() {
