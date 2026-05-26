@@ -154,7 +154,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 scan:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: github/codeql-action/init@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3
+                    - uses: github/codeql-action/init@03e4368ac7daa2bd82b3e85262f3bf87ee112f57 # v3
                       name: Init CodeQL
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/security.yml")
