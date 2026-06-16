@@ -46,7 +46,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: codecov/codecov-action@v4
+                    - uses: codecov/codecov-action@v4.6.0
                       name: Upload coverage
               """,
             """
@@ -56,7 +56,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
                       name: Upload coverage
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -75,7 +75,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@v4
+                    - uses: actions/checkout@v4.3.1
                       name: Checkout
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -95,7 +95,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@v4
+                    - uses: actions/checkout@v4.3.1
                       name: Checkout
               """,
             """
@@ -105,7 +105,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+                    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
                       name: Checkout
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -124,7 +124,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 scan:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: github/codeql-action/init@v3
+                    - uses: github/codeql-action/init@v3.36.2
                       name: Init CodeQL
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/security.yml")
@@ -144,7 +144,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 scan:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: github/codeql-action/init@v3
+                    - uses: github/codeql-action/init@v3.36.2
                       name: Init CodeQL
               """,
             """
@@ -154,7 +154,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 scan:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: github/codeql-action/init@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3
+                    - uses: github/codeql-action/init@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3.36.2
                       name: Init CodeQL
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/security.yml")
@@ -230,11 +230,11 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@v4
+                    - uses: actions/checkout@v4.3.1
                       name: Checkout
-                    - uses: docker/setup-buildx-action@v3
+                    - uses: docker/setup-buildx-action@v3.12.0
                       name: Setup Buildx
-                    - uses: docker/build-push-action@v5
+                    - uses: docker/build-push-action@v5.4.0
                       name: Build image
               """,
             """
@@ -244,11 +244,11 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@v4
+                    - uses: actions/checkout@v4.3.1
                       name: Checkout
-                    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+                    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
                       name: Setup Buildx
-                    - uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
+                    - uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
                       name: Build image
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -262,7 +262,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
           yaml(
             """
               config:
-                uses: codecov/codecov-action@v4
+                uses: codecov/codecov-action@v4.6.0
               """,
             sourceSpecs -> sourceSpecs.path("config.yml")
           )
@@ -281,7 +281,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: gradle/actions/setup-gradle@v3
+                    - uses: gradle/actions/setup-gradle@v3.5.0
                       name: Setup Gradle
               """,
             """
@@ -291,7 +291,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3
+                    - uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
                       name: Setup Gradle
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -311,7 +311,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                   runs-on: ubuntu-latest
                   steps:
                     - name: Upload coverage
-                      uses: codecov/codecov-action@v4
+                      uses: codecov/codecov-action@v4.6.0
               """,
             """
               name: CI
@@ -321,7 +321,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                   runs-on: ubuntu-latest
                   steps:
                     - name: Upload coverage
-                      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
           )
@@ -340,8 +340,8 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                   runs-on: ubuntu-latest
                   steps:
                     - name: Coverage
-                      uses: codecov/codecov-action@v4
-                    - uses: docker/setup-buildx-action@v3
+                      uses: codecov/codecov-action@v4.6.0
+                    - uses: docker/setup-buildx-action@v3.12.0
                       name: Buildx
               """,
             """
@@ -352,8 +352,8 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                   runs-on: ubuntu-latest
                   steps:
                     - name: Coverage
-                      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
-                    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+                      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
+                    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
                       name: Buildx
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -373,7 +373,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                   runs-on: ubuntu-latest
                   steps:
                     - name: Coverage
-                      uses: codecov/codecov-action@v4
+                      uses: codecov/codecov-action@v4.6.0
               env:
                 FOO: bar
               """,
@@ -385,7 +385,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                   runs-on: ubuntu-latest
                   steps:
                     - name: Coverage
-                      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
               env:
                 FOO: bar
               """,
@@ -405,7 +405,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: codecov/codecov-action@v4 # uploads coverage
+                    - uses: codecov/codecov-action@v4.6.0 # uploads coverage
                       name: Coverage
               """,
             """
@@ -415,7 +415,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
                       name: Coverage
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -435,7 +435,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                   runs-on: ubuntu-latest
                   steps:
                     - name: Coverage
-                      uses: codecov/codecov-action@v4 # uploads coverage
+                      uses: codecov/codecov-action@v4.6.0 # uploads coverage
               """,
             """
               name: CI
@@ -445,7 +445,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                   runs-on: ubuntu-latest
                   steps:
                     - name: Coverage
-                      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
           )
@@ -464,7 +464,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                   runs-on: ubuntu-latest
                   steps:
                     # uploads coverage to codecov.io
-                    - uses: codecov/codecov-action@v4
+                    - uses: codecov/codecov-action@v4.6.0
                       name: Coverage
               """,
             """
@@ -475,7 +475,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                   runs-on: ubuntu-latest
                   steps:
                     # uploads coverage to codecov.io
-                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
                       name: Coverage
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -535,11 +535,11 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: codecov/codecov-action@v4
+                    - uses: codecov/codecov-action@v4.6.0
                       name: Coverage
-                    - uses: docker/login-action@v3
+                    - uses: docker/login-action@v3.7.0
                       name: Docker login
-                    - uses: docker/setup-buildx-action@v3
+                    - uses: docker/setup-buildx-action@v3.12.0
                       name: Setup Buildx (not allow-listed)
               """,
             """
@@ -549,11 +549,11 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
                       name: Coverage
-                    - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+                    - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
                       name: Docker login
-                    - uses: docker/setup-buildx-action@v3
+                    - uses: docker/setup-buildx-action@v3.12.0
                       name: Setup Buildx (not allow-listed)
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -574,11 +574,11 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: docker/login-action@v3
+                    - uses: docker/login-action@v3.7.0
                       name: Docker login
-                    - uses: docker/setup-buildx-action@v3
+                    - uses: docker/setup-buildx-action@v3.12.0
                       name: Setup Buildx
-                    - uses: codecov/codecov-action@v4
+                    - uses: codecov/codecov-action@v4.6.0
                       name: Not in docker org
               """,
             """
@@ -588,11 +588,11 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+                    - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
                       name: Docker login
-                    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+                    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
                       name: Setup Buildx
-                    - uses: codecov/codecov-action@v4
+                    - uses: codecov/codecov-action@v4.6.0
                       name: Not in docker org
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -613,7 +613,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: gradle/actions/setup-gradle@v3
+                    - uses: gradle/actions/setup-gradle@v3.5.0
                       name: Setup Gradle
               """,
             """
@@ -623,7 +623,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3
+                    - uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
                       name: Setup Gradle
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -644,7 +644,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: gradle/actions/setup-gradle@v3
+                    - uses: gradle/actions/setup-gradle@v3.5.0
                       name: Allowed
                     - uses: gradle/actions/wrapper-validation@v3
                       name: Different subpath, not allow-listed
@@ -656,7 +656,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3
+                    - uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
                       name: Allowed
                     - uses: gradle/actions/wrapper-validation@v3
                       name: Different subpath, not allow-listed
@@ -679,7 +679,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@v4
+                    - uses: actions/checkout@v4.3.1
                       name: Checkout
                     - uses: actions/setup-java@v4
                       name: Not on allow list
@@ -691,7 +691,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+                    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
                       name: Checkout
                     - uses: actions/setup-java@v4
                       name: Not on allow list
@@ -713,7 +713,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: codecov/codecov-action@v4
+                    - uses: codecov/codecov-action@v4.6.0
                       name: Coverage
               """,
             """
@@ -723,7 +723,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                    - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
                       name: Coverage
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -760,13 +760,13 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@v4
+                    - uses: actions/checkout@v4.3.1
                       name: Checkout
                     - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238
                       name: Already pinned
                     - uses: ./local-action
                       name: Local
-                    - uses: docker/login-action@v3
+                    - uses: docker/login-action@v3.7.0
                       name: Docker login
               """,
             """
@@ -776,13 +776,13 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+                    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
                       name: Checkout
                     - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238
                       name: Already pinned
                     - uses: ./local-action
                       name: Local
-                    - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+                    - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
                       name: Docker login
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -808,12 +808,12 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@v4
+                    - uses: actions/checkout@v4.3.1
                       name: Checkout
                      # should be skipped because 'docker' is a trusted owner
-                    - uses: docker/login-action@v3
+                    - uses: docker/login-action@v3.7.0
                       name: Login to Docker
-                    - uses: codecov/codecov-action@v4
+                    - uses: codecov/codecov-action@v4.6.0
                       name: Upload coverage
               """,
             //language=yaml
@@ -824,12 +824,12 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                build:
                  runs-on: ubuntu-latest
                  steps:
-                   - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+                   - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
                      name: Checkout
                     # should be skipped because 'docker' is a trusted owner
-                   - uses: docker/login-action@v3
+                   - uses: docker/login-action@v3.7.0
                      name: Login to Docker
-                   - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                   - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
                      name: Upload coverage
              """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
@@ -855,12 +855,12 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                 build:
                   runs-on: ubuntu-latest
                   steps:
-                    - uses: actions/checkout@v4
+                    - uses: actions/checkout@v4.3.1
                       name: Checkout
                      # should be skipped because 'docker' is a trusted owner, though it's included
-                    - uses: docker/login-action@v3
+                    - uses: docker/login-action@v3.7.0
                       name: Login to Docker
-                    - uses: codecov/codecov-action@v4
+                    - uses: codecov/codecov-action@v4.6.0
                       name: Upload coverage
               """,
             //language=yaml
@@ -871,12 +871,12 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                build:
                  runs-on: ubuntu-latest
                  steps:
-                   - uses: actions/checkout@v4
+                   - uses: actions/checkout@v4.3.1
                      name: Checkout
                     # should be skipped because 'docker' is a trusted owner, though it's included
-                   - uses: docker/login-action@v3
+                   - uses: docker/login-action@v3.7.0
                      name: Login to Docker
-                   - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+                   - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
                      name: Upload coverage
              """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
