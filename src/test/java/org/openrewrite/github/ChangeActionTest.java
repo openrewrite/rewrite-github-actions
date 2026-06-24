@@ -29,7 +29,8 @@ class ChangeActionTest implements RewriteTest {
           spec -> spec.recipe(new ChangeAction(
             "gradle/wrapper-validation-action",
             "gradle/actions/wrapper-validation",
-            "v3")),
+            "v3",
+            null)),
           //language=yaml
           yaml(
             """
@@ -63,7 +64,8 @@ class ChangeActionTest implements RewriteTest {
           spec -> spec.recipe(new ChangeAction(
             "gradle/wrapper-validation-action",
             "gradle/actions/wrapper-validation",
-            "main")),
+            "main",
+            null)),
           //language=yaml
           yaml(
             """
@@ -106,6 +108,150 @@ class ChangeActionTest implements RewriteTest {
                     - name: Checkout
                       uses: actions/checkout@v4
                     - uses: gradle/actions/setup-gradle@v6
+              """,
+            source -> source.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void emptyOldShaLeavesShaPinnedActionUntouched() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeAction(
+            "gradle/wrapper-validation-action",
+            "gradle/actions/wrapper-validation",
+            "v3",
+            "")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/wrapper-validation-action@8ade135a41bc03ea155e62e844d188df1ea18608
+              """,
+            source -> source.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void emptyOldShaStillRenamesTagPinnedAction() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeAction(
+            "gradle/wrapper-validation-action",
+            "gradle/actions/wrapper-validation",
+            "v3",
+            "")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/wrapper-validation-action@v2
+              """,
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/actions/wrapper-validation@v3
+              """,
+            source -> source.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void emptyOldShaIsPerEntry() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeAction(
+            "gradle/wrapper-validation-action",
+            "gradle/actions/wrapper-validation",
+            "v3",
+            "")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/wrapper-validation-action@8ade135a41bc03ea155e62e844d188df1ea18608
+                    - uses: gradle/wrapper-validation-action@v2
+              """,
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/wrapper-validation-action@8ade135a41bc03ea155e62e844d188df1ea18608
+                    - uses: gradle/actions/wrapper-validation@v3
+              """,
+            source -> source.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void specificOldShaChangesOnlyMatchingPin() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeAction(
+            "gradle/wrapper-validation-action",
+            "gradle/actions/wrapper-validation",
+            "v3",
+            "8ade135a41bc03ea155e62e844d188df1ea18608")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/wrapper-validation-action@8ade135a41bc03ea155e62e844d188df1ea18608
+                    - uses: gradle/wrapper-validation-action@b4ffde65f46336ab88eb53be808477a3936bae11
+                    - uses: gradle/wrapper-validation-action@v2
+              """,
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/actions/wrapper-validation@v3
+                    - uses: gradle/wrapper-validation-action@b4ffde65f46336ab88eb53be808477a3936bae11
+                    - uses: gradle/wrapper-validation-action@v2
+              """,
+            source -> source.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void nullOldShaStillRewritesShaPinnedAction() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeAction(
+            "gradle/wrapper-validation-action",
+            "gradle/actions/wrapper-validation",
+            "v3",
+            null)),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/wrapper-validation-action@8ade135a41bc03ea155e62e844d188df1ea18608
+              """,
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/actions/wrapper-validation@v3
               """,
             source -> source.path(".github/workflows/ci.yml")
           )

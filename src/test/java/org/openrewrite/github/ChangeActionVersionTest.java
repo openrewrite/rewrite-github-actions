@@ -27,7 +27,7 @@ class ChangeActionVersionTest implements RewriteTest {
     @Test
     void updateActionVersion() {
         rewriteRun(
-          spec -> spec.recipe(new ChangeActionVersion("actions/setup-java", "v4")),
+          spec -> spec.recipe(new ChangeActionVersion("actions/setup-java", "v4", null)),
           //language=yaml
           yaml(
             """
@@ -91,7 +91,7 @@ class ChangeActionVersionTest implements RewriteTest {
     @Test
     void updateActionVersionWithWildcard() {
         rewriteRun(
-          spec -> spec.recipe(new ChangeActionVersion("actions/nested.*", "v4")),
+          spec -> spec.recipe(new ChangeActionVersion("actions/nested.*", "v4", null)),
           //language=yaml
           yaml(
             """
@@ -111,6 +111,149 @@ class ChangeActionVersionTest implements RewriteTest {
                     - uses: actions/checkout@v2
                     - uses: actions/nested/checkout@v4
                     - uses: actions/nested/setup-java@v4
+              """,
+            source -> source.path(".github/workflows/ci.yaml")
+          )
+        );
+    }
+
+    @Test
+    void emptyOldShaPreservesShaPin() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeActionVersion("actions/setup-java", "v4", "")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/setup-java@8ade135a41bc03ea155e62e844d188df1ea18608
+              """,
+            source -> source.path(".github/workflows/ci.yaml")
+          )
+        );
+    }
+
+    @Test
+    void emptyOldShaPreservesShaPinAndComment() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeActionVersion("actions/setup-java", "v4", "")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/setup-java@8ade135a41bc03ea155e62e844d188df1ea18608 # v3
+              """,
+            source -> source.path(".github/workflows/ci.yaml")
+          )
+        );
+    }
+
+    @Test
+    void emptyOldShaStillUpgradesTag() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeActionVersion("actions/setup-java", "v4", "")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/setup-java@v3
+              """,
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/setup-java@v4
+              """,
+            source -> source.path(".github/workflows/ci.yaml")
+          )
+        );
+    }
+
+    @Test
+    void emptyOldShaIsPerEntry() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeActionVersion("actions/setup-java", "v4", "")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/setup-java@8ade135a41bc03ea155e62e844d188df1ea18608
+                    - uses: actions/setup-java@v3
+              """,
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/setup-java@8ade135a41bc03ea155e62e844d188df1ea18608
+                    - uses: actions/setup-java@v4
+              """,
+            source -> source.path(".github/workflows/ci.yaml")
+          )
+        );
+    }
+
+    @Test
+    void specificOldShaChangesOnlyMatchingPin() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeActionVersion("actions/setup-java", "v4",
+            "8ade135a41bc03ea155e62e844d188df1ea18608")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/setup-java@8ade135a41bc03ea155e62e844d188df1ea18608
+                    - uses: actions/setup-java@b4ffde65f46336ab88eb53be808477a3936bae11
+                    - uses: actions/setup-java@v3
+              """,
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/setup-java@v4
+                    - uses: actions/setup-java@b4ffde65f46336ab88eb53be808477a3936bae11
+                    - uses: actions/setup-java@v3
+              """,
+            source -> source.path(".github/workflows/ci.yaml")
+          )
+        );
+    }
+
+    @Test
+    void nullOldShaStillRewritesShaPin() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeActionVersion("actions/setup-java", "v4", null)),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/setup-java@8ade135a41bc03ea155e62e844d188df1ea18608
+              """,
+            """
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/setup-java@v4
               """,
             source -> source.path(".github/workflows/ci.yaml")
           )
