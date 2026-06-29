@@ -17,8 +17,8 @@ package org.openrewrite.github;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
-import org.openrewrite.yaml.ChangeValue;
 
 @EqualsAndHashCode(callSuper = false)
 @Value
@@ -27,6 +27,18 @@ public class ChangeAction extends Recipe {
             description = "Name of the action to match.",
             example = "gradle/wrapper-validation-action")
     String oldAction;
+
+    @Option(displayName = "Old commit SHA",
+            description = "Restricts the change by the existing `uses:` ref. When omitted, the " +
+                    "action is changed regardless of how it is pinned (the default; commit SHA pins " +
+                    "are rewritten). When set to an empty string, only references that are **not** " +
+                    "pinned to a 40-character commit SHA are changed, leaving deliberate SHA pins on " +
+                    "the original action untouched. When set to a specific commit SHA, only " +
+                    "references pinned to exactly that SHA are changed.",
+            required = false,
+            example = "8f4b7f84864484a7bf31766abe9204da3cbe65b3")
+    @Nullable
+    String oldSha;
 
     @Option(displayName = "Action",
             description = "Name of the action to use instead.",
@@ -46,8 +58,9 @@ public class ChangeAction extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
                 new IsGitHubActionsWorkflow(),
-                new ChangeValue(
+                new ChangeUsesVisitor(
                         "$.jobs..[?(@.uses =~ '" + oldAction + "(?:@.+)?')].uses",
-                        newAction + '@' + newVersion, null).getVisitor());
+                        oldSha,
+                        current -> newAction + '@' + newVersion));
     }
 }
