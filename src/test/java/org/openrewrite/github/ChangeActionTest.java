@@ -28,9 +28,9 @@ class ChangeActionTest implements RewriteTest {
         rewriteRun(
           spec -> spec.recipe(new ChangeAction(
             "gradle/wrapper-validation-action",
+            null,
             "gradle/actions/wrapper-validation",
-            "v3",
-            null)),
+            "v3")),
           //language=yaml
           yaml(
             """
@@ -63,9 +63,9 @@ class ChangeActionTest implements RewriteTest {
         rewriteRun(
           spec -> spec.recipe(new ChangeAction(
             "gradle/wrapper-validation-action",
+            null,
             "gradle/actions/wrapper-validation",
-            "main",
-            null)),
+            "main")),
           //language=yaml
           yaml(
             """
@@ -119,9 +119,9 @@ class ChangeActionTest implements RewriteTest {
         rewriteRun(
           spec -> spec.recipe(new ChangeAction(
             "gradle/wrapper-validation-action",
+            "",
             "gradle/actions/wrapper-validation",
-            "v3",
-            "")),
+            "v3")),
           //language=yaml
           yaml(
             """
@@ -141,9 +141,9 @@ class ChangeActionTest implements RewriteTest {
         rewriteRun(
           spec -> spec.recipe(new ChangeAction(
             "gradle/wrapper-validation-action",
+            "",
             "gradle/actions/wrapper-validation",
-            "v3",
-            "")),
+            "v3")),
           //language=yaml
           yaml(
             """
@@ -170,9 +170,9 @@ class ChangeActionTest implements RewriteTest {
         rewriteRun(
           spec -> spec.recipe(new ChangeAction(
             "gradle/wrapper-validation-action",
+            "",
             "gradle/actions/wrapper-validation",
-            "v3",
-            "")),
+            "v3")),
           //language=yaml
           yaml(
             """
@@ -201,9 +201,9 @@ class ChangeActionTest implements RewriteTest {
         rewriteRun(
           spec -> spec.recipe(new ChangeAction(
             "gradle/wrapper-validation-action",
+            "8ade135a41bc03ea155e62e844d188df1ea18608",
             "gradle/actions/wrapper-validation",
-            "v3",
-            "8ade135a41bc03ea155e62e844d188df1ea18608")),
+            "v3")),
           //language=yaml
           yaml(
             """
@@ -234,9 +234,9 @@ class ChangeActionTest implements RewriteTest {
         rewriteRun(
           spec -> spec.recipe(new ChangeAction(
             "gradle/wrapper-validation-action",
+            null,
             "gradle/actions/wrapper-validation",
-            "v3",
-            null)),
+            "v3")),
           //language=yaml
           yaml(
             """

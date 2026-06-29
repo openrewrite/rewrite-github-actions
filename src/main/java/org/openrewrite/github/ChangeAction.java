@@ -28,16 +28,6 @@ public class ChangeAction extends Recipe {
             example = "gradle/wrapper-validation-action")
     String oldAction;
 
-    @Option(displayName = "Action",
-            description = "Name of the action to use instead.",
-            example = "gradle/actions/wrapper-validation")
-    String newAction;
-
-    @Option(displayName = "Version",
-            description = "New version to use.",
-            example = "v3")
-    String newVersion;
-
     @Option(displayName = "Old commit SHA",
             description = "Restricts the change by the existing `uses:` ref. When omitted, the " +
                     "action is changed regardless of how it is pinned (the default; commit SHA pins " +
@@ -49,6 +39,16 @@ public class ChangeAction extends Recipe {
             example = "8f4b7f84864484a7bf31766abe9204da3cbe65b3")
     @Nullable
     String oldSha;
+
+    @Option(displayName = "Action",
+            description = "Name of the action to use instead.",
+            example = "gradle/actions/wrapper-validation")
+    String newAction;
+
+    @Option(displayName = "Version",
+            description = "New version to use.",
+            example = "v3")
+    String newVersion;
 
     String displayName = "Change GitHub Action";
 
