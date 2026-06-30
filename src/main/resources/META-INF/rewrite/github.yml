@@ -18,7 +18,7 @@
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.GitHubActionsBestPractices
 displayName: GitHub Actions best practices
-description: Applies best practices to GitHub Actions workflows, including enabling dependency caching, using cached distributions, finding missing timeouts, removing unused inputs, and preferring block-style job dependencies.
+description: Applies best practices to GitHub Actions workflows, including enabling dependency caching, using cached distributions, finding missing timeouts, removing unused inputs, preferring block-style job dependencies, and upgrading official actions to their latest versions.
 tags:
   - github
   - actions
@@ -28,6 +28,7 @@ recipeList:
   - org.openrewrite.github.PreferTemurinDistributions
   - org.openrewrite.github.RemoveUnusedWorkflowDispatchInputs
   - org.openrewrite.github.SetupJavaCaching
+  - org.openrewrite.github.UpgradeOfficialGitHubActions
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.AddManualTrigger
