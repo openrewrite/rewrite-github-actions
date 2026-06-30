@@ -16,6 +16,7 @@
 package org.openrewrite.github;
 
 import org.jspecify.annotations.Nullable;
+import org.openrewrite.semver.LatestRelease;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +35,8 @@ import static java.util.Collections.unmodifiableSet;
 final class OfficialActionVersions {
 
     static final Set<String> OFFICIAL_ORGS = unmodifiableSet(new HashSet<>(asList("actions", "github")));
+
+    private static final LatestRelease LATEST_RELEASE = new LatestRelease(null);
 
     private static final Pattern SHA = Pattern.compile("[0-9a-f]{40}");
     private static final Pattern MAJOR = Pattern.compile("v?\\d+");
@@ -114,24 +117,11 @@ final class OfficialActionVersions {
     }
 
     private static int compare(String a, String b) {
-        int[] left = parse(a);
-        int[] right = parse(b);
-        for (int i = 0; i < Math.min(left.length, right.length); i++) {
-            int c = Integer.compare(left[i], right[i]);
-            if (c != 0) {
-                return c;
-            }
-        }
-        return Integer.compare(left.length, right.length);
+        return LATEST_RELEASE.compare(unprefixed(a), unprefixed(b));
     }
 
-    private static int[] parse(String version) {
-        String[] parts = (version.startsWith("v") ? version.substring(1) : version).split("\\.");
-        int[] numbers = new int[parts.length];
-        for (int i = 0; i < parts.length; i++) {
-            numbers[i] = Integer.parseInt(parts[i]);
-        }
-        return numbers;
+    private static String unprefixed(String version) {
+        return version.startsWith("v") ? version.substring(1) : version;
     }
 
     private static final class Versions {

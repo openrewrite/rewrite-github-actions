@@ -47,117 +47,80 @@ class OfficialActionVersionsTest {
 
     @Test
     void majorUpgradesToNewestMajorAcrossMajors() {
-        // given
         OfficialActionVersions versions = versions();
-
-        // when / then
         assertThat(versions.upgrade("actions/checkout", "v1")).isEqualTo("v3");
     }
 
     @Test
     void fullVersionUpgradesToNewestFullVersion() {
-        // given
         OfficialActionVersions versions = versions();
-
-        // when / then
         assertThat(versions.upgrade("actions/checkout", "v1.0.0")).isEqualTo("v3.2.1");
     }
 
     @Test
     void twoPartUpgradesToNewestTwoPart() {
-        // given
         OfficialActionVersions versions = versions();
-
-        // when / then
         assertThat(versions.upgrade("actions/checkout", "v2.0")).isEqualTo("v2.1");
     }
 
     @Test
     void commitShaUpgradesToLatestMajorSha() {
-        // given
         OfficialActionVersions versions = versions();
-
-        // when / then
         assertThat(versions.upgrade("actions/checkout", SHA_V1_0_0)).isEqualTo(SHA_V3);
     }
 
     @Test
     void preservesAbsentVPrefix() {
-        // given
         OfficialActionVersions versions = versions();
-
-        // when / then
         assertThat(versions.upgrade("actions/checkout", "1")).isEqualTo("3");
     }
 
     @Test
     void officialActionWithSubpathIsUpgraded() {
-        // given
         OfficialActionVersions versions = versions();
-
-        // when / then
         assertThat(versions.upgrade("github/codeql-action/init", "v3.0.0")).isEqualTo("v3.1.0");
     }
 
     @Test
     void doesNotDowngrade() {
-        // given
         OfficialActionVersions versions = versions();
-
-        // when / then
         assertThat(versions.upgrade("actions/checkout", "v9")).isNull();
     }
 
     @Test
     void alreadyLatestIsLeftUntouched() {
-        // given
         OfficialActionVersions versions = versions();
-
-        // when / then
         assertThat(versions.upgrade("actions/checkout", "v3")).isNull();
         assertThat(versions.upgrade("actions/checkout", "v3.2.1")).isNull();
     }
 
     @Test
     void commitShaAlreadyAtLatestMajorIsLeftUntouched() {
-        // given
         OfficialActionVersions versions = versions();
-
-        // when / then
         assertThat(versions.upgrade("actions/checkout", SHA_V3)).isNull();
     }
 
     @Test
     void thirdPartyActionsAreNotIndexed() {
-        // given
         OfficialActionVersions versions = versions();
-
-        // when / then
         assertThat(versions.upgrade("codecov/codecov-action", "v3")).isNull();
     }
 
     @Test
     void unknownOfficialActionIsLeftUntouched() {
-        // given
         OfficialActionVersions versions = versions();
-
-        // when / then
         assertThat(versions.upgrade("actions/not-a-real-action", "v1")).isNull();
     }
 
     @Test
     void branchAndPreReleaseRefsAreLeftUntouched() {
-        // given
         OfficialActionVersions versions = versions();
-
-        // when / then
         assertThat(versions.upgrade("actions/checkout", "main")).isNull();
         assertThat(versions.upgrade("actions/checkout", "v3.0.0-beta.1")).isNull();
     }
 
     @Test
     void isOfficialRecognizesActionsAndGithubOrgs() {
-        // when / then
         assertThat(OfficialActionVersions.isOfficial("actions/checkout")).isTrue();
         assertThat(OfficialActionVersions.isOfficial("github/codeql-action/init")).isTrue();
         assertThat(OfficialActionVersions.isOfficial("codecov/codecov-action")).isFalse();
