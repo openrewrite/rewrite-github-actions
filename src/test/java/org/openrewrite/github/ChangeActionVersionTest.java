@@ -87,6 +87,33 @@ class ChangeActionVersionTest implements RewriteTest {
         );
     }
 
+    @Test
+    void updateActionVersionInCompositeActionDefinition() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeActionVersion("actions/setup-java", "v4", null)),
+          //language=yaml
+          yaml(
+            """
+              name: Composite
+              runs:
+                using: composite
+                steps:
+                  - uses: actions/setup-java@main
+                    shell: bash
+              """,
+            """
+              name: Composite
+              runs:
+                using: composite
+                steps:
+                  - uses: actions/setup-java@v4
+                    shell: bash
+              """,
+            source -> source.path(".github/actions/setup/action.yaml")
+          )
+        );
+    }
+
     @Issue("https://github.com/openrewrite/rewrite-github-actions/issues/163")
     @Test
     void updateActionVersionWithWildcard() {

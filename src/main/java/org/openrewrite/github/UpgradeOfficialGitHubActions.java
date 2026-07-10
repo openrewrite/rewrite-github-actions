@@ -26,6 +26,7 @@ import org.openrewrite.yaml.tree.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -58,7 +59,7 @@ public class UpgradeOfficialGitHubActions extends ScanningRecipe<UpgradeOfficial
 
     @Override
     public TreeVisitor<?, ExecutionContext> getScanner(Accumulator acc) {
-        return Preconditions.check(new IsGitHubActionsWorkflow(), new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(workflowOrActionDefinition(), new YamlIsoVisitor<ExecutionContext>() {
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 if (entry.getKey() instanceof Yaml.Scalar &&
@@ -85,16 +86,37 @@ public class UpgradeOfficialGitHubActions extends ScanningRecipe<UpgradeOfficial
         if (acc.getTargets().isEmpty()) {
             return TreeVisitor.noop();
         }
-        return Preconditions.check(new IsGitHubActionsWorkflow(), new YamlIsoVisitor<ExecutionContext>() {
+        Map<String, String> replacements = new HashMap<>();
+        for (UpgradeTarget target : acc.getTargets()) {
+            replacements.put(target.getAction() + '@' + target.getCurrentRef(),
+                    target.getAction() + '@' + target.getTarget());
+        }
+        return Preconditions.check(workflowOrActionDefinition(), new YamlIsoVisitor<ExecutionContext>() {
             @Override
-            public Yaml.Documents visitDocuments(Yaml.Documents documents, ExecutionContext ctx) {
-                for (UpgradeTarget target : acc.getTargets()) {
-                    doAfterVisit(new ChangeActionVersion(target.getAction(), target.getTarget(), target.getCurrentRef())
-                            .getVisitor());
+            public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
+                Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
+                if (e.getKey() instanceof Yaml.Scalar &&
+                        "uses".equals(((Yaml.Scalar) e.getKey()).getValue()) &&
+                        e.getValue() instanceof Yaml.Scalar) {
+                    Yaml.Scalar scalar = (Yaml.Scalar) e.getValue();
+                    String newValue = replacements.get(scalar.getValue());
+                    if (newValue != null) {
+                        return e.withValue(scalar.withValue(newValue));
+                    }
                 }
-                return documents;
+                return e;
             }
         });
+    }
+
+    /**
+     * Official action references appear both in workflow files ({@code $.jobs..steps[].uses}) and in
+     * the {@code runs.steps[].uses} of composite action definitions, so both file types are matched.
+     */
+    private static TreeVisitor<?, ExecutionContext> workflowOrActionDefinition() {
+        return Preconditions.or(
+                new IsGitHubActionsWorkflow().getVisitor(),
+                new IsGitHubActionDefinition().getVisitor());
     }
 
     private static Map<String, String> loadKnownShas() {

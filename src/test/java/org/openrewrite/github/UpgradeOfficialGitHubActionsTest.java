@@ -129,7 +129,32 @@ class UpgradeOfficialGitHubActionsTest implements RewriteTest {
     }
 
     @Test
-    void onlyRunsOnWorkflowFiles() {
+    void upgradesActionsInCompositeActionDefinitions() {
+        rewriteRun(
+          spec -> spec.recipe(new UpgradeOfficialGitHubActions()),
+          //language=yaml
+          yaml(
+            """
+              runs:
+                using: composite
+                steps:
+                  - uses: actions/checkout@v1
+                  - uses: actions/checkout@%s
+              """.formatted(LATEST_MAJOR),
+            """
+              runs:
+                using: composite
+                steps:
+                  - uses: actions/checkout@%s
+                  - uses: actions/checkout@%s
+              """.formatted(LATEST_MAJOR, LATEST_MAJOR),
+            source -> source.path(".github/actions/build/action.yml")
+          )
+        );
+    }
+
+    @Test
+    void ignoresNonWorkflowNonActionFiles() {
         rewriteRun(
           spec -> spec.recipe(new UpgradeOfficialGitHubActions()),
           //language=yaml
