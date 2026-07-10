@@ -52,9 +52,11 @@ public class ChangeActionVersion extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                new IsGitHubActionsWorkflow(),
+                Preconditions.or(
+                        new IsGitHubActionsWorkflow().getVisitor(),
+                        new IsGitHubActionDefinition().getVisitor()),
                 new ChangeUsesVisitor(
-                        "$.jobs..[?(@.uses =~ '" + action + "(?:@.+)?')].uses",
+                        "$..[?(@.uses =~ '" + action + "(?:@.+)?')].uses",
                         oldSha,
                         current -> current.split("@", 2)[0] + '@' + version));
     }

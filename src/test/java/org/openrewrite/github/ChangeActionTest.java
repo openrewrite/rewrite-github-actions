@@ -86,6 +86,39 @@ class ChangeActionTest implements RewriteTest {
     }
 
     @Test
+    void changeActionInCompositeActionDefinition() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeAction(
+            "gradle/wrapper-validation-action",
+            null,
+            "gradle/actions/wrapper-validation",
+            "v3")),
+          //language=yaml
+          yaml(
+            """
+              name: Composite
+              runs:
+                using: composite
+                steps:
+                  - name: Validate wrapper
+                    uses: gradle/wrapper-validation-action@v2
+                    shell: bash
+              """,
+            """
+              name: Composite
+              runs:
+                using: composite
+                steps:
+                  - name: Validate wrapper
+                    uses: gradle/actions/wrapper-validation@v3
+                    shell: bash
+              """,
+            source -> source.path(".github/actions/validate/action.yml")
+          )
+        );
+    }
+
+    @Test
     void setupGradleYamlRecipe() {
         rewriteRun(
           spec -> spec.recipeFromResources("org.openrewrite.github.gradle.RenameGradleBuildActionToSetupGradle"),
