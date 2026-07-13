@@ -17,6 +17,7 @@ package org.openrewrite.github;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
+import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
 import java.io.InputStream;
@@ -28,6 +29,11 @@ import static org.openrewrite.yaml.Assertions.yaml;
 
 class UpgradeOfficialGitHubActionsTest implements RewriteTest {
 
+    @Override
+    public void defaults(RecipeSpec spec) {
+        spec.recipe( new UpgradeOfficialGitHubActions() );
+    }
+
     private static final Map<String, String> PROPS = loadProperties();
     private static final OfficialActionVersions VERSIONS = OfficialActionVersions.fromProperties(PROPS);
 
@@ -37,14 +43,14 @@ class UpgradeOfficialGitHubActionsTest implements RewriteTest {
     private static final String LATEST_MAJOR_SHA = PROPS.get("actions/checkout@" + LATEST_MAJOR);
 
     private static Map<String, String> loadProperties() {
-        Properties props = new Properties();
+        var props = new Properties();
         try (InputStream is = UpgradeOfficialGitHubActionsTest.class
                 .getResourceAsStream("/META-INF/rewrite/known-action-shas.properties")) {
             props.load(is);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
-        Map<String, String> map = new LinkedHashMap<>();
+        var map = new LinkedHashMap<String, String>();
         for (String key : props.stringPropertyNames()) {
             map.put(key, props.getProperty(key));
         }
@@ -55,7 +61,6 @@ class UpgradeOfficialGitHubActionsTest implements RewriteTest {
     @Test
     void upgradesOfficialActionsPreservingPrecisionAndLeavingOthersUntouched() {
         rewriteRun(
-          spec -> spec.recipe(new UpgradeOfficialGitHubActions()),
           //language=yaml
           yaml(
             """
@@ -86,7 +91,6 @@ class UpgradeOfficialGitHubActionsTest implements RewriteTest {
     @Test
     void upgradesCommitShaToLatestMajorSha() {
         rewriteRun(
-          spec -> spec.recipe(new UpgradeOfficialGitHubActions()),
           //language=yaml
           yaml(
             """
@@ -111,7 +115,6 @@ class UpgradeOfficialGitHubActionsTest implements RewriteTest {
     @Test
     void leavesUnknownAndAlreadyLatestActionsUntouched() {
         rewriteRun(
-          spec -> spec.recipe(new UpgradeOfficialGitHubActions()),
           //language=yaml
           yaml(
             """
@@ -131,7 +134,6 @@ class UpgradeOfficialGitHubActionsTest implements RewriteTest {
     @Test
     void upgradesActionsInCompositeActionDefinitions() {
         rewriteRun(
-          spec -> spec.recipe(new UpgradeOfficialGitHubActions()),
           //language=yaml
           yaml(
             """
@@ -156,7 +158,6 @@ class UpgradeOfficialGitHubActionsTest implements RewriteTest {
     @Test
     void ignoresNonWorkflowNonActionFiles() {
         rewriteRun(
-          spec -> spec.recipe(new UpgradeOfficialGitHubActions()),
           //language=yaml
           yaml(
             """

@@ -108,6 +108,7 @@ examples:
 - description: '`ChangeActionTest#changeActionInSteps`'
   parameters:
   - gradle/wrapper-validation-action
+  - 'null'
   - gradle/actions/wrapper-validation
   - v3
   sources:
@@ -139,6 +140,7 @@ examples:
   parameters:
   - actions/setup-java
   - v4
+  - 'null'
   sources:
   - before: |
       jobs:
@@ -223,6 +225,23 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.IsGitHubActionDefinition
+examples:
+- description: '`IsGitHubActionDefinitionTest#detectCompositeAction`'
+  sources:
+  - before: |
+      runs:
+        using: composite
+        steps:
+          - uses: actions/checkout@v4
+    after: |
+      runs:
+        using: composite
+        steps:
+          - uses: actions/checkout@v4
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.IsGitHubActionsWorkflow
 examples:
 - description: '`IsGitHubActionsWorkflowTest#detectYml`'
@@ -258,6 +277,34 @@ examples:
             - uses: astral-sh/setup-uv@v7
               with:
                 version: "0.5.13"
+    path: .github/workflows/ci.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.MigrateTibdexGitHubAppTokenToActions
+examples:
+- description: '`MigrateTibdexGitHubAppTokenToActionsTest#migratesActionAndRenamesInputs`'
+  sources:
+  - before: |
+      jobs:
+        token:
+          runs-on: ubuntu-latest
+          steps:
+            - id: create_token
+              uses: tibdex/github-app-token@v2
+              with:
+                app_id: ${{ secrets.APP_ID }}
+                private_key: ${{ secrets.APP_PRIVATE_KEY }}
+    after: |
+      jobs:
+        token:
+          runs-on: ubuntu-latest
+          steps:
+            - id: create_token
+              uses: actions/create-github-app-token@v3
+              with:
+                app-id: ${{ secrets.APP_ID }}
+                private-key: ${{ secrets.APP_PRIVATE_KEY }}
     path: .github/workflows/ci.yml
     language: yaml
 ---
@@ -1126,7 +1173,7 @@ examples:
         build:
           runs-on: ubuntu-latest
           steps:
-            - uses: codecov/codecov-action@v4
+            - uses: codecov/codecov-action@v4.6.0
               name: Upload coverage
     after: |
       name: CI
@@ -1135,7 +1182,7 @@ examples:
         build:
           runs-on: ubuntu-latest
           steps:
-            - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+            - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
               name: Upload coverage
     path: .github/workflows/ci.yml
     language: yaml
