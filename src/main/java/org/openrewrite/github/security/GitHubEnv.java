@@ -165,11 +165,7 @@ public class GitHubEnv extends Recipe {
                 }
 
                 // If it's just static echo content, it's likely safe
-                if (isStaticEcho(runContent)) {
-                    return false;
-                }
-
-                return true;
+                return !isStaticEcho( runContent );
             }
 
             private boolean isStaticEcho(String runContent) {

@@ -170,9 +170,8 @@ public class ArtifactSecurity extends Recipe {
                 public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, Void ctx) {
                     if ("uses".equals(entry.getKey().getValue()) && entry.getValue() instanceof Yaml.Scalar) {
                         String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
-                        if (usesValue.startsWith("actions/checkout") || usesValue.startsWith("actions/upload-artifact")) {
-                            // Additional workflow-level analysis can be added here
-                        }
+                        usesValue.startsWith( "actions/checkout" );
+                        usesValue.startsWith( "actions/upload-artifact" );
                     }
                     return super.visitMappingEntry(entry, ctx);
                 }
