@@ -20,3 +20,5 @@ jobs:
       sonatype_token: ${{ secrets.SONATYPE_TOKEN}}
       ossrh_signing_key: ${{ secrets.OSSRH_SIGNING_KEY }}
       ossrh_signing_password: ${{ secrets.OSSRH_SIGNING_PASSWORD }}
+      cgp_artifacts_maven_username: ${{ secrets.CGP_ARTIFACTS_MAVEN_USERNAME }}
+      cgp_artifacts_maven_token: ${{ secrets.CGP_ARTIFACTS_MAVEN_TOKEN }}
