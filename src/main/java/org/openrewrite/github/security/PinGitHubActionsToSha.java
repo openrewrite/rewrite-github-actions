@@ -62,11 +62,12 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     @Nullable
     Boolean pinOfficialActions;
 
-    @Option(example = "TODO Provide a usage example for the docs", displayName = "GitHub API token",
-                description = "A GitHub personal access token used to resolve tags/branches to commit SHAs " +
-                            "via the GitHub API. Only needed for actions not found in the built-in static mapping. " +
-                            "Without a token, unauthenticated requests are rate-limited to 60/hour.",
-                required = false)
+    @Option(displayName = "GitHub API token",
+            description = "A GitHub personal access token used to resolve tags/branches to commit SHAs " +
+                    "via the GitHub API. Only needed for actions not found in the built-in static mapping. " +
+                    "Without a token, unauthenticated requests are rate-limited to 60/hour.",
+            required = false,
+            example = "ghp_exampleTokenNotARealToken")
     @Nullable
     String githubApiToken;
 
