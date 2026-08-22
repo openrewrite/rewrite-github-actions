@@ -117,12 +117,9 @@ public class ReplaceDependabotReviewersWithCodeowners extends ScanningRecipe<Rep
                 }
                 SourceFile sourceFile = (SourceFile) tree;
                 if (DEPENDABOT_LOCATIONS.contains(normalize(sourceFile.getSourcePath())) && sourceFile instanceof Yaml.Documents) {
-                    Yaml yaml = (Yaml) sourceFile;
-                    for (String ecosystem : acc.getMigratedEcosystems()) {
-                        yaml = (Yaml) new DeleteKey("$.updates[?(@.package-ecosystem =~ '" + ecosystem + "')].reviewers", null)
-                                .getVisitor().visitNonNull(yaml, ctx);
-                    }
-                    return yaml;
+                    String ecosystems = String.join("|", acc.getMigratedEcosystems());
+                    return new DeleteKey("$.updates[?(@.package-ecosystem =~ '(" + ecosystems + ")')].reviewers", null)
+                            .getVisitor().visitNonNull(sourceFile, ctx);
                 }
                 if (sourceFile instanceof PlainText && sourceFile.getSourcePath().equals(acc.getExistingCodeowners())) {
                     return append((PlainText) sourceFile, acc.getOwnersByPattern());
@@ -152,20 +149,21 @@ public class ReplaceDependabotReviewersWithCodeowners extends ScanningRecipe<Rep
         }
 
         String existing = codeowners.getText();
+        String newline = existing.contains("\r\n") ? "\r\n" : "\n";
         StringBuilder text = new StringBuilder(existing);
         if (!existing.isEmpty()) {
             if (existing.charAt(existing.length() - 1) != '\n') {
-                text.append('\n');
+                text.append(newline);
             }
-            text.append('\n');
+            text.append(newline);
         }
         text.append(HEADER);
         for (String line : renderLines(missing)) {
-            text.append('\n').append(line);
+            text.append(newline).append(line);
         }
         // Match the trailing newline convention the file already used
         if (existing.endsWith("\n")) {
-            text.append('\n');
+            text.append(newline);
         }
         return codeowners.withText(text.toString());
     }
@@ -267,16 +265,14 @@ public class ReplaceDependabotReviewersWithCodeowners extends ScanningRecipe<Rep
         private boolean codeownersIsAppendable = true;
 
         void foundCodeowners(String path, SourceFile sourceFile) {
-            if (!(sourceFile instanceof PlainText)) {
-                codeownersIsAppendable = false;
-                return;
-            }
             // GitHub honors only one CODEOWNERS: .github wins over the root, which wins over docs
             int precedence = CODEOWNERS_PRECEDENCE.indexOf(path);
-            if (precedence < existingCodeownersPrecedence) {
-                existingCodeownersPrecedence = precedence;
-                existingCodeowners = sourceFile.getSourcePath();
+            if (precedence >= existingCodeownersPrecedence) {
+                return;
             }
+            existingCodeownersPrecedence = precedence;
+            codeownersIsAppendable = sourceFile instanceof PlainText;
+            existingCodeowners = codeownersIsAppendable ? sourceFile.getSourcePath() : null;
         }
 
         boolean canMigrate() {

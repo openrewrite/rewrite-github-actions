@@ -573,6 +573,79 @@ class ReplaceDependabotReviewersWithCodeownersTest implements RewriteTest {
     }
 
     @Test
+    void appendsToDotGithubCodeownersWhenLowerPrecedenceCodeownersCannotBeRead() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: maven
+                  directory: /
+                  reviewers:
+                    - acme/backend
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: maven
+                  directory: /
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          ),
+          other(
+            "* @acme/everyone",
+            spec -> spec.path("docs/CODEOWNERS")
+          ),
+          text(
+            """
+              * @acme/everyone
+              """,
+            """
+              * @acme/everyone
+
+              # Reviewers migrated from the Dependabot configuration
+              /pom.xml @acme/backend
+              """,
+            spec -> spec.path(".github/CODEOWNERS")
+          )
+        );
+    }
+
+    @Test
+    void githubActionsInNonRootDirectoryMapsToCompositeAction() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /.github/actions/setup
+                  reviewers:
+                    - acme/devops
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /.github/actions/setup
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          ),
+          text(
+            null,
+            """
+              # Reviewers migrated from the Dependabot configuration
+              /.github/actions/setup/action.yml @acme/devops
+              /.github/actions/setup/action.yaml @acme/devops
+              """,
+            spec -> spec.path(".github/CODEOWNERS")
+          )
+        );
+    }
+
+    @Test
     void doesNotTouchOtherYamlFiles() {
         rewriteRun(
           //language=yaml

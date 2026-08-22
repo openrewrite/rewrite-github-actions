@@ -20,7 +20,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.*;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.unmodifiableMap;
+import static java.util.Collections.*;
 
 // Ecosystems absent from this map are deliberately left alone rather than mapped to a broader
 // pattern such as the whole directory, which would grant ownership beyond what Dependabot covered.
@@ -36,21 +36,21 @@ final class DependabotEcosystemManifests {
         manifests.put("cargo", asList("Cargo.toml", "Cargo.lock"));
         manifests.put("composer", asList("composer.json", "composer.lock"));
         manifests.put("devcontainers", asList(".devcontainer/devcontainer.json", ".devcontainer.json"));
-        manifests.put("docker", asList("Dockerfile"));
+        manifests.put("docker", singletonList("Dockerfile"));
         manifests.put("docker-compose", asList("docker-compose.yml", "docker-compose.yaml"));
-        manifests.put("elm", asList("elm.json"));
-        manifests.put("gitsubmodule", asList(".gitmodules"));
+        manifests.put("elm", singletonList("elm.json"));
+        manifests.put("gitsubmodule", singletonList(".gitmodules"));
         manifests.put("gomod", asList("go.mod", "go.sum"));
         manifests.put("gradle", asList("build.gradle", "build.gradle.kts", "gradle/libs.versions.toml"));
         manifests.put("helm", asList("Chart.yaml", "Chart.lock"));
-        manifests.put("maven", asList("pom.xml"));
+        manifests.put("maven", singletonList("pom.xml"));
         manifests.put("mix", asList("mix.exs", "mix.lock"));
         manifests.put("npm", asList("package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml"));
         manifests.put("nuget", asList("*.csproj", "packages.config"));
         manifests.put("pip", asList("requirements.txt", "pyproject.toml", "Pipfile", "Pipfile.lock"));
         manifests.put("pub", asList("pubspec.yaml", "pubspec.lock"));
         manifests.put("swift", asList("Package.swift", "Package.resolved"));
-        manifests.put("terraform", asList("*.tf"));
+        manifests.put("terraform", singletonList("*.tf"));
         manifests.put("uv", asList("pyproject.toml", "uv.lock"));
         MANIFESTS = unmodifiableMap(manifests);
     }
@@ -63,14 +63,17 @@ final class DependabotEcosystemManifests {
     }
 
     static List<String> patternsFor(@Nullable String ecosystem, String directory) {
+        String prefix = normalizeDirectory(directory);
         if (GITHUB_ACTIONS.equals(ecosystem)) {
-            return asList("/.github/workflows/");
+            // A non-root directory points at a composite action definition rather than the workflows
+            return "/".equals(prefix) ?
+                    singletonList("/.github/workflows/") :
+                    asList(prefix + "action.yml", prefix + "action.yaml");
         }
         List<String> manifests = MANIFESTS.get(ecosystem);
         if (manifests == null) {
-            return Collections.emptyList();
+            return emptyList();
         }
-        String prefix = normalizeDirectory(directory);
         List<String> patterns = new ArrayList<>(manifests.size());
         for (String manifest : manifests) {
             patterns.add(prefix + manifest);
