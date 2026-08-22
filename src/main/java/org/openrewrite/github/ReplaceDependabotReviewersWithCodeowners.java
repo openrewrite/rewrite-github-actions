@@ -130,26 +130,47 @@ public class ReplaceDependabotReviewersWithCodeowners extends ScanningRecipe<Rep
     }
 
     private static PlainText append(PlainText codeowners, Map<String, Set<String>> ownersByPattern) {
-        Set<String> existingPatterns = new HashSet<>();
-        for (String line : codeowners.getText().split("\r?\n", -1)) {
-            String trimmed = line.trim();
-            if (!trimmed.isEmpty() && !trimmed.startsWith("#")) {
-                existingPatterns.add(trimmed.split("\\s+")[0]);
+        String original = codeowners.getText();
+        String newline = original.contains("\r\n") ? "\r\n" : "\n";
+        String[] lines = original.split("\r?\n", -1);
+
+        // CODEOWNERS is last match wins, so a second line for a pattern would silently displace the
+        // owners already on the first; merge into that line instead to keep both sets of reviewers
+        Set<String> mergedPatterns = new HashSet<>();
+        boolean merged = false;
+        for (int i = 0; i < lines.length; i++) {
+            String trimmed = lines[i].trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                continue;
+            }
+            String[] tokens = trimmed.split("\\s+");
+            Set<String> owners = ownersByPattern.get(tokens[0]);
+            if (owners == null) {
+                continue;
+            }
+            mergedPatterns.add(tokens[0]);
+            Set<String> alreadyOwning = new HashSet<>(asList(tokens).subList(1, tokens.length));
+            List<String> missingOwners = owners.stream()
+                    .filter(owner -> !alreadyOwning.contains(owner))
+                    .collect(toList());
+            if (!missingOwners.isEmpty()) {
+                lines[i] = trimTrailing(lines[i]) + ' ' + String.join(" ", missingOwners);
+                merged = true;
             }
         }
 
         Map<String, Set<String>> missing = new LinkedHashMap<>();
         ownersByPattern.forEach((pattern, owners) -> {
-            if (!existingPatterns.contains(pattern)) {
+            if (!mergedPatterns.contains(pattern)) {
                 missing.put(pattern, owners);
             }
         });
+
+        String existing = String.join(newline, lines);
         if (missing.isEmpty()) {
-            return codeowners;
+            return merged ? codeowners.withText(existing) : codeowners;
         }
 
-        String existing = codeowners.getText();
-        String newline = existing.contains("\r\n") ? "\r\n" : "\n";
         StringBuilder text = new StringBuilder(existing);
         if (!existing.isEmpty()) {
             if (existing.charAt(existing.length() - 1) != '\n') {
@@ -166,6 +187,14 @@ public class ReplaceDependabotReviewersWithCodeowners extends ScanningRecipe<Rep
             text.append(newline);
         }
         return codeowners.withText(text.toString());
+    }
+
+    private static String trimTrailing(String line) {
+        int end = line.length();
+        while (end > 0 && Character.isWhitespace(line.charAt(end - 1))) {
+            end--;
+        }
+        return line.substring(0, end);
     }
 
     private static List<String> renderLines(Map<String, Set<String>> ownersByPattern) {

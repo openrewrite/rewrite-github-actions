@@ -151,7 +151,7 @@ class ReplaceDependabotReviewersWithCodeownersTest implements RewriteTest {
     }
 
     @Test
-    void doNotDuplicatePatternAlreadyOwned() {
+    void mergeIntoPatternAlreadyOwnedBySomeoneElse() {
         rewriteRun(
           //language=yaml
           yaml(
@@ -174,6 +174,81 @@ class ReplaceDependabotReviewersWithCodeownersTest implements RewriteTest {
           text(
             """
               /pom.xml @someone/else
+              """,
+            """
+              /pom.xml @someone/else @acme/backend
+              """,
+            spec -> spec.path("CODEOWNERS")
+          )
+        );
+    }
+
+    @Test
+    void doNotDuplicateOwnerAlreadyOnTheLine() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: maven
+                  directory: /
+                  reviewers:
+                    - acme/backend
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: maven
+                  directory: /
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          ),
+          text(
+            """
+              /pom.xml @acme/backend @someone/else
+              """,
+            spec -> spec.path("CODEOWNERS")
+          )
+        );
+    }
+
+    @Test
+    void mergeSomeOwnersAndAppendOtherPatterns() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: gomod
+                  directory: /
+                  reviewers:
+                    - acme/backend
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: gomod
+                  directory: /
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          ),
+          text(
+            """
+              # ownership
+              /go.mod @someone/else
+
+              /unrelated.txt @acme/docs
+              """,
+            """
+              # ownership
+              /go.mod @someone/else @acme/backend
+
+              /unrelated.txt @acme/docs
+
+              # Reviewers migrated from the Dependabot configuration
+              /go.sum @acme/backend
               """,
             spec -> spec.path("CODEOWNERS")
           )
