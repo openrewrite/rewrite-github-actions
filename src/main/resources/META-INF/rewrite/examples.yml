@@ -80,25 +80,31 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.AutoCancelInProgressWorkflow
 examples:
-- description: '`AutoCancelInProgressWorkflowTest#useDefaultAccessToken`'
-  parameters:
-  - 'null'
+- description: '`AutoCancelInProgressWorkflowTest#addConcurrency`'
   sources:
   - before: |
+      on:
+        push:
+          branches:
+            - main
       jobs:
         build:
           runs-on: linux
           steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
     after: |
+      on:
+        push:
+          branches:
+            - main
+      concurrency:
+        group: ${{ github.workflow }}-${{ github.ref }}
+        cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
       jobs:
         build:
           runs-on: linux
           steps:
-            - uses: styfle/cancel-workflow-action@0.9.1
-              with:
-                access_token: ${{ github.token }}
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
     path: .github/workflows/ci.yml
     language: yaml
 ---

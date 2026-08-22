@@ -17,35 +17,48 @@ package org.openrewrite.github;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
+import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
 class AutoCancelInProgressWorkflowTest implements RewriteTest {
 
+    @Override
+    public void defaults(RecipeSpec spec) {
+        spec.recipe(new AutoCancelInProgressWorkflow());
+    }
+
     @DocumentExample
     @Test
-    void useDefaultAccessToken() {
+    void addConcurrency() {
         rewriteRun(
-          spec -> spec.recipe(new AutoCancelInProgressWorkflow(null)),
           //language=yaml
           yaml(
             """
+              on:
+                push:
+                  branches:
+                    - main
               jobs:
                 build:
                   runs-on: linux
                   steps:
-                    - uses: actions/checkout@v2
+                    - uses: actions/checkout@v4
               """,
             """
+              on:
+                push:
+                  branches:
+                    - main
+              concurrency:
+                group: ${{ github.workflow }}-${{ github.ref }}
+                cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
               jobs:
                 build:
                   runs-on: linux
                   steps:
-                    - uses: styfle/cancel-workflow-action@0.9.1
-                      with:
-                        access_token: ${{ github.token }}
-                    - uses: actions/checkout@v2
+                    - uses: actions/checkout@v4
               """,
             spec -> spec.path(".github/workflows/ci.yml")
           )
@@ -53,29 +66,37 @@ class AutoCancelInProgressWorkflowTest implements RewriteTest {
     }
 
     @Test
-    void useUserProvidedAccessToken() {
+    void retainExistingConcurrency() {
         rewriteRun(
-          spec -> spec.recipe(new AutoCancelInProgressWorkflow("WORKFLOWS_ACCESS_TOKEN")),
+          //language=yaml
+          yaml(
+            """
+              on: push
+              concurrency:
+                group: ${{ github.workflow }}
+                cancel-in-progress: true
+              jobs:
+                build:
+                  runs-on: linux
+                  steps:
+                    - uses: actions/checkout@v4
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void notAWorkflowFile() {
+        rewriteRun(
           //language=yaml
           yaml(
             """
               jobs:
                 build:
                   runs-on: linux
-                  steps:
-                    - uses: actions/checkout@v2
               """,
-            """
-              jobs:
-                build:
-                  runs-on: linux
-                  steps:
-                    - uses: styfle/cancel-workflow-action@0.9.1
-                      with:
-                        access_token: ${{ secrets.WORKFLOWS_ACCESS_TOKEN }}
-                    - uses: actions/checkout@v2
-              """,
-            spec -> spec.path(".github/workflows/ci.yml")
+            spec -> spec.path("src/main/resources/application.yml")
           )
         );
     }
