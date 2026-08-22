@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
 
     steps:
       - uses: actions/checkout@v7
@@ -53,30 +52,22 @@ jobs:
               BODY+="### Added"$'\n\n'"${ADDED}"$'\n'
             fi
 
+            echo "$BODY" >> "$GITHUB_STEP_SUMMARY"
+
             {
-              echo "pr_body<<EOF_PR_BODY"
+              echo "commit_body<<EOF_COMMIT_BODY"
               echo "$BODY"
-              echo "EOF_PR_BODY"
+              echo "EOF_COMMIT_BODY"
             } >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Open pull request
+      - name: Commit to main
         if: steps.update.outputs.changed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_BODY: ${{ steps.update.outputs.pr_body }}
+          COMMIT_BODY: ${{ steps.update.outputs.commit_body }}
         run: |
-          BRANCH="automation/update-known-shas-${GITHUB_RUN_ID}"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b "$BRANCH"
           git add src/main/resources/META-INF/rewrite/known-action-shas.properties
-          git commit -m "Update known action SHAs"
-          git push origin "$BRANCH"
-
-          gh pr create \
-            --title "Update known action SHAs" \
-            --body "$PR_BODY" \
-            --base main \
-            --head "$BRANCH" \
-            --label "dependencies" || true
+          git commit -m "Update known action SHAs" -m "$COMMIT_BODY"
+          git push origin HEAD:main
