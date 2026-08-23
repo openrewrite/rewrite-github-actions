@@ -16,6 +16,9 @@
 package org.openrewrite.github;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -51,6 +54,67 @@ class RemoveAllCronTriggerTest implements RewriteTest {
                     - main
               """,
             spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void removeCronTriggerFromMatchingWorkflow() {
+        rewriteRun(
+          spec -> spec.recipe(new RemoveAllCronTriggers("build*.yml")),
+          //language=yml
+          yaml(
+            """
+              on:
+                push:
+                  branches:
+                    - main
+                schedule:
+                  - cron: "0 18 * * *"
+              """,
+            """
+              on:
+                push:
+                  branches:
+                    - main
+              """,
+            spec -> spec.path(".github/workflows/build.yml")
+          ),
+          //language=yml
+          yaml(
+            """
+              on:
+                schedule:
+                  - cron: "0 11 * * *"
+              """,
+            spec -> spec.path(".github/workflows/release.yml")
+          )
+        );
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void missingFileMatcherUsesAllWorkflows(String fileMatcher) {
+        rewriteRun(
+          spec -> spec.recipe(new RemoveAllCronTriggers(fileMatcher)),
+          //language=yml
+          yaml(
+            """
+              on:
+                push:
+                  branches:
+                    - main
+                schedule:
+                  - cron: "0 18 * * *"
+              """,
+            """
+              on:
+                push:
+                  branches:
+                    - main
+              """,
+            spec -> spec.path(".github/workflows/ci.yaml")
           )
         );
     }

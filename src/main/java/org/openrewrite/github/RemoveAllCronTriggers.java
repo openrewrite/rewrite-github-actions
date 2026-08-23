@@ -15,29 +15,52 @@
  */
 package org.openrewrite.github;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.FindSourceFiles;
+import org.openrewrite.Option;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
+import org.openrewrite.internal.StringUtils;
 import org.openrewrite.yaml.DeleteKey;
 
 import java.time.Duration;
 
+@EqualsAndHashCode(callSuper = false)
+@Getter
 public class RemoveAllCronTriggers extends Recipe {
 
-    @Getter
+    @Option(displayName = "Workflow files to match",
+            description = "Matches one or more workflows to update. Defaults to `*.{yml,yaml}`",
+            required = false,
+            example = "build.yml")
+    @Nullable
+    private final String workflowFileMatcher;
+
+    public RemoveAllCronTriggers() {
+        this(null);
+    }
+
+    @JsonCreator
+    public RemoveAllCronTriggers(@JsonProperty("workflowFileMatcher") @Nullable String workflowFileMatcher) {
+        this.workflowFileMatcher = workflowFileMatcher;
+    }
+
     final String displayName = "Remove all cron triggers";
 
-    @Getter
     final String description = "Removes all cron triggers from a workflow.";
 
-    @Getter
     final Duration estimatedEffortPerOccurrence = Duration.ofMinutes( 1 );
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new IsGitHubActionsWorkflow(),
+        String path = StringUtils.isBlank(workflowFileMatcher) ? ".github/workflows/*.{yml,yaml}" : ".github/workflows/" + workflowFileMatcher;
+        return Preconditions.check(new FindSourceFiles(path),
                 new DeleteKey("$.on.schedule", null).getVisitor());
     }
 }
