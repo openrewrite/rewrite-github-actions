@@ -33,306 +33,330 @@ class SetupNodeUpgradeNodeVersionTest implements RewriteTest {
     @Test
     void upgradeNodeVersion() {
         rewriteRun(
-                yaml(
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: '18'
-                              - run: npm ci
-                              - run: npm test
-                        """,
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: '24'
-                              - run: npm ci
-                              - run: npm test
-                        """,
-                        spec -> spec.path(".github/workflows/ci.yml")
-                )
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: '18'
+                    - run: npm ci
+                    - run: npm test
+              """,
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: '24'
+                    - run: npm ci
+                    - run: npm test
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
         );
     }
 
     @Test
     void upgradeNodeVersionFromNode20() {
         rewriteRun(
-                yaml(
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: '20'
-                              - run: npm ci
-                              - run: npm test
-                        """,
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: '24'
-                              - run: npm ci
-                              - run: npm test
-                        """,
-                        spec -> spec.path(".github/workflows/ci.yml")
-                )
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: '20'
+                    - run: npm ci
+                    - run: npm test
+              """,
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: '24'
+                    - run: npm ci
+                    - run: npm test
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
         );
     }
 
     @Test
     void upgradeNodeVersionFromVersionWithPatch() {
         rewriteRun(
-                yaml(
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v3
-                                with:
-                                  node-version: '18.17.1'
-                              - run: npm ci
-                              - run: npm test
-                        """,
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v3
-                                with:
-                                  node-version: '24'
-                              - run: npm ci
-                              - run: npm test
-                        """,
-                        spec -> spec.path(".github/workflows/ci.yml")
-                )
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v3
+                      with:
+                        node-version: '18.17.1'
+                    - run: npm ci
+                    - run: npm test
+              """,
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v3
+                      with:
+                        node-version: '24'
+                    - run: npm ci
+                    - run: npm test
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
         );
     }
 
     @Test
     void doNotUpgradeAlreadyCurrentVersion() {
         rewriteRun(
-                yaml(
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: '24'
-                              - run: npm ci
-                              - run: npm test
-                        """,
-                        spec -> spec.path(".github/workflows/ci.yml")
-                )
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: '24'
+                    - run: npm ci
+                    - run: npm test
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
         );
     }
 
     @Test
     void doNotUpgradeNewerVersion() {
         rewriteRun(
-                yaml(
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: '25'
-                              - run: npm ci
-                              - run: npm test
-                        """,
-                        spec -> spec.path(".github/workflows/ci.yml")
-                )
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: '25'
+                    - run: npm ci
+                    - run: npm test
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
         );
     }
 
     @Test
     void ignoreNonVersionValues() {
         rewriteRun(
-                yaml(
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: 'lts/*'
-                              - run: npm ci
-                              - run: npm test
-                        """,
-                        spec -> spec.path(".github/workflows/ci.yml")
-                )
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: 'lts/*'
+                    - run: npm ci
+                    - run: npm test
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
         );
     }
 
     @Test
     void ignoreLatestKeyword() {
         rewriteRun(
-                yaml(
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: 'latest'
-                              - run: npm ci
-                              - run: npm test
-                        """,
-                        spec -> spec.path(".github/workflows/ci.yml")
-                )
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: 'latest'
+                    - run: npm ci
+                    - run: npm test
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
         );
     }
 
     @Test
     void customMinimumVersion() {
         rewriteRun(
-                spec -> spec.recipe(new SetupNodeUpgradeNodeVersion(20)),
-                yaml(
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: '18'
-                              - run: npm ci
-                              - run: npm test
-                        """,
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: '20'
-                              - run: npm ci
-                              - run: npm test
-                        """,
-                        spec -> spec.path(".github/workflows/ci.yml")
-                )
+          spec -> spec.recipe(new SetupNodeUpgradeNodeVersion(20)),
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: '18'
+                    - run: npm ci
+                    - run: npm test
+              """,
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: '20'
+                    - run: npm ci
+                    - run: npm test
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
         );
     }
 
     @Test
     void multipleJobsUpgrade() {
         rewriteRun(
-                yaml(
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: '16'
-                              - run: npm test
-                          build:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: '18'
-                              - run: npm run build
-                        """,
-                        """
-                        name: CI
-                        on:
-                          pull_request:
-                        jobs:
-                          test:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: '24'
-                              - run: npm test
-                          build:
-                            runs-on: ubuntu-latest
-                            steps:
-                              - uses: actions/checkout@v4
-                              - uses: actions/setup-node@v4
-                                with:
-                                  node-version: '24'
-                              - run: npm run build
-                        """,
-                        spec -> spec.path(".github/workflows/ci.yml")
-                )
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: '16'
+                    - run: npm test
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: '18'
+                    - run: npm run build
+              """,
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: '24'
+                    - run: npm test
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: '24'
+                    - run: npm run build
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void doesNotUpdateMatrixVersion() {
+        rewriteRun(
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      node-version: [18, 20]
+                  steps:
+                    - uses: actions/setup-node@v4
+                      with:
+                        node-version: ${{ matrix.node-version }}
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
         );
     }
 }

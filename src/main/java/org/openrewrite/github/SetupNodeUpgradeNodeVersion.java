@@ -62,7 +62,8 @@ public class SetupNodeUpgradeNodeVersion extends Recipe {
 
         @Override
         public Yaml visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-            if (!nodeVersion.matches(getCursor())) {
+            if (!"node-version".equals(entry.getKey().getValue()) ||
+                    !nodeVersion.matches(getCursor())) {
                 return super.visitMappingEntry(entry, ctx);
             }
 
