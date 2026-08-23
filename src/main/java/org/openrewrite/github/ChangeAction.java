@@ -46,8 +46,10 @@ public class ChangeAction extends Recipe {
     String newAction;
 
     @Option(displayName = "Version",
-            description = "New version to use.",
+            description = "New version to use. When omitted, preserve the existing ref.",
+            required = false,
             example = "v3")
+    @Nullable
     String newVersion;
 
     String displayName = "Change GitHub Action";
@@ -63,6 +65,9 @@ public class ChangeAction extends Recipe {
                 new ChangeUsesVisitor(
                         "$..[?(@.uses =~ '" + oldAction + "(?:@.+)?')].uses",
                         oldSha,
-                        current -> newAction + '@' + newVersion));
+                        current -> {
+                            String ref = newVersion == null ? UsesRefs.refOf(current) : newVersion;
+                            return ref == null ? newAction : newAction + '@' + ref;
+                        }));
     }
 }
