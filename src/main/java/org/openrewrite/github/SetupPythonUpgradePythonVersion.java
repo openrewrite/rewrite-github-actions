@@ -26,6 +26,7 @@ import org.openrewrite.yaml.tree.Yaml;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.openrewrite.semver.Semver.Ecosystem.MAVEN;
@@ -40,6 +41,7 @@ public class SetupPythonUpgradePythonVersion extends Recipe {
 
     // Concrete versions only; `Semver.isVersion` also accepts ranges such as `3.x` and `3.7 - 3.9`
     private static final Pattern CPYTHON_VERSION = Pattern.compile("[0-9]+\\.[0-9]+(\\.[0-9]+)?([-+].*)?");
+    private static final Pattern NON_UPPER_BOUND_RANGE_VERSION = Pattern.compile("(?:^|[\\s,])(?:>=|>|[~^])?\\s*[v=]?([0-9]+(?:\\.[0-9]+){0,2})");
 
     private static final String ABOVE_ANY_PYTHON_VERSION = "999.999.999";
 
@@ -100,6 +102,16 @@ public class SetupPythonUpgradePythonVersion extends Recipe {
         // Maven precedence orders `major.minor`, which is not strict SemVer; ranges follow the npm grammar `setup-python` documents
         if (CPYTHON_VERSION.matcher(currentVersion).matches()) {
             return Semver.compare(currentVersion, version, MAVEN) < 0;
+        }
+        // A union or any lower/base version at or above the target could select a newer Python and must not be downgraded
+        if (currentVersion.contains("||")) {
+            return false;
+        }
+        Matcher rangeVersion = NON_UPPER_BOUND_RANGE_VERSION.matcher(currentVersion);
+        while (rangeVersion.find()) {
+            if (Semver.compare(rangeVersion.group(1), version, MAVEN) >= 0) {
+                return false;
+            }
         }
         // No comparator exposes a range's upper bound, so a range is only raised when it admits neither the target nor an implausibly high version
         return Semver.validate(currentVersion, null, NODE).isValid() &&

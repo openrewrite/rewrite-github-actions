@@ -349,7 +349,7 @@ class SetupPythonUpgradePythonVersionTest implements RewriteTest {
     }
 
     @Test
-    void preserveCompatibleRangeAndDynamicValues() {
+    void preserveNonOlderRangesAndDynamicValues() {
         rewriteRun(
           yaml(
             """
@@ -366,6 +366,18 @@ class SetupPythonUpgradePythonVersionTest implements RewriteTest {
                     - uses: actions/setup-python@v5
                       with:
                         python-version: '>=4 || <3.14'
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: '>3.14 <3.15'
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: '>=3.15 <4'
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: '3.15.x'
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: '~3.15'
                     - uses: actions/setup-python@v5
                       with:
                         python-version: ${{ matrix.python-version }}
