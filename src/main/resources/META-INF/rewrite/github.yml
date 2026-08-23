@@ -45,6 +45,23 @@ recipeList:
       fileMatcher: '.github/workflows/*.{yml,yaml}'
 ---
 type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.github.AddMergeGroupTrigger
+displayName: Add `merge_group` workflow trigger
+description: Trigger workflows for pull requests queued in a [merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue).
+tags:
+  - github
+preconditions:
+  - org.openrewrite.yaml.search.FindKey:
+      key: $.on.pull_request
+recipeList:
+  - org.openrewrite.yaml.MergeYaml:
+      key: $.on
+      yaml: |-
+        merge_group:
+      acceptTheirs: true
+      filePattern: '.github/workflows/*.{yml,yaml}'
+---
+type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.DependabotCheckForGithubActionsUpdatesDaily
 displayName: Check for github-actions updates daily
 description: Set dependabot to check for github-actions updates daily.
