@@ -808,6 +808,42 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.SetupPythonUpgradePythonVersion
+examples:
+- description: '`SetupPythonUpgradePythonVersionTest#upgradePythonVersion`'
+  parameters:
+  - '3.14'
+  sources:
+  - before: |
+      name: CI
+      on:
+        pull_request:
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                python-version: '3.10'
+            - run: python -m pytest
+    after: |
+      name: CI
+      on:
+        pull_request:
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                python-version: '3.14'
+            - run: python -m pytest
+    path: .github/workflows/ci.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.UpgradeSlackNotificationVersion2
 examples:
 - description: '`UpgradeSlackNotificationVersion2Test#updatesVersion2`'
