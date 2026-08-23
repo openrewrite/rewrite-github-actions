@@ -387,10 +387,59 @@ class SetupPythonUpgradePythonVersionTest implements RewriteTest {
                     - uses: actions/setup-python@v5
                       with:
                         python-version: graalpy-24.0
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void upgradeLoneBlockScalarVersionButNotAMatrix() {
+        rewriteRun(
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
                     - uses: actions/setup-python@v5
                       with:
                         python-version: |
                           3.10
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: >
+                          3.11
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: |
+                          3.10
+                          3.11
+              """,
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: |
+                          3.14
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: >
+                          3.14
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: |
+                          3.10
+                          3.11
               """,
             spec -> spec.path(".github/workflows/ci.yml")
           )

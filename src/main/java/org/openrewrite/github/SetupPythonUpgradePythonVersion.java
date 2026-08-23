@@ -21,10 +21,12 @@ import org.openrewrite.*;
 import org.openrewrite.semver.Semver;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlVisitor;
+import org.openrewrite.yaml.trait.BlockScalar;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,17 +79,20 @@ public class SetupPythonUpgradePythonVersion extends Recipe {
                 }
 
                 Yaml.Scalar currentValue = (Yaml.Scalar) entry.getValue();
-                // The value of a block scalar carries the block envelope, which `withValue` would clobber
-                if (currentValue.getStyle() == Yaml.Scalar.Style.LITERAL ||
-                        currentValue.getStyle() == Yaml.Scalar.Style.FOLDED) {
-                    return super.visitMappingEntry(entry, ctx);
+                // A block scalar's raw value carries the block envelope, so its body is read and written through the trait
+                Optional<BlockScalar> blockScalar = new BlockScalar.Matcher().get(currentValue, getCursor());
+                if (blockScalar.isPresent()) {
+                    BlockScalar block = blockScalar.get();
+                    String body = block.getBody();
+                    // Several versions in one block is a deliberate matrix, rather than a single version to raise
+                    if (!body.contains("\n") && isBelowTarget(body)) {
+                        return super.visitMappingEntry(entry.withValue(block.withBody(version)), ctx);
+                    }
+                } else if (isBelowTarget(currentValue.getValue())) {
+                    return super.visitMappingEntry(entry.withValue(currentValue.withValue(version)), ctx);
                 }
 
-                if (!isBelowTarget(currentValue.getValue())) {
-                    return super.visitMappingEntry(entry, ctx);
-                }
-
-                return super.visitMappingEntry(entry.withValue(currentValue.withValue(version)), ctx);
+                return super.visitMappingEntry(entry, ctx);
             }
 
             private boolean hasPythonVersionFile() {
