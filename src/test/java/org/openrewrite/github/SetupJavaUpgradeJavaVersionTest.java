@@ -246,4 +246,25 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void doesNotUpdateSequenceVersion() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  steps:
+                    - name: set-up-jdk
+                      uses: actions/setup-java@v2.3.0
+                      with:
+                        java-version:
+                          - 11
+                          - 17
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
 }

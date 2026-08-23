@@ -33,7 +33,10 @@ class SetupJavaDistributionReplacerVisitor extends YamlIsoVisitor<ExecutionConte
 
     @Override
     public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-        if (DISTRIBUTION_MATCHER.matches(getCursor()) && this.originalDistributions.contains(((Yaml.Scalar) entry.getValue()).getValue())) {
+        if ("distribution".equals(entry.getKey().getValue()) &&
+                entry.getValue() instanceof Yaml.Scalar &&
+                this.originalDistributions.contains(((Yaml.Scalar) entry.getValue()).getValue()) &&
+                DISTRIBUTION_MATCHER.matches(getCursor())) {
             return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue(this.newDistribution)), ctx);
         }
         return super.visitMappingEntry(entry, ctx);

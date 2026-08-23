@@ -212,4 +212,25 @@ class SetupJavaAdoptOpenJDKToTemurinTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void doNotChangeSequenceDistribution() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  steps:
+                    - name: set-up-jdk
+                      uses: actions/setup-java@v2
+                      with:
+                        distribution:
+                          - adopt
+                        java-version: "11"
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
 }

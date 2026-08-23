@@ -335,4 +335,27 @@ class SetupNodeUpgradeNodeVersionTest implements RewriteTest {
                 )
         );
     }
+
+    @Test
+    void doesNotUpdateSequenceVersion() {
+        rewriteRun(
+                yaml(
+                        """
+                        name: CI
+                        on:
+                          pull_request:
+                        jobs:
+                          test:
+                            runs-on: ubuntu-latest
+                            steps:
+                              - uses: actions/setup-node@v4
+                                with:
+                                  node-version:
+                                    - 18
+                                    - 20
+                        """,
+                        spec -> spec.path(".github/workflows/ci.yml")
+                )
+        );
+    }
 }
