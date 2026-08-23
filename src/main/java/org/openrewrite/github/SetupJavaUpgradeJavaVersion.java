@@ -58,7 +58,6 @@ public class SetupJavaUpgradeJavaVersion extends Recipe {
         @Override
         public Yaml visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
             if (!"java-version".equals(entry.getKey().getValue()) ||
-                    !(entry.getValue() instanceof Yaml.Scalar) ||
                     !javaVersion.matches(getCursor())) {
                 return super.visitMappingEntry(entry, ctx);
             }

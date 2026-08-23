@@ -248,20 +248,21 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
     }
 
     @Test
-    void doesNotUpdateSequenceVersion() {
+    void doesNotUpdateMatrixVersion() {
         rewriteRun(
           //language=yaml
           yaml(
             """
               jobs:
                 build:
+                  strategy:
+                    matrix:
+                      java-version: [11, 17]
                   steps:
                     - name: set-up-jdk
                       uses: actions/setup-java@v2.3.0
                       with:
-                        java-version:
-                          - 11
-                          - 17
+                        java-version: ${{ matrix.java-version }}
               """,
             spec -> spec.path(".github/workflows/ci.yml")
           )

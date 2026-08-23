@@ -337,7 +337,7 @@ class SetupNodeUpgradeNodeVersionTest implements RewriteTest {
     }
 
     @Test
-    void doesNotUpdateSequenceVersion() {
+    void doesNotUpdateMatrixVersion() {
         rewriteRun(
           yaml(
             """
@@ -347,12 +347,13 @@ class SetupNodeUpgradeNodeVersionTest implements RewriteTest {
               jobs:
                 test:
                   runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      node-version: [18, 20]
                   steps:
                     - uses: actions/setup-node@v4
                       with:
-                        node-version:
-                          - 18
-                          - 20
+                        node-version: ${{ matrix.node-version }}
               """,
             spec -> spec.path(".github/workflows/ci.yml")
           )

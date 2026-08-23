@@ -214,19 +214,21 @@ class SetupJavaAdoptOpenJDKToTemurinTest implements RewriteTest {
     }
 
     @Test
-    void doNotChangeSequenceDistribution() {
+    void doNotChangeMatrixDistribution() {
         rewriteRun(
           //language=yaml
           yaml(
             """
               jobs:
                 build:
+                  strategy:
+                    matrix:
+                      distribution: [adopt, zulu]
                   steps:
                     - name: set-up-jdk
                       uses: actions/setup-java@v2
                       with:
-                        distribution:
-                          - adopt
+                        distribution: ${{ matrix.distribution }}
                         java-version: "11"
               """,
             spec -> spec.path(".github/workflows/ci.yml")
