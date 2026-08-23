@@ -119,6 +119,77 @@ class ChangeActionTest implements RewriteTest {
     }
 
     @Test
+    void changeActionAndPreserveExistingRef() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeAction(
+            "gradle/wrapper-validation-action",
+            null,
+            "gradle/actions/wrapper-validation",
+            null)),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/wrapper-validation-action@v2 # v2
+                      with:
+                        path: ~/.gradle/caches
+                    - uses: gradle/wrapper-validation-action@main
+                    - uses: gradle/wrapper-validation-action@8ade135a41bc03ea155e62e844d188df1ea18608
+              """,
+            """
+              jobs:
+                deploy:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: gradle/actions/wrapper-validation@v2 # v2
+                      with:
+                        path: ~/.gradle/caches
+                    - uses: gradle/actions/wrapper-validation@main
+                    - uses: gradle/actions/wrapper-validation@8ade135a41bc03ea155e62e844d188df1ea18608
+              """,
+            source -> source.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void changeActionAndPreserveRefFromYaml() {
+        rewriteRun(
+          spec -> spec.recipeFromYaml("""
+            type: specs.openrewrite.org/v1beta/recipe
+            name: org.example.RenameAction
+            displayName: Rename action
+            description: Rename an action while preserving its ref.
+            recipeList:
+              - org.openrewrite.github.ChangeAction:
+                  oldAction: gradle/wrapper-validation-action
+                  newAction: gradle/actions/wrapper-validation
+            """, "org.example.RenameAction"),
+          //language=yaml
+          yaml(
+            """
+              runs:
+                using: composite
+                steps:
+                  - uses: gradle/wrapper-validation-action@v2
+                    shell: bash
+              """,
+            """
+              runs:
+                using: composite
+                steps:
+                  - uses: gradle/actions/wrapper-validation@v2
+                    shell: bash
+              """,
+            source -> source.path(".github/actions/validate/action.yml")
+          )
+        );
+    }
+
+    @Test
     void setupGradleYamlRecipe() {
         rewriteRun(
           spec -> spec.recipeFromResources("org.openrewrite.github.gradle.RenameGradleBuildActionToSetupGradle"),
