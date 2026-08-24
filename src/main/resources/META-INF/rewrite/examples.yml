@@ -78,6 +78,37 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.AddMergeGroupTrigger
+examples:
+- description: '`AddMergeGroupTriggerTest#addsMergeGroupTriggerToPullRequestWorkflow`'
+  sources:
+  - before: |
+      on:
+        push:
+          branches:
+            - main
+        pull_request:
+          branches:
+            - main
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+    after: |
+      on:
+        push:
+          branches:
+            - main
+        pull_request:
+          branches:
+            - main
+        merge_group:
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+    path: .github/workflows/ci.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.AutoCancelInProgressWorkflow
 examples:
 - description: '`AutoCancelInProgressWorkflowTest#addConcurrency`'
@@ -507,6 +538,42 @@ examples:
             keepThisInput: "keep this value"
             anotherInput: "also keep this"
     path: .github/workflows/caller.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.ReplaceDependabotReviewersWithCodeowners
+examples:
+- description: '`ReplaceDependabotReviewersWithCodeownersTest#migrateReviewersToNewCodeownersFile`'
+  parameters:
+  - 'null'
+  sources:
+  - before: |
+      version: 2
+      updates:
+        - package-ecosystem: maven
+          directory: /
+          schedule:
+            interval: weekly
+          reviewers:
+            - acme/backend
+        - package-ecosystem: npm
+          directory: /frontend
+          schedule:
+            interval: weekly
+          reviewers:
+            - acme/frontend
+    after: |
+      version: 2
+      updates:
+        - package-ecosystem: maven
+          directory: /
+          schedule:
+            interval: weekly
+        - package-ecosystem: npm
+          directory: /frontend
+          schedule:
+            interval: weekly
+    path: .github/dependabot.yml
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example

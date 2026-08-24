@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
+import org.openrewrite.internal.StringUtils;
 import org.openrewrite.text.PlainText;
 import org.openrewrite.text.PlainTextParser;
 import org.openrewrite.yaml.DeleteKey;
@@ -273,7 +274,7 @@ public class ReplaceDependabotReviewersWithCodeowners extends ScanningRecipe<Rep
             List<String> values = new ArrayList<>();
             for (Yaml.Sequence.Entry entry : ((Yaml.Sequence) block).getEntries()) {
                 String value = scalar(entry.getBlock());
-                if (value != null && !value.trim().isEmpty()) {
+                if (!StringUtils.isBlank( value )) {
                     values.add(value.trim());
                 }
             }
