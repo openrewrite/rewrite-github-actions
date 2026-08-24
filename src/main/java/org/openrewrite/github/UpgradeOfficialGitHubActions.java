@@ -53,7 +53,7 @@ public class UpgradeOfficialGitHubActions extends ScanningRecipe<UpgradeOfficial
 
     @Override
     public TreeVisitor<?, ExecutionContext> getScanner(Accumulator acc) {
-        return Preconditions.check(workflowOrActionDefinition(), new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(GitHubActionsPreconditions.workflowOrActionDefinition(), new YamlIsoVisitor<ExecutionContext>() {
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 if (entry.getKey() instanceof Yaml.Scalar &&
@@ -85,7 +85,7 @@ public class UpgradeOfficialGitHubActions extends ScanningRecipe<UpgradeOfficial
             replacements.put(target.getAction() + '@' + target.getCurrentRef(),
                     target.getAction() + '@' + target.getTarget());
         }
-        return Preconditions.check(workflowOrActionDefinition(), new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(GitHubActionsPreconditions.workflowOrActionDefinition(), new YamlIsoVisitor<ExecutionContext>() {
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
@@ -101,16 +101,6 @@ public class UpgradeOfficialGitHubActions extends ScanningRecipe<UpgradeOfficial
                 return e;
             }
         });
-    }
-
-    /**
-     * Official action references appear both in workflow files ({@code $.jobs..steps[].uses}) and in
-     * the {@code runs.steps[].uses} of composite action definitions, so both file types are matched.
-     */
-    private static TreeVisitor<?, ExecutionContext> workflowOrActionDefinition() {
-        return Preconditions.or(
-                new IsGitHubActionsWorkflow().getVisitor(),
-                new IsGitHubActionDefinition().getVisitor());
     }
 
     private static Map<String, String> loadKnownShas() {

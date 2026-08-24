@@ -268,4 +268,36 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void upgradeJavaVersionInCompositeAction() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              name: Setup
+              description: Composite action
+              runs:
+                using: composite
+                steps:
+                  - uses: actions/setup-java@v3
+                    with:
+                      java-version: "11"
+                      distribution: temurin
+              """,
+            """
+              name: Setup
+              description: Composite action
+              runs:
+                using: composite
+                steps:
+                  - uses: actions/setup-java@v3
+                    with:
+                      java-version: "21"
+                      distribution: temurin
+              """,
+            spec -> spec.path(".github/actions/setup/action.yml")
+          )
+        );
+    }
 }

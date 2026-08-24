@@ -310,4 +310,31 @@ class TemplateInjectionTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void flagsTemplateInjectionInCompositeAction() {
+        rewriteRun(
+          yaml(
+            """
+              name: Setup
+              description: Composite action
+              runs:
+                using: composite
+                steps:
+                  - run: 'echo "PR Title: ${{ github.event.pull_request.title }}"'
+                    shell: bash
+              """,
+            """
+              name: Setup
+              description: Composite action
+              runs:
+                using: composite
+                steps:
+                  - ~~(Potential template injection vulnerability. User-controlled input 'github.event.pull_request.title' used in run command without proper escaping.)~~>run: 'echo "PR Title: ${{ github.event.pull_request.title }}"'
+                    shell: bash
+              """,
+            spec -> spec.path(".github/actions/setup/action.yml")
+          )
+        );
+    }
 }

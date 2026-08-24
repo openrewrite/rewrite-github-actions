@@ -22,7 +22,7 @@ import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
-import org.openrewrite.github.IsGitHubActionsWorkflow;
+import org.openrewrite.github.GitHubActionsPreconditions;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
@@ -86,7 +86,7 @@ public class TemplateInjection extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                new IsGitHubActionsWorkflow(),
+                GitHubActionsPreconditions.workflowOrActionDefinition(),
                 new TemplateInjectionVisitor()
         );
     }

@@ -21,7 +21,7 @@ import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
-import org.openrewrite.github.IsGitHubActionsWorkflow;
+import org.openrewrite.github.GitHubActionsPreconditions;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -48,7 +48,7 @@ public class UnpinnedDockerImages extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                new IsGitHubActionsWorkflow(),
+                GitHubActionsPreconditions.workflowOrActionDefinition(),
                 new UnpinnedDockerImagesVisitor()
         );
     }
@@ -71,6 +71,12 @@ public class UnpinnedDockerImages extends Recipe {
             return mappingEntry;
         }
 
+        private boolean isLocalDockerfile(String imageValue) {
+            return !imageValue.startsWith("docker://") &&
+                    (imageValue.startsWith("./") || imageValue.startsWith("../") ||
+                            "Dockerfile".equals(imageValue) || imageValue.endsWith("/Dockerfile"));
+        }
+
         private boolean isImageEntry(Yaml.Mapping.Entry entry) {
             return "image".equals(entry.getKey().getValue());
         }
@@ -80,6 +86,11 @@ public class UnpinnedDockerImages extends Recipe {
         }
 
         private boolean isUnpinnedDockerImage(String imageValue) {
+            // A Docker container action may build from a local Dockerfile, which has no digest to pin
+            if (isLocalDockerfile(imageValue)) {
+                return false;
+            }
+
             // Handle docker:// prefix
             String cleanImage = imageValue;
             if (cleanImage.startsWith("docker://")) {

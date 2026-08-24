@@ -59,9 +59,7 @@ public class ChangeAction extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                Preconditions.or(
-                        new IsGitHubActionsWorkflow().getVisitor(),
-                        new IsGitHubActionDefinition().getVisitor()),
+                GitHubActionsPreconditions.workflowOrActionDefinition(),
                 new ChangeUsesVisitor(
                         "$..[?(@.uses =~ '" + oldAction + "(?:@.+)?')].uses",
                         oldSha,

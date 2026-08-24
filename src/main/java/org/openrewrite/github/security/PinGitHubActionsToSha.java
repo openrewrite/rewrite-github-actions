@@ -19,7 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
-import org.openrewrite.github.IsGitHubActionsWorkflow;
+import org.openrewrite.github.GitHubActionsPreconditions;
 import org.openrewrite.ipc.http.HttpSender;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -128,7 +128,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
         String apiToken = githubApiToken;
         List<String> allowList = includedActions == null ? emptyList() : includedActions;
         return Preconditions.check(
-                new IsGitHubActionsWorkflow(),
+                GitHubActionsPreconditions.workflowOrActionDefinition(),
                 new YamlIsoVisitor<ExecutionContext>() {
 
                     /**
