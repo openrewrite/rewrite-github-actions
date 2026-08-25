@@ -45,7 +45,7 @@ public class SetupJavaAdoptOpenj9ToSemeru extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(GitHubActionsPreconditions.workflowOrActionDefinition(),
+        return Preconditions.check(new IsGitHubActionsFile(),
                 new SetupJavaDistributionReplacerVisitor(singletonList("adopt-openj9"), "semeru"));
     }
 

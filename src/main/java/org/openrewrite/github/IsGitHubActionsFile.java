@@ -15,23 +15,26 @@
  */
 package org.openrewrite.github;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
+import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 
-public class GitHubActionsPreconditions {
+public class IsGitHubActionsFile extends Recipe {
 
-    private GitHubActionsPreconditions() {
-    }
+    @Getter
+    final String displayName = "Is GitHub Actions workflow or action definition";
 
-    /**
-     * Steps, and the {@code uses:} references within them, appear both in workflow files under
-     * {@code $.jobs.*.steps} and in the {@code $.runs.steps} of composite action definitions. Use this
-     * in favor of {@link IsGitHubActionsWorkflow} alone for any recipe that operates on steps, so that
-     * composite actions are covered too. Recipes that read workflow-only keys such as {@code on:},
-     * {@code permissions:}, {@code runs-on:} or {@code needs:} should keep the narrower precondition.
-     */
-    public static TreeVisitor<?, ExecutionContext> workflowOrActionDefinition() {
+    @Getter
+    final String description = "Checks if the file is either a GitHub Actions workflow file, or a GitHub Action " +
+            "definition (`action.yml`). Steps, and the `uses:` references within them, appear in both, so prefer " +
+            "this over `IsGitHubActionsWorkflow` as a precondition for any recipe that operates on steps. Recipes " +
+            "that read workflow-only keys such as `on:`, `permissions:`, `runs-on:` or `needs:` should keep the " +
+            "narrower `IsGitHubActionsWorkflow`.";
+
+    @Override
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.or(
                 new IsGitHubActionsWorkflow().getVisitor(),
                 new IsGitHubActionDefinition().getVisitor());

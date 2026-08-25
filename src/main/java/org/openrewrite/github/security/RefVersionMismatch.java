@@ -18,7 +18,7 @@ package org.openrewrite.github.security;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
-import org.openrewrite.github.GitHubActionsPreconditions;
+import org.openrewrite.github.IsGitHubActionsFile;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -49,7 +49,7 @@ public class RefVersionMismatch extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                GitHubActionsPreconditions.workflowOrActionDefinition(),
+                new IsGitHubActionsFile(),
                 new RefVersionMismatchVisitor()
         );
     }

@@ -53,7 +53,7 @@ public class UpgradeOfficialGitHubActions extends ScanningRecipe<UpgradeOfficial
 
     @Override
     public TreeVisitor<?, ExecutionContext> getScanner(Accumulator acc) {
-        return Preconditions.check(GitHubActionsPreconditions.workflowOrActionDefinition(), new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new IsGitHubActionsFile(), new YamlIsoVisitor<ExecutionContext>() {
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 if (entry.getKey() instanceof Yaml.Scalar &&
@@ -85,7 +85,7 @@ public class UpgradeOfficialGitHubActions extends ScanningRecipe<UpgradeOfficial
             replacements.put(target.getAction() + '@' + target.getCurrentRef(),
                     target.getAction() + '@' + target.getTarget());
         }
-        return Preconditions.check(GitHubActionsPreconditions.workflowOrActionDefinition(), new YamlIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new IsGitHubActionsFile(), new YamlIsoVisitor<ExecutionContext>() {
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
