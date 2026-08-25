@@ -30,35 +30,46 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ReplaceAlwaysWithSuccessOrFailure extends Recipe {
-    private static final Pattern ALWAYS_CALL = Pattern.compile("(?<![A-Za-z0-9_.])always\\s*\\(\\s*\\)(?![A-Za-z0-9_])");
+    // A leading string literal alternative consumes `'...'` so that only the unquoted group 1 calls are replaced
+    private static final Pattern ALWAYS_CALL = Pattern.compile("'(?:[^']|'')*'|((?<![A-Za-z0-9_.])always\\s*\\(\\s*\\)(?![A-Za-z0-9_]))");
+    private static final Pattern ONLY_ALWAYS = Pattern.compile("\\s*(?:always\\s*\\(\\s*\\)|\\$\\{\\{\\s*always\\s*\\(\\s*\\)\\s*}})\\s*");
     private static final String REPLACEMENT = "success() || failure()";
+    private static final String PARENTHESIZED_REPLACEMENT = "(" + REPLACEMENT + ")";
+    private static final BlockScalar.Matcher BLOCK_SCALAR = new BlockScalar.Matcher();
+    private static final JsonPathMatcher STEP_CONDITION = new JsonPathMatcher("$..steps[*].if");
+    private static final JsonPathMatcher JOB_CONDITION = new JsonPathMatcher("$.jobs.*.if");
 
     @Getter
     final String displayName = "Replace `always()` with `success() || failure()`";
 
     @Getter
     final String description = "Replace `always()` in GitHub Actions job and step conditions with `success() || failure()` " +
-            "so that canceled workflows do not continue running or hang until they time out.";
+            "so that canceled workflows do not continue running or hang until they time out. Note that teardown steps " +
+            "deliberately using `always()` to still run on cancellation will no longer run.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(new IsGitHubActionsFile(), new YamlIsoVisitor<ExecutionContext>() {
-            private final JsonPathMatcher jobCondition = new JsonPathMatcher("$.jobs.*.if");
-            private final JsonPathMatcher stepCondition = new JsonPathMatcher("$..steps[*].if");
-
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
-                if ((jobCondition.matches(getCursor()) || stepCondition.matches(getCursor())) &&
-                        e.getValue() instanceof Yaml.Scalar) {
-                    Yaml.Scalar condition = (Yaml.Scalar) e.getValue();
-                    Optional<BlockScalar> blockScalar = new BlockScalar.Matcher().get(condition, getCursor());
-                    String value = blockScalar.isPresent() ? blockScalar.get().getBody() : condition.getValue();
-                    String updated = replaceAlways(value);
-                    if (!value.equals(updated)) {
-                        return e.withValue(blockScalar.isPresent() ?
-                                blockScalar.get().withBody(updated) : condition.withValue(updated));
-                    }
+                if (!"if".equals(e.getKey().getValue()) || !(e.getValue() instanceof Yaml.Scalar)) {
+                    return e;
+                }
+                Yaml.Scalar condition = (Yaml.Scalar) e.getValue();
+                if (!condition.getValue().contains("always") ||
+                        !(STEP_CONDITION.matches(getCursor()) || JOB_CONDITION.matches(getCursor()))) {
+                    return e;
+                }
+                Optional<BlockScalar> blockScalar = BLOCK_SCALAR.get(condition, getCursor());
+                String value = blockScalar.isPresent() ? blockScalar.get().getBody() : condition.getValue();
+                // `''` is YAML's escape for a quote, not a closed expression string
+                String updated = condition.getStyle() == Yaml.Scalar.Style.SINGLE_QUOTED ?
+                        replaceAlways(value.replace("''", "'")).replace("'", "''") :
+                        replaceAlways(value);
+                if (!value.equals(updated)) {
+                    return e.withValue(blockScalar.isPresent() ?
+                            blockScalar.get().withBody(updated) : condition.withValue(updated));
                 }
                 return e;
             }
@@ -66,52 +77,14 @@ public class ReplaceAlwaysWithSuccessOrFailure extends Recipe {
     }
 
     private static String replaceAlways(String condition) {
+        String replacement = ONLY_ALWAYS.matcher(condition).matches() ? REPLACEMENT : PARENTHESIZED_REPLACEMENT;
         Matcher matcher = ALWAYS_CALL.matcher(condition);
-        String expression = condition.trim();
-        if (expression.startsWith("${{") && expression.endsWith("}}")) {
-            expression = expression.substring(3, expression.length() - 2).trim();
-        }
-
-        String replacement = ALWAYS_CALL.matcher(expression).matches() ?
-                REPLACEMENT : "(" + REPLACEMENT + ")";
-        StringBuilder updated = null;
-        int lastMatchEnd = 0;
+        StringBuffer updated = new StringBuffer();
         while (matcher.find()) {
-            if (isInsideStringLiteral(condition, matcher.start())) {
-                continue;
-            }
-            if (updated == null) {
-                updated = new StringBuilder(condition.length() + replacement.length());
-            }
-            updated.append(condition, lastMatchEnd, matcher.start()).append(replacement);
-            lastMatchEnd = matcher.end();
-        }
-        return updated == null ? condition : updated.append(condition, lastMatchEnd, condition.length()).toString();
-    }
-
-    private static boolean isInsideStringLiteral(String expression, int offset) {
-        boolean singleQuoted = false;
-        boolean doubleQuoted = false;
-        for (int i = 0; i < offset; i++) {
-            char current = expression.charAt(i);
-            if (singleQuoted) {
-                if (current == '\'' && i + 1 < offset && expression.charAt(i + 1) == '\'') {
-                    i++;
-                } else if (current == '\'') {
-                    singleQuoted = false;
-                }
-            } else if (doubleQuoted) {
-                if (current == '\\' && i + 1 < offset) {
-                    i++;
-                } else if (current == '"') {
-                    doubleQuoted = false;
-                }
-            } else if (current == '\'') {
-                singleQuoted = true;
-            } else if (current == '"') {
-                doubleQuoted = true;
+            if (matcher.group(1) != null) {
+                matcher.appendReplacement(updated, replacement);
             }
         }
-        return singleQuoted || doubleQuoted;
+        return matcher.appendTail(updated).toString();
     }
 }

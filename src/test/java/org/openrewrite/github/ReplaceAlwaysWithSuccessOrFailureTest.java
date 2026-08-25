@@ -239,6 +239,38 @@ class ReplaceAlwaysWithSuccessOrFailureTest implements RewriteTest {
     }
 
     @Test
+    void doesNotReplaceTextInsideQuotedScalarStringLiterals() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - if: 'always() && contains(github.event.head_commit.message, ''always()'')'
+                      run: ./publish.sh
+                    - if: "always() && contains(github.event.head_commit.message, 'always()')"
+                      run: ./upload.sh
+              """,
+            """
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - if: '(success() || failure()) && contains(github.event.head_commit.message, ''always()'')'
+                      run: ./publish.sh
+                    - if: "(success() || failure()) && contains(github.event.head_commit.message, 'always()')"
+                      run: ./upload.sh
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
     void doesNotChangeUnrelatedIfKeys() {
         rewriteRun(
           //language=yaml
