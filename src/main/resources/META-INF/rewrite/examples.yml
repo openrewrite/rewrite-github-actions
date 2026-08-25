@@ -541,6 +541,34 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.ReplaceAlwaysWithSuccessOrFailure
+examples:
+- description: '`ReplaceAlwaysWithSuccessOrFailureTest#replacesJobAndStepConditions`'
+  sources:
+  - before: |
+      on: push
+      jobs:
+        build:
+          if: always()
+          runs-on: ubuntu-latest
+          steps:
+            - name: Upload results
+              if: ${{ always() }}
+              run: ./upload-results.sh
+    after: |
+      on: push
+      jobs:
+        build:
+          if: success() || failure()
+          runs-on: ubuntu-latest
+          steps:
+            - name: Upload results
+              if: ${{ success() || failure() }}
+              run: ./upload-results.sh
+    path: .github/workflows/ci.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.ReplaceDependabotReviewersWithCodeowners
 examples:
 - description: '`ReplaceDependabotReviewersWithCodeownersTest#migrateReviewersToNewCodeownersFile`'
