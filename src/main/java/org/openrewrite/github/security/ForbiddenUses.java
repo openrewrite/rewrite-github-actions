@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
-import org.openrewrite.github.IsGitHubActionsWorkflow;
+import org.openrewrite.github.IsGitHubActionsFile;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
@@ -109,7 +109,7 @@ public class ForbiddenUses extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                new IsGitHubActionsWorkflow(),
+                new IsGitHubActionsFile(),
                 new ForbiddenUsesVisitor(allDangerousActions, allSuspiciousPatterns)
         );
     }

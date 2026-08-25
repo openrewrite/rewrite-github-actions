@@ -473,7 +473,7 @@ class SetupPythonUpgradePythonVersionTest implements RewriteTest {
                       with:
                         python-version: '3.10'
               """,
-            spec -> spec.path("action.yml")
+            spec -> spec.path("config.yml")
           )
         );
     }

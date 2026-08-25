@@ -91,7 +91,7 @@ public class SetupPythonToUv extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                new IsGitHubActionsWorkflow(),
+                new IsGitHubActionsFile(),
                 new SetupPythonToUvVisitor(
                     uvVersion != null ? uvVersion : "v6",
                     mapSyncStrategy(syncStrategy != null ? syncStrategy : "basic"),

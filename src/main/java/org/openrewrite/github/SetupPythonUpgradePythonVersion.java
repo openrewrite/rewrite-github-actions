@@ -68,7 +68,7 @@ public class SetupPythonUpgradePythonVersion extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new IsGitHubActionsWorkflow(), new YamlVisitor<ExecutionContext>() {
+        return Preconditions.check(new IsGitHubActionsFile(), new YamlVisitor<ExecutionContext>() {
             @Override
             public Yaml visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 if (!"python-version".equals(entry.getKey().getValue()) ||

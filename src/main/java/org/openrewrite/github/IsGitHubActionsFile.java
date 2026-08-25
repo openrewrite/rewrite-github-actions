@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 the original author or authors.
+ * Copyright 2026 the original author or authors.
  * <p>
  * Licensed under the Moderne Source Available License (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,28 +21,22 @@ import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 
-import java.util.Arrays;
-import java.util.Set;
-
-import static java.util.Collections.singleton;
-
-public class SetupJavaAdoptOpenJDKToTemurin extends Recipe {
-
+public class IsGitHubActionsFile extends Recipe {
 
     @Getter
-    final String displayName = "Use `actions/setup-java` `temurin` distribution";
+    final String displayName = "Is GitHub Actions workflow or action definition";
 
     @Getter
-    final String description = "Adopt OpenJDK got moved to Eclipse Temurin and won't be updated anymore. " +
-                "It is highly recommended to migrate workflows from adopt to temurin to keep receiving software and security updates. " +
-                "See more details in the [Good-bye AdoptOpenJDK post](https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/).";
-
-    @Getter
-    final Set<String> tags = singleton( "security" );
+    final String description = "Checks if the file is either a GitHub Actions workflow file, or a GitHub Action " +
+            "definition (`action.yml`). Steps, and the `uses:` references within them, appear in both, so prefer " +
+            "this over `IsGitHubActionsWorkflow` as a precondition for any recipe that operates on steps. Recipes " +
+            "that read workflow-only keys such as `on:`, `permissions:`, `runs-on:` or `needs:` should keep the " +
+            "narrower `IsGitHubActionsWorkflow`.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new IsGitHubActionsFile(), new SetupJavaDistributionReplacerVisitor(Arrays.asList("adopt", "adopt-hotspot"), "temurin"));
+        return Preconditions.or(
+                new IsGitHubActionsWorkflow().getVisitor(),
+                new IsGitHubActionDefinition().getVisitor());
     }
-
 }
