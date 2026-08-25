@@ -15,14 +15,19 @@
  */
 package org.openrewrite.github;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
+import org.openrewrite.internal.ListUtils;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlIsoVisitor;
+import org.openrewrite.yaml.YamlParser;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @EqualsAndHashCode(callSuper = false)
@@ -39,9 +44,45 @@ public class ChangeDependabotScheduleInterval extends Recipe {
             example = "weekly")
     String interval;
 
+    @Option(displayName = "Schedule day",
+            description = "The day of the week the package-ecosystem should use.",
+            example = "monday",
+            required = false)
+    @Nullable
+    String day;
+
+    @Option(displayName = "Schedule time",
+            description = "The time of day the package-ecosystem should use, in `HH:mm` format.",
+            example = "09:00",
+            required = false)
+    @Nullable
+    String time;
+
+    @Option(displayName = "Schedule timezone",
+            description = "The IANA time zone identifier the package-ecosystem should use.",
+            example = "Asia/Tokyo",
+            required = false)
+    @Nullable
+    String timezone;
+
+    public ChangeDependabotScheduleInterval(String packageEcosystem, String interval) {
+        this(packageEcosystem, interval, null, null, null);
+    }
+
+    @JsonCreator
+    public ChangeDependabotScheduleInterval(String packageEcosystem, String interval, @Nullable String day,
+                                            @Nullable String time, @Nullable String timezone) {
+        this.packageEcosystem = packageEcosystem;
+        this.interval = interval;
+        this.day = day;
+        this.time = time;
+        this.timezone = timezone;
+    }
+
     String displayName = "Change dependabot schedule interval";
 
-    String description = "Change the schedule interval for a given package-ecosystem in a `dependabot.yml` configuration file. " +
+    String description = "Change the schedule interval and optionally the day, time, and time zone for a given " +
+                "package-ecosystem in a `dependabot.yml` configuration file. " +
                 "[The available configuration options for dependabot are listed on GitHub](https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates).";
 
     @Override
@@ -56,14 +97,110 @@ public class ChangeDependabotScheduleInterval extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(new FindSourceFiles(".github/dependabot.{yml,yaml}"), new YamlIsoVisitor<ExecutionContext>() {
-            private final JsonPathMatcher targetEcosystem = new JsonPathMatcher("$.updates[?(@.package-ecosystem =~ '" + packageEcosystem + "')].schedule.interval");
+            private static final String CONFIGURE_SCHEDULE = "CONFIGURE_SCHEDULE";
+            private final JsonPathMatcher packageEcosystemMatcher =
+                    new JsonPathMatcher("$.updates[*].package-ecosystem");
 
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
-                if (targetEcosystem.matches(getCursor()) && !((Yaml.Scalar) entry.getValue()).getValue().equals(interval)) {
-                    return super.visitMappingEntry(entry.withValue(((Yaml.Scalar) entry.getValue()).withValue(interval)), ctx);
+                Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
+                if (packageEcosystemMatcher.matches(getCursor()) && e.getValue() instanceof Yaml.Scalar &&
+                        packageEcosystem.equals(((Yaml.Scalar) e.getValue()).getValue())) {
+                    getCursor().dropParentUntil(Yaml.Mapping.class::isInstance).putMessage(CONFIGURE_SCHEDULE, true);
                 }
-                return super.visitMappingEntry(entry, ctx);
+                return e;
+            }
+
+            @Override
+            public Yaml.Mapping visitMapping(Yaml.Mapping mapping, ExecutionContext ctx) {
+                Yaml.Mapping m = super.visitMapping(mapping, ctx);
+                if (!Boolean.TRUE.equals(getCursor().pollMessage(CONFIGURE_SCHEDULE))) {
+                    return m;
+                }
+                return m.withEntries(ListUtils.map(m.getEntries(), entry -> {
+                    if (!"schedule".equals(entry.getKey().getValue()) ||
+                            !(entry.getValue() instanceof Yaml.Mapping)) {
+                        return entry;
+                    }
+                    Cursor scheduleEntryCursor = new Cursor(getCursor(), entry);
+                    return entry.withValue(configureSchedule(
+                            (Yaml.Mapping) entry.getValue(), ctx, scheduleEntryCursor));
+                }));
+            }
+
+            private Yaml.Mapping configureSchedule(Yaml.Mapping schedule, ExecutionContext ctx,
+                                                   Cursor scheduleEntryCursor) {
+                Yaml.Mapping m = upsert(schedule, "interval", interval, false, ctx, scheduleEntryCursor);
+                if (day != null) {
+                    m = upsert(m, "day", day, false, ctx, scheduleEntryCursor);
+                }
+                if (time != null) {
+                    m = upsert(m, "time", time, true, ctx, scheduleEntryCursor);
+                }
+                if (timezone != null) {
+                    m = upsert(m, "timezone", timezone, true, ctx, scheduleEntryCursor);
+                }
+                return m;
+            }
+
+            private Yaml.Mapping upsert(Yaml.Mapping schedule, String key, String value, boolean quoted,
+                                        ExecutionContext ctx, Cursor scheduleEntryCursor) {
+                for (Yaml.Mapping.Entry entry : schedule.getEntries()) {
+                    if (key.equals(entry.getKey().getValue())) {
+                        if (entry.getValue() instanceof Yaml.Scalar &&
+                                !value.equals(((Yaml.Scalar) entry.getValue()).getValue())) {
+                            return schedule.withEntries(ListUtils.map(schedule.getEntries(), e -> e == entry ?
+                                    e.withValue(((Yaml.Scalar) e.getValue()).withValue(value)) : e));
+                        }
+                        return schedule;
+                    }
+                }
+
+                Yaml.Mapping.Entry newEntry = new YamlParser()
+                        .parse(ctx, key + ": " + (quoted ? quote(value) : value))
+                        .map(Yaml.Documents.class::cast)
+                        .map(documents -> (Yaml.Mapping) documents.getDocuments().get(0).getBlock())
+                        .map(parsed -> parsed.getEntries().get(0))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("Failed to parse Dependabot schedule option"));
+                if (schedule.getOpeningBracePrefix() != null) {
+                    schedule = schedule.withOpeningBracePrefix(null).withClosingBracePrefix(null);
+                    schedule = schedule.withEntries(ListUtils.mapFirst(schedule.getEntries(),
+                            first -> first.withPrefix("\n")));
+                    schedule = autoFormat(schedule, ctx, scheduleEntryCursor);
+                }
+                Cursor scheduleCursor = new Cursor(scheduleEntryCursor, schedule);
+                newEntry = autoFormat(newEntry, ctx, scheduleCursor);
+
+                List<Yaml.Mapping.Entry> entries = schedule.getEntries();
+                int keyOrder = scheduleKeyOrder(key);
+                int insertionIndex = entries.size();
+                for (int i = 0; i < entries.size(); i++) {
+                    if (scheduleKeyOrder(entries.get(i).getKey().getValue()) > keyOrder) {
+                        insertionIndex = i;
+                        break;
+                    }
+                }
+                return schedule.withEntries(ListUtils.insert(entries, newEntry, insertionIndex));
+            }
+
+            private int scheduleKeyOrder(String key) {
+                switch (key) {
+                    case "interval":
+                        return 0;
+                    case "day":
+                        return 1;
+                    case "time":
+                        return 2;
+                    case "timezone":
+                        return 3;
+                    default:
+                        return Integer.MAX_VALUE;
+                }
+            }
+
+            private String quote(String value) {
+                return '"' + value.replace("\\", "\\\\").replace("\"", "\\\"") + '"';
             }
         });
     }
