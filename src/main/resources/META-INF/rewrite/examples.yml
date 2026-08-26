@@ -279,6 +279,23 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.IsGitHubActionsFile
+examples:
+- description: '`IsGitHubActionsFileTest#detectCompositeAction`'
+  sources:
+  - before: |
+      runs:
+        using: composite
+        steps:
+          - uses: actions/checkout@v4
+    after: |
+      runs:
+        using: composite
+        steps:
+          - uses: actions/checkout@v4
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.IsGitHubActionsWorkflow
 examples:
 - description: '`IsGitHubActionsWorkflowTest#detectYml`'

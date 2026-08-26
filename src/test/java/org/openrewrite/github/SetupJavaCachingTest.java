@@ -18,6 +18,7 @@ package org.openrewrite.github;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -28,6 +29,44 @@ class SetupJavaCachingTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new SetupJavaCaching());
+    }
+
+    @DocumentExample
+    @Test
+    void setupJavaCachingInCompositeAction() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              name: Build
+              description: Composite action
+              runs:
+                using: composite
+                steps:
+                  - uses: actions/setup-java
+                    with:
+                      distribution: 'temurin'
+                      java-version: '11'
+                  - run: ./gradlew build
+                    shell: bash
+              """,
+            """
+              name: Build
+              description: Composite action
+              runs:
+                using: composite
+                steps:
+                  - uses: actions/setup-java
+                    with:
+                      distribution: 'temurin'
+                      java-version: '11'
+                      cache: 'gradle'
+                  - run: ./gradlew build
+                    shell: bash
+              """,
+            spec -> spec.path(".github/actions/build/action.yml")
+          )
+        );
     }
 
     @ParameterizedTest
@@ -69,43 +108,6 @@ class SetupJavaCachingTest implements RewriteTest {
               buildTool.split("->")[0].trim()
             ),
             spec -> spec.path(".github/workflows/ci.yml")
-          )
-        );
-    }
-
-    @Test
-    void setupJavaCachingInCompositeAction() {
-        rewriteRun(
-          //language=yaml
-          yaml(
-            """
-              name: Build
-              description: Composite action
-              runs:
-                using: composite
-                steps:
-                  - uses: actions/setup-java
-                    with:
-                      distribution: 'temurin'
-                      java-version: '11'
-                  - run: ./gradlew build
-                    shell: bash
-              """,
-            """
-              name: Build
-              description: Composite action
-              runs:
-                using: composite
-                steps:
-                  - uses: actions/setup-java
-                    with:
-                      distribution: 'temurin'
-                      java-version: '11'
-                      cache: 'gradle'
-                  - run: ./gradlew build
-                    shell: bash
-              """,
-            spec -> spec.path(".github/actions/build/action.yml")
           )
         );
     }
