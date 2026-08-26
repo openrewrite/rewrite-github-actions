@@ -68,6 +68,289 @@ class ChangeDependabotScheduleIntervalTest implements RewriteTest {
     }
 
     @Test
+    void configureCompleteScheduleAndAddMissingFieldsInOrder() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeDependabotScheduleInterval(
+            "github-actions", "weekly", "monday", "09:00", "Asia/Tokyo")),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /one
+                  schedule:
+                    # Keep the interval comment
+                    interval: daily # and its suffix
+                    day: sunday
+                    time: "08:00"
+                    timezone: "Europe/Paris"
+                - package-ecosystem: maven
+                  directory: /
+                  schedule:
+                    interval: daily
+                    day: friday
+                    time: "07:00"
+                    timezone: "Europe/London"
+                - package-ecosystem: github-actions
+                  directory: /two
+                  schedule:
+                    # Keep the timezone comment
+                    timezone: "UTC" # and its suffix
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /one
+                  schedule:
+                    # Keep the interval comment
+                    interval: weekly # and its suffix
+                    day: monday
+                    time: "09:00"
+                    timezone: "Asia/Tokyo"
+                - package-ecosystem: maven
+                  directory: /
+                  schedule:
+                    interval: daily
+                    day: friday
+                    time: "07:00"
+                    timezone: "Europe/London"
+                - package-ecosystem: github-actions
+                  directory: /two
+                  schedule:
+                    interval: weekly
+                    day: monday
+                    time: "09:00"
+                    # Keep the timezone comment
+                    timezone: "Asia/Tokyo" # and its suffix
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          )
+        );
+    }
+
+    @Test
+    void nullScheduleOptionsLeaveExistingFieldsUnchanged() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeDependabotScheduleInterval(
+            "github-actions", "weekly", null, null, null)),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+                    interval: daily
+                    day: sunday
+                    time: "08:00"
+                    timezone: "Europe/Paris"
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+                    interval: weekly
+                    day: sunday
+                    time: "08:00"
+                    timezone: "Europe/Paris"
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          )
+        );
+    }
+
+    @Test
+    void addMissingScheduleFieldsToYamlFile() {
+        rewriteRun(
+          spec -> spec.recipeFromYaml("""
+            type: specs.openrewrite.org/v1beta/recipe
+            name: org.example.ConfigureDependabotSchedule
+            displayName: Configure Dependabot schedule
+            description: Configure a complete Dependabot schedule.
+            recipeList:
+              - org.openrewrite.github.ChangeDependabotScheduleInterval:
+                  packageEcosystem: github-actions
+                  interval: monthly
+                  day: tuesday
+                  time: "10:30"
+                  timezone: America/New_York
+            """, "org.example.ConfigureDependabotSchedule"),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule: { interval: daily }
+                - package-ecosystem: github-actions
+                  directory: /empty
+                  schedule: {}
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+                    interval: monthly
+                    day: tuesday
+                    time: "10:30"
+                    timezone: "America/New_York"
+                - package-ecosystem: github-actions
+                  directory: /empty
+                  schedule:
+                    interval: monthly
+                    day: tuesday
+                    time: "10:30"
+                    timezone: "America/New_York"
+              """,
+            spec -> spec.path(".github/dependabot.yaml")
+          )
+        );
+    }
+
+    @Test
+    void addScheduleFieldsToEmptyBlock() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeDependabotScheduleInterval(
+            "github-actions", "weekly", "monday", "09:00", "UTC")),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+                    interval: weekly
+                    day: monday
+                    time: "09:00"
+                    timezone: "UTC"
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          )
+        );
+    }
+
+    @Test
+    void addScheduleFieldsWhenUpdateUsesFlowMapping() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeDependabotScheduleInterval(
+            "github-actions", "weekly", "monday", "09:00", "UTC")),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - { package-ecosystem: github-actions, directory: /, schedule: { interval: daily } }
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+                    interval: weekly
+                    day: monday
+                    time: "09:00"
+                    timezone: "UTC"
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          )
+        );
+    }
+
+    @Test
+    void oldDeclarativeConfigurationPreservesExistingFlowMappingOptions() {
+        rewriteRun(
+          spec -> spec.recipeFromYaml("""
+            type: specs.openrewrite.org/v1beta/recipe
+            name: org.example.ChangeDependabotInterval
+            displayName: Change Dependabot interval
+            description: Change only the Dependabot interval.
+            recipeList:
+              - org.openrewrite.github.ChangeDependabotScheduleInterval:
+                  packageEcosystem: github-actions
+                  interval: weekly
+            """, "org.example.ChangeDependabotInterval"),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule: { interval: daily, day: sunday, time: "08:00", timezone: "Europe/Paris" }
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule: { interval: weekly, day: sunday, time: "08:00", timezone: "Europe/Paris" }
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          )
+        );
+    }
+
+    @Test
+    void packageEcosystemRegexRemainsSupported() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeDependabotScheduleInterval("maven|gradle", "daily")),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: maven
+                  directory: /
+                  schedule:
+                    interval: weekly
+                - package-ecosystem: gradle
+                  directory: /
+                  schedule:
+                    interval: monthly
+                - package-ecosystem: npm
+                  directory: /
+                  schedule:
+                    interval: weekly
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: maven
+                  directory: /
+                  schedule:
+                    interval: daily
+                - package-ecosystem: gradle
+                  directory: /
+                  schedule:
+                    interval: daily
+                - package-ecosystem: npm
+                  directory: /
+                  schedule:
+                    interval: weekly
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          )
+        );
+    }
+
+    @Test
     void noMatchingPackageEcosystem() {
         rewriteRun(
           spec -> spec.recipe(new ChangeDependabotScheduleInterval("npm", "weekly")),
