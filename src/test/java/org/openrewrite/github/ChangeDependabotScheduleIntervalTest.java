@@ -216,6 +216,64 @@ class ChangeDependabotScheduleIntervalTest implements RewriteTest {
     }
 
     @Test
+    void addScheduleFieldsToEmptyBlock() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeDependabotScheduleInterval(
+            "github-actions", "weekly", "monday", "09:00", "UTC")),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+                    interval: weekly
+                    day: monday
+                    time: "09:00"
+                    timezone: "UTC"
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          )
+        );
+    }
+
+    @Test
+    void addScheduleFieldsWhenUpdateUsesFlowMapping() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeDependabotScheduleInterval(
+            "github-actions", "weekly", "monday", "09:00", "UTC")),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - { package-ecosystem: github-actions, directory: /, schedule: { interval: daily } }
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule:
+                    interval: weekly
+                    day: monday
+                    time: "09:00"
+                    timezone: "UTC"
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          )
+        );
+    }
+
+    @Test
     void oldDeclarativeConfigurationPreservesExistingFlowMappingOptions() {
         rewriteRun(
           spec -> spec.recipeFromYaml("""

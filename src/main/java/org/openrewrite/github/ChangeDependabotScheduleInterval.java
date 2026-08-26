@@ -119,15 +119,62 @@ public class ChangeDependabotScheduleInterval extends Recipe {
                 if (!Boolean.TRUE.equals(getCursor().pollMessage(CONFIGURE_SCHEDULE))) {
                     return m;
                 }
+                Cursor mappingParentCursor = getCursor().getParentOrThrow();
+                if (m.getOpeningBracePrefix() != null &&
+                        m.getEntries().stream().anyMatch(this::scheduleNeedsNewEntry)) {
+                    m = normalizeFlowMapping(m, m.getOpeningBracePrefix(), ctx, mappingParentCursor);
+                }
+                Cursor mappingCursor = new Cursor(mappingParentCursor, m);
                 return m.withEntries(ListUtils.map(m.getEntries(), entry -> {
-                    if (!"schedule".equals(entry.getKey().getValue()) ||
-                            !(entry.getValue() instanceof Yaml.Mapping)) {
+                    if (!"schedule".equals(entry.getKey().getValue())) {
                         return entry;
                     }
-                    Cursor scheduleEntryCursor = new Cursor(getCursor(), entry);
-                    return entry.withValue(configureSchedule(
-                            (Yaml.Mapping) entry.getValue(), ctx, scheduleEntryCursor));
+                    Yaml.Mapping schedule;
+                    if (entry.getValue() instanceof Yaml.Mapping) {
+                        schedule = (Yaml.Mapping) entry.getValue();
+                    } else if (isEmptyScalar(entry.getValue())) {
+                        schedule = emptyMapping(ctx);
+                    } else {
+                        return entry;
+                    }
+                    Cursor scheduleEntryCursor = new Cursor(mappingCursor, entry);
+                    return entry.withValue(configureSchedule(schedule, ctx, scheduleEntryCursor));
                 }));
+            }
+
+            private boolean scheduleNeedsNewEntry(Yaml.Mapping.Entry entry) {
+                if (!"schedule".equals(entry.getKey().getValue())) {
+                    return false;
+                }
+                if (isEmptyScalar(entry.getValue())) {
+                    return true;
+                }
+                if (!(entry.getValue() instanceof Yaml.Mapping)) {
+                    return false;
+                }
+                Yaml.Mapping schedule = (Yaml.Mapping) entry.getValue();
+                return !hasEntry(schedule, "interval") ||
+                        day != null && !hasEntry(schedule, "day") ||
+                        time != null && !hasEntry(schedule, "time") ||
+                        timezone != null && !hasEntry(schedule, "timezone");
+            }
+
+            private boolean hasEntry(Yaml.Mapping mapping, String key) {
+                return mapping.getEntries().stream()
+                        .anyMatch(entry -> key.equals(entry.getKey().getValue()));
+            }
+
+            private boolean isEmptyScalar(Yaml.Block value) {
+                return value instanceof Yaml.Scalar && ((Yaml.Scalar) value).getValue().isEmpty();
+            }
+
+            private Yaml.Mapping emptyMapping(ExecutionContext ctx) {
+                return new YamlParser()
+                        .parse(ctx, "{}")
+                        .map(Yaml.Documents.class::cast)
+                        .map(documents -> (Yaml.Mapping) documents.getDocuments().get(0).getBlock())
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("Failed to parse empty Dependabot schedule"));
             }
 
             private Yaml.Mapping configureSchedule(Yaml.Mapping schedule, ExecutionContext ctx,
@@ -165,12 +212,7 @@ public class ChangeDependabotScheduleInterval extends Recipe {
                         .map(parsed -> parsed.getEntries().get(0))
                         .findFirst()
                         .orElseThrow(() -> new IllegalStateException("Failed to parse Dependabot schedule option"));
-                if (schedule.getOpeningBracePrefix() != null) {
-                    schedule = schedule.withOpeningBracePrefix(null).withClosingBracePrefix(null);
-                    schedule = schedule.withEntries(ListUtils.mapFirst(schedule.getEntries(),
-                            first -> first.withPrefix("\n")));
-                    schedule = autoFormat(schedule, ctx, scheduleEntryCursor);
-                }
+                schedule = normalizeFlowMapping(schedule, "\n", ctx, scheduleEntryCursor);
                 Cursor scheduleCursor = new Cursor(scheduleEntryCursor, schedule);
                 newEntry = autoFormat(newEntry, ctx, scheduleCursor);
 
@@ -184,6 +226,17 @@ public class ChangeDependabotScheduleInterval extends Recipe {
                     }
                 }
                 return schedule.withEntries(ListUtils.insert(entries, newEntry, insertionIndex));
+            }
+
+            private Yaml.Mapping normalizeFlowMapping(Yaml.Mapping mapping, String firstEntryPrefix,
+                                                       ExecutionContext ctx, Cursor parentCursor) {
+                if (mapping.getOpeningBracePrefix() == null) {
+                    return mapping;
+                }
+                Yaml.Mapping normalized = mapping.withOpeningBracePrefix(null).withClosingBracePrefix(null);
+                normalized = normalized.withEntries(ListUtils.mapFirst(normalized.getEntries(),
+                        first -> first.withPrefix(firstEntryPrefix)));
+                return autoFormat(normalized, ctx, parentCursor);
             }
 
             private int scheduleKeyOrder(String key) {
