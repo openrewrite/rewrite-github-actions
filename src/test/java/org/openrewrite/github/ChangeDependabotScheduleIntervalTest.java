@@ -95,7 +95,8 @@ class ChangeDependabotScheduleIntervalTest implements RewriteTest {
                 - package-ecosystem: github-actions
                   directory: /two
                   schedule:
-                    timezone: "UTC"
+                    # Keep the timezone comment
+                    timezone: "UTC" # and its suffix
               """,
             """
               version: 2
@@ -121,7 +122,8 @@ class ChangeDependabotScheduleIntervalTest implements RewriteTest {
                     interval: weekly
                     day: monday
                     time: "09:00"
-                    timezone: "Asia/Tokyo"
+                    # Keep the timezone comment
+                    timezone: "Asia/Tokyo" # and its suffix
               """,
             spec -> spec.path(".github/dependabot.yml")
           )
@@ -186,6 +188,9 @@ class ChangeDependabotScheduleIntervalTest implements RewriteTest {
                 - package-ecosystem: github-actions
                   directory: /
                   schedule: { interval: daily }
+                - package-ecosystem: github-actions
+                  directory: /empty
+                  schedule: {}
               """,
             """
               version: 2
@@ -197,8 +202,92 @@ class ChangeDependabotScheduleIntervalTest implements RewriteTest {
                     day: tuesday
                     time: "10:30"
                     timezone: "America/New_York"
+                - package-ecosystem: github-actions
+                  directory: /empty
+                  schedule:
+                    interval: monthly
+                    day: tuesday
+                    time: "10:30"
+                    timezone: "America/New_York"
               """,
             spec -> spec.path(".github/dependabot.yaml")
+          )
+        );
+    }
+
+    @Test
+    void oldDeclarativeConfigurationPreservesExistingFlowMappingOptions() {
+        rewriteRun(
+          spec -> spec.recipeFromYaml("""
+            type: specs.openrewrite.org/v1beta/recipe
+            name: org.example.ChangeDependabotInterval
+            displayName: Change Dependabot interval
+            description: Change only the Dependabot interval.
+            recipeList:
+              - org.openrewrite.github.ChangeDependabotScheduleInterval:
+                  packageEcosystem: github-actions
+                  interval: weekly
+            """, "org.example.ChangeDependabotInterval"),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule: { interval: daily, day: sunday, time: "08:00", timezone: "Europe/Paris" }
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: github-actions
+                  directory: /
+                  schedule: { interval: weekly, day: sunday, time: "08:00", timezone: "Europe/Paris" }
+              """,
+            spec -> spec.path(".github/dependabot.yml")
+          )
+        );
+    }
+
+    @Test
+    void packageEcosystemRegexRemainsSupported() {
+        rewriteRun(
+          spec -> spec.recipe(new ChangeDependabotScheduleInterval("maven|gradle", "daily")),
+          //language=yaml
+          yaml(
+            """
+              version: 2
+              updates:
+                - package-ecosystem: maven
+                  directory: /
+                  schedule:
+                    interval: weekly
+                - package-ecosystem: gradle
+                  directory: /
+                  schedule:
+                    interval: monthly
+                - package-ecosystem: npm
+                  directory: /
+                  schedule:
+                    interval: weekly
+              """,
+            """
+              version: 2
+              updates:
+                - package-ecosystem: maven
+                  directory: /
+                  schedule:
+                    interval: daily
+                - package-ecosystem: gradle
+                  directory: /
+                  schedule:
+                    interval: daily
+                - package-ecosystem: npm
+                  directory: /
+                  schedule:
+                    interval: weekly
+              """,
+            spec -> spec.path(".github/dependabot.yml")
           )
         );
     }

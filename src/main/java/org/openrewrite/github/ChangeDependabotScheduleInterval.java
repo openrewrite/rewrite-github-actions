@@ -29,6 +29,7 @@ import org.openrewrite.yaml.tree.Yaml;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @EqualsAndHashCode(callSuper = false)
 @Value
@@ -45,21 +46,21 @@ public class ChangeDependabotScheduleInterval extends Recipe {
     String interval;
 
     @Option(displayName = "Schedule day",
-            description = "The day of the week the package-ecosystem should use.",
+            description = "The day of the week to run updates when the schedule interval is `weekly`.",
             example = "monday",
             required = false)
     @Nullable
     String day;
 
     @Option(displayName = "Schedule time",
-            description = "The time of day the package-ecosystem should use, in `HH:mm` format.",
+            description = "The time of day to run updates, in `HH:mm` format. Defaults to UTC unless `timezone` is set.",
             example = "09:00",
             required = false)
     @Nullable
     String time;
 
     @Option(displayName = "Schedule timezone",
-            description = "The IANA time zone identifier the package-ecosystem should use.",
+            description = "The IANA time zone identifier for the configured schedule time.",
             example = "Asia/Tokyo",
             required = false)
     @Nullable
@@ -100,12 +101,13 @@ public class ChangeDependabotScheduleInterval extends Recipe {
             private static final String CONFIGURE_SCHEDULE = "CONFIGURE_SCHEDULE";
             private final JsonPathMatcher packageEcosystemMatcher =
                     new JsonPathMatcher("$.updates[*].package-ecosystem");
+            private final Pattern packageEcosystemPattern = Pattern.compile(packageEcosystem);
 
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
                 if (packageEcosystemMatcher.matches(getCursor()) && e.getValue() instanceof Yaml.Scalar &&
-                        packageEcosystem.equals(((Yaml.Scalar) e.getValue()).getValue())) {
+                        packageEcosystemPattern.matcher(((Yaml.Scalar) e.getValue()).getValue()).matches()) {
                     getCursor().dropParentUntil(Yaml.Mapping.class::isInstance).putMessage(CONFIGURE_SCHEDULE, true);
                 }
                 return e;
