@@ -48,7 +48,7 @@ public class SetupNodeUpgradeNodeVersion extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new IsGitHubActionsWorkflow(), new UpgradeNodeVersionVisitor(
+        return Preconditions.check(new IsGitHubActionsFile(), new UpgradeNodeVersionVisitor(
                 minimumNodeMajorVersion == null ? 24 : minimumNodeMajorVersion
         ));
     }

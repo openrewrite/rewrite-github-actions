@@ -35,26 +35,26 @@ public class SetupJavaCaching extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new IsGitHubActionsWorkflow(), new YamlVisitor<ExecutionContext>() {
+        return Preconditions.check(new IsGitHubActionsFile(), new YamlVisitor<ExecutionContext>() {
             @Override
             public Yaml visitDocuments(Yaml.Documents documents, ExecutionContext ctx) {
                 Yaml.Documents d = documents;
-                if (!FindKey.find(documents, "$.jobs..steps[?(@.run =~ '.*gradle.*')]").isEmpty()) {
-                    d = (Yaml.Documents) new MergeYaml("$.jobs..steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
+                if (!FindKey.find(documents, "$..steps[?(@.run =~ '.*gradle.*')]").isEmpty()) {
+                    d = (Yaml.Documents) new MergeYaml("$..steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
                             "" +
                                     "with:\n" +
                                     "  cache: 'gradle'", true, null, null, null, null, null)
                             .getVisitor().visitNonNull(d, ctx);
                 }
-                if (!FindKey.find(documents, "$.jobs..steps[?(@.run =~ '.*mvn.*')]").isEmpty()) {
-                    d = (Yaml.Documents) new MergeYaml("$.jobs..steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
+                if (!FindKey.find(documents, "$..steps[?(@.run =~ '.*mvn.*')]").isEmpty()) {
+                    d = (Yaml.Documents) new MergeYaml("$..steps[?(@.uses =~ 'actions/setup-java(?:@v.+)?')]",
                             "" +
                                     "with:\n" +
                                     "  cache: 'maven'", true, null, null, null, null, null)
                             .getVisitor().visitNonNull(d, ctx);
                 }
                 if (d != documents) {
-                    d = (Yaml.Documents) new DeleteKey("$.jobs..steps[?(@.uses =~ 'actions/cache(?:@v.+)?')]", null)
+                    d = (Yaml.Documents) new DeleteKey("$..steps[?(@.uses =~ 'actions/cache(?:@v.+)?')]", null)
                             .getVisitor().visitNonNull(d, ctx);
                 }
                 return d;

@@ -237,4 +237,53 @@ class UnpinnedDockerImagesTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void flagsUnpinnedImageInDockerAction() {
+        rewriteRun(
+          yaml(
+            """
+              name: Lint
+              description: Docker action
+              runs:
+                using: docker
+                image: docker://alpine:3.18
+              """,
+            """
+              name: Lint
+              description: Docker action
+              runs:
+                using: docker
+                ~~(Docker image 'docker://alpine:3.18' is not pinned to a digest. Consider pinning to a specific digest for security and reproducibility.)~~>image: docker://alpine:3.18
+              """,
+            spec -> spec.path(".github/actions/lint/action.yml")
+          )
+        );
+    }
+
+    @Test
+    void doesNotFlagLocalDockerfileBuild() {
+        rewriteRun(
+          yaml(
+            """
+              name: Lint
+              description: Docker action
+              runs:
+                using: docker
+                image: Dockerfile
+              """,
+            spec -> spec.path(".github/actions/lint/action.yml")
+          ),
+          yaml(
+            """
+              name: Lint
+              description: Docker action
+              runs:
+                using: docker
+                image: ./docker/Dockerfile
+              """,
+            spec -> spec.path(".github/actions/lint-nested/action.yml")
+          )
+        );
+    }
 }

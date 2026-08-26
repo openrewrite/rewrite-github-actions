@@ -270,6 +270,33 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     }
 
     @Test
+    void shouldPinCompositeActionInNestedFolder() {
+        rewriteRun(
+          yaml(
+            """
+              name: Setup
+              description: Composite action
+              runs:
+                using: composite
+                steps:
+                  - uses: codecov/codecov-action@v4.6.0
+                    shell: bash
+              """,
+            """
+              name: Setup
+              description: Composite action
+              runs:
+                using: composite
+                steps:
+                  - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
+                    shell: bash
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/actions/setup/action.yml")
+          )
+        );
+    }
+
+    @Test
     void shouldPinActionWithSubpath() {
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false, null, null, null)),
