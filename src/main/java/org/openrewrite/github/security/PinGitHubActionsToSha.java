@@ -231,11 +231,11 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                             return null;
                         }
 
-                        // Replace the scalar value, retain the original ref as a comment
+                        // Replace the scalar value, annotate with the most-specific tag for the SHA
                         Yaml.Scalar originalScalar = (Yaml.Scalar) e.getValue();
                         return new PinResult(
                                 e.withValue(originalScalar.withValue(actionPath + "@" + sha)),
-                                formatRefComment(ref)
+                                resolveDisplayTag(knownShas, actionPath, sha, ref)
                         );
                     }
 
@@ -323,6 +323,43 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
             return ref;
         }
         return ref + " @ " + LocalDate.now(ZoneOffset.UTC);
+    }
+
+    /**
+     * Resolve the comment tag written next to a pinned SHA. The static mapping already lists every
+     * version tag of an action, so a moving tag like {@code v4} shares its SHA with the exact patch
+     * release it points at (e.g. {@code v4.4.0}). This scans the mapping for tags of the same action
+     * resolving to {@code sha} and returns the most-specific one, so a reader sees {@code # v4.4.0}
+     * rather than {@code # v4}. Falls back to the user's original ref when the SHA isn't in the map
+     * (e.g. resolved via the API, or a branch reference).
+     */
+    static String resolveDisplayTag(Map<String, String> knownShas, String actionPath, String sha, String originalRef) {
+        String prefix = actionPath + "@";
+        String best = null;
+        for (Map.Entry<String, String> entry : knownShas.entrySet()) {
+            if (!entry.getKey().startsWith(prefix) || !sha.equals(entry.getValue())) {
+                continue;
+            }
+            String tag = entry.getKey().substring(prefix.length());
+            if (TAG_REF_PATTERN.matcher(tag).matches() && (best == null || isMoreSpecific(tag, best))) {
+                best = tag;
+            }
+        }
+        return best != null ? best : formatRefComment(originalRef);
+    }
+
+    /**
+     * Compare two version tags by specificity: a tag with more version components (e.g. {@code v4.4.0})
+     * is more specific than one with fewer ({@code v4}); an equal number of components is broken by the
+     * greater tag so the result is stable regardless of map iteration order.
+     */
+    static boolean isMoreSpecific(String candidate, String current) {
+        long candidateDots = candidate.chars().filter(c -> c == '.').count();
+        long currentDots = current.chars().filter(c -> c == '.').count();
+        if (candidateDots != currentDots) {
+            return candidateDots > currentDots;
+        }
+        return candidate.compareTo(current) > 0;
     }
 
     private static boolean matchesAllowList(String actionPath, List<String> allowList) {

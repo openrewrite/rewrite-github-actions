@@ -23,6 +23,7 @@ import org.openrewrite.test.RewriteTest;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.openrewrite.yaml.Assertions.yaml;
@@ -756,6 +757,108 @@ class PinGitHubActionsToShaTest implements RewriteTest {
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
           )
         );
+    }
+
+    @Test
+    void shouldUseMostSpecificPatchTagInComment() {
+        rewriteRun(
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null, null)),
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v2
+                      name: Checkout
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
+                      name: Checkout
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void shouldKeepAlreadySpecificPatchTagInComment() {
+        rewriteRun(
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null, null)),
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v2.8.0
+                      name: Checkout
+              """,
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
+                      name: Checkout
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void resolveDisplayTagPicksMostSpecificTagForSha() {
+        // given
+        Map<String, String> knownShas = Map.of(
+          "actions/checkout@v2", "0717577d45739eb3c851188b29f50ed6c0b2194e",
+          "actions/checkout@v2.8.0", "0717577d45739eb3c851188b29f50ed6c0b2194e",
+          "actions/checkout@v2.7.0", "ee0669bd1cc54295c223e0bb666b733df41de1c5");
+
+        // when
+        String tag = PinGitHubActionsToSha.resolveDisplayTag(
+          knownShas, "actions/checkout", "0717577d45739eb3c851188b29f50ed6c0b2194e", "v2");
+
+        // then
+        assertThat(tag).isEqualTo("v2.8.0");
+    }
+
+    @Test
+    void resolveDisplayTagFallsBackToOriginalRefWhenShaUnknown() {
+        // given
+        Map<String, String> knownShas = Map.of(
+          "actions/checkout@v2", "0717577d45739eb3c851188b29f50ed6c0b2194e");
+        String today = LocalDate.now(ZoneOffset.UTC).toString();
+
+        // when
+        String tagRef = PinGitHubActionsToSha.resolveDisplayTag(
+          knownShas, "some/action", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "v9");
+        String branchRef = PinGitHubActionsToSha.resolveDisplayTag(
+          knownShas, "some/action", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "main");
+
+        // then
+        assertThat(tagRef).isEqualTo("v9");
+        assertThat(branchRef).isEqualTo("main @ " + today);
+    }
+
+    @Test
+    void isMoreSpecificPrefersMoreDotsThenGreaterTag() {
+        assertThat(PinGitHubActionsToSha.isMoreSpecific("v4.4.0", "v4")).isTrue();
+        assertThat(PinGitHubActionsToSha.isMoreSpecific("v4", "v4.4.0")).isFalse();
+        assertThat(PinGitHubActionsToSha.isMoreSpecific("v4.5.0", "v4.4.0")).isTrue();
+        assertThat(PinGitHubActionsToSha.isMoreSpecific("v4.4.0", "v4.4.0")).isFalse();
     }
 
     @Test
