@@ -55,6 +55,41 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.AddDependabotOpenPullRequestsLimit
+examples:
+- description: '`AddDependabotOpenPullRequestsLimitTest#addLimitToEveryUpdateEntry`'
+  parameters:
+  - '10'
+  - 'null'
+  sources:
+  - before: |
+      version: 2
+      updates:
+        - package-ecosystem: github-actions
+          directory: /
+          schedule:
+            interval: daily
+        - package-ecosystem: gradle
+          directory: /
+          schedule:
+            interval: weekly
+    after: |
+      version: 2
+      updates:
+        - package-ecosystem: github-actions
+          directory: /
+          schedule:
+            interval: daily
+          open-pull-requests-limit: 10
+        - package-ecosystem: gradle
+          directory: /
+          schedule:
+            interval: weekly
+          open-pull-requests-limit: 10
+    path: .github/dependabot.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.AddManualTrigger
 examples:
 - description: '`AddManualTriggerTest#manualTrigger`'
