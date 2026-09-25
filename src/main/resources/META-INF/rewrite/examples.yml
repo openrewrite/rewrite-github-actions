@@ -714,6 +714,44 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.ReplaceSetOutputAndSaveStateCommands
+examples:
+- description: '`ReplaceSetOutputAndSaveStateCommandsTest#replaceSetOutputAndSaveState`'
+  sources:
+  - before: |
+      name: ci
+      on:
+        push:
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+            - name: Save state
+              id: state
+              run: echo "::save-state name=isPost::true"
+            - name: Set output
+              run: echo "::set-output name=version::1.2.3"
+            - name: Read output
+              run: echo "version is ${{ steps.state.outputs.version }}"
+    after: |
+      name: ci
+      on:
+        push:
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+            - name: Save state
+              id: state
+              run: echo "isPost=true" >> $GITHUB_STATE
+            - name: Set output
+              run: echo "version=1.2.3" >> $GITHUB_OUTPUT
+            - name: Read output
+              run: echo "version is ${{ steps.state.outputs.version }}"
+    path: .github/workflows/ci.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.SetupJavaAdoptOpenJDKToTemurin
 examples:
 - description: '`SetupJavaAdoptOpenJDKToTemurinTest#actionsSetupJavaAdoptOpenJDKToTemurin`'
