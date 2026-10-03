@@ -22,8 +22,12 @@ import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlVisitor;
+import org.openrewrite.internal.ListUtils;
 import org.openrewrite.yaml.tree.Yaml;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,6 +59,97 @@ public class SetupJavaUpgradeJavaVersion extends Recipe {
 
         private final int minimumJavaMajorVersion;
 
+        private static final Pattern matrixReference = Pattern.compile("\\$\\{\\{\\s*matrix\\.([a-zA-Z_][a-zA-Z0-9_-]*)\\s*}}");
+        private static final JsonPathMatcher job = new JsonPathMatcher("$.jobs.*");
+
+        @Override
+        public Yaml visitMapping(Yaml.Mapping mapping, ExecutionContext ctx) {
+            Yaml.Mapping m = (Yaml.Mapping) super.visitMapping(mapping, ctx);
+            if (!job.matches(getCursor().getParentOrThrow())) {
+                return m;
+            }
+            Yaml.Block steps = value(m, "steps");
+            if (!(steps instanceof Yaml.Sequence)) {
+                return m;
+            }
+            Set<String> axes = new HashSet<>();
+            for (Yaml.Sequence.Entry step : ((Yaml.Sequence) steps).getEntries()) {
+                if (!(step.getBlock() instanceof Yaml.Mapping)) {
+                    continue;
+                }
+                Yaml.Mapping stepMapping = (Yaml.Mapping) step.getBlock();
+                Yaml.Block uses = value(stepMapping, "uses");
+                Yaml.Block with = value(stepMapping, "with");
+                if (!(uses instanceof Yaml.Scalar) || !((Yaml.Scalar) uses).getValue().startsWith("actions/setup-java@") ||
+                        !(with instanceof Yaml.Mapping)) {
+                    continue;
+                }
+                Yaml.Block version = value((Yaml.Mapping) with, "java-version");
+                if (version instanceof Yaml.Scalar) {
+                    Matcher reference = matrixReference.matcher(((Yaml.Scalar) version).getValue());
+                    if (reference.matches()) {
+                        axes.add(reference.group(1));
+                    }
+                }
+            }
+            return m.withEntries(ListUtils.map(m.getEntries(), strategy -> {
+                if (!"strategy".equals(strategy.getKey().getValue()) || !(strategy.getValue() instanceof Yaml.Mapping)) {
+                    return strategy;
+                }
+                Yaml.Mapping strategyValue = (Yaml.Mapping) strategy.getValue();
+                return strategy.withValue(strategyValue.withEntries(ListUtils.map(strategyValue.getEntries(), matrix -> {
+                    if (!"matrix".equals(matrix.getKey().getValue()) || !(matrix.getValue() instanceof Yaml.Mapping)) {
+                        return matrix;
+                    }
+                    Yaml.Mapping matrixValue = (Yaml.Mapping) matrix.getValue();
+                    // Includes and exclusions can encode relationships between axes. Do not invalidate them.
+                    if (value(matrixValue, "include") != null || value(matrixValue, "exclude") != null) {
+                        return matrix;
+                    }
+                    return matrix.withValue(matrixValue.withEntries(ListUtils.map(matrixValue.getEntries(), axis -> {
+                        if (!axes.contains(axis.getKey().getValue()) || !(axis.getValue() instanceof Yaml.Sequence)) {
+                            return axis;
+                        }
+                        Yaml.Sequence values = (Yaml.Sequence) axis.getValue();
+                        List<Yaml.Sequence.Entry> upgraded = ListUtils.map(values.getEntries(), item ->
+                                item.getBlock() instanceof Yaml.Scalar ?
+                                        item.withBlock(upgrade((Yaml.Scalar) item.getBlock())) : item);
+                        if (upgraded == values.getEntries()) {
+                            return axis;
+                        }
+                        Set<String> seen = new HashSet<>();
+                        List<Yaml.Sequence.Entry> distinct = ListUtils.map(upgraded, item ->
+                                item.getBlock() instanceof Yaml.Scalar &&
+                                        !seen.add(((Yaml.Scalar) item.getBlock()).getValue()) ? null : item);
+                        if (distinct.size() != upgraded.size()) {
+                            String trailingComma = upgraded.get(upgraded.size() - 1).getTrailingCommaPrefix();
+                            distinct = ListUtils.mapLast(distinct, item -> item.withTrailingCommaPrefix(trailingComma));
+                        }
+                        return axis.withValue(values.withEntries(distinct));
+                    })));
+                })));
+            }));
+        }
+
+        private static Yaml.@Nullable Block value(Yaml.Mapping mapping, String key) {
+            return mapping.getEntries().stream().filter(e -> key.equals(e.getKey().getValue()))
+                    .map(Yaml.Mapping.Entry::getValue).findFirst().orElse(null);
+        }
+
+        private Yaml.Scalar upgrade(Yaml.Scalar scalar) {
+            Matcher matcher = javaVersionPattern.matcher(scalar.getValue());
+            if (matcher.matches()) {
+                try {
+                    if (Integer.parseInt(matcher.group(1)) < minimumJavaMajorVersion) {
+                        return scalar.withValue(String.valueOf(minimumJavaMajorVersion));
+                    }
+                } catch (NumberFormatException ignored) {
+                    // Leave values outside the supported integer range unchanged.
+                }
+            }
+            return scalar;
+        }
+
         @Override
         public Yaml visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
             if (!"java-version".equals(entry.getKey().getValue()) ||
@@ -62,29 +157,10 @@ public class SetupJavaUpgradeJavaVersion extends Recipe {
                 return super.visitMappingEntry(entry, ctx);
             }
 
-            Yaml.Scalar currentValue = (Yaml.Scalar) entry.getValue();
-
-            // specific versions are allowed by `actions/setup-java`
-            Matcher matcher = javaVersionPattern.matcher(currentValue.getValue());
-            if (!matcher.matches()) {
+            if (!(entry.getValue() instanceof Yaml.Scalar)) {
                 return super.visitMappingEntry(entry, ctx);
             }
-
-            int currentMajorVersion;
-            try {
-                currentMajorVersion = Integer.parseInt(matcher.group(1));
-            } catch (NumberFormatException ex) {
-                return super.visitMappingEntry(entry, ctx);
-            }
-
-            if (currentMajorVersion >= minimumJavaMajorVersion) {
-                return super.visitMappingEntry(entry, ctx);
-            }
-
-            return super.visitMappingEntry(
-                    entry.withValue(currentValue.withValue(String.valueOf(minimumJavaMajorVersion))),
-                    ctx
-            );
+            return super.visitMappingEntry(entry.withValue(upgrade((Yaml.Scalar) entry.getValue())), ctx);
         }
     }
 }
