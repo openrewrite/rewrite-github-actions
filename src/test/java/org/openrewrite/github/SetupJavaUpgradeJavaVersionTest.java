@@ -29,6 +29,81 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
         spec.recipe(new SetupJavaUpgradeJavaVersion(21));
     }
 
+    @Test
+    void updatesReferencedMatrixInItsOwnJob() {
+        rewriteRun(
+          yaml(
+            """
+              jobs:
+                build:
+                  strategy:
+                    matrix:
+                      java: [ '17', '26' ]
+                  steps:
+                    - uses: actions/setup-java@v4
+                      with:
+                        java-version: ${{matrix.java}}
+                other:
+                  strategy:
+                    matrix:
+                      java: [ '17' ]
+                  steps:
+                    - run: echo unchanged
+              """,
+            """
+              jobs:
+                build:
+                  strategy:
+                    matrix:
+                      java: [ '21', '26' ]
+                  steps:
+                    - uses: actions/setup-java@v4
+                      with:
+                        java-version: ${{matrix.java}}
+                other:
+                  strategy:
+                    matrix:
+                      java: [ '17' ]
+                  steps:
+                    - run: echo unchanged
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void preservesMatricesWithCrossAxisRulesAndDynamicVersions() {
+        rewriteRun(
+          yaml(
+            """
+              jobs:
+                build:
+                  strategy:
+                    matrix:
+                      java: [17, 21]
+                      os: [ubuntu-latest, windows-latest]
+                      exclude:
+                        - java: 17
+                          os: windows-latest
+                  steps:
+                    - uses: actions/setup-java@v4
+                      with:
+                        java-version: ${{ matrix.java }}
+                dynamic:
+                  strategy:
+                    matrix:
+                      java: [17]
+                  steps:
+                    - uses: actions/setup-java@v4
+                      with:
+                        java-version: ${{ inputs.java || matrix.java }}
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
     @DocumentExample
     @Test
     void updatesOldMajorVersion() {
@@ -248,7 +323,7 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
     }
 
     @Test
-    void doesNotUpdateMatrixVersion() {
+    void upgradesMatrixVersionAndRemovesDuplicates() {
         rewriteRun(
           //language=yaml
           yaml(
@@ -258,6 +333,18 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
                   strategy:
                     matrix:
                       java-version: [11, 17]
+                  steps:
+                    - name: set-up-jdk
+                      uses: actions/setup-java@v2.3.0
+                      with:
+                        java-version: ${{ matrix.java-version }}
+              """,
+            """
+              jobs:
+                build:
+                  strategy:
+                    matrix:
+                      java-version: [21]
                   steps:
                     - name: set-up-jdk
                       uses: actions/setup-java@v2.3.0
