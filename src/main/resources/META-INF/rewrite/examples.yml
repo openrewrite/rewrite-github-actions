@@ -504,6 +504,29 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.RemoveRunner
+examples:
+- description: '`RemoveRunnerTest#removeRunnerFromFlowSequence`'
+  parameters:
+  - build
+  - MyRunner
+  sources:
+  - before: |
+      jobs:
+        build:
+          runs-on: [ubuntu-latest, MyRunner, gpu]
+        other:
+          runs-on: [ubuntu-latest, MyRunner]
+    after: |
+      jobs:
+        build:
+          runs-on: [ubuntu-latest, gpu]
+        other:
+          runs-on: [ubuntu-latest, MyRunner]
+    path: .github/workflows/ci.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.RemoveUnusedWorkflowDispatchInputs
 examples:
 - description: '`RemoveUnusedWorkflowDispatchInputsTest#removeUnusedInputs`'
