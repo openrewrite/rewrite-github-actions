@@ -105,18 +105,21 @@ public class RemoveRunner extends Recipe {
             if (!"labels".equals(entry.getKey().getValue())) {
                 continue;
             }
-            if (entry.getValue() instanceof Yaml.Sequence) {
-                int index = i;
-                return runsOn.withEntries(ListUtils.map(entries, (idx, e) ->
-                        idx == index ? e.withValue(removeFrom((Yaml.Sequence) e.getValue())) : e));
-            }
-            if (isRunner(entry.getValue()) && hasGroup(runsOn)) {
+            if (consistsOfRunner(entry.getValue())) {
+                if (!hasGroup(runsOn)) {
+                    return runsOn;
+                }
                 List<Yaml.Mapping.Entry> updated = new ArrayList<>(entries);
                 updated.remove(i);
                 if (i == 0) {
                     updated.set(0, updated.get(0).withPrefix(entry.getPrefix()));
                 }
                 return runsOn.withEntries(updated);
+            }
+            if (entry.getValue() instanceof Yaml.Sequence) {
+                int index = i;
+                return runsOn.withEntries(ListUtils.map(entries, (idx, e) ->
+                        idx == index ? e.withValue(removeFrom((Yaml.Sequence) e.getValue())) : e));
             }
             return runsOn;
         }
@@ -130,6 +133,14 @@ public class RemoveRunner extends Recipe {
             }
         }
         return false;
+    }
+
+    private boolean consistsOfRunner(Yaml.Block labels) {
+        if (labels instanceof Yaml.Sequence) {
+            List<Yaml.Sequence.Entry> entries = ((Yaml.Sequence) labels).getEntries();
+            return !entries.isEmpty() && entries.stream().allMatch(e -> isRunner(e.getBlock()));
+        }
+        return isRunner(labels);
     }
 
     private boolean isRunner(Yaml.Block block) {

@@ -274,6 +274,47 @@ class RemoveRunnerTest implements RewriteTest {
     }
 
     @Test
+    void removeEmptiedLabelsWhenGroupRemains() {
+        rewriteRun(
+          spec -> spec.recipe(new RemoveRunner("build", "gpu")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on:
+                    group: ubuntu-runners
+                    labels: [gpu]
+              """,
+            """
+              jobs:
+                build:
+                  runs-on:
+                    group: ubuntu-runners
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void keepSequenceLabelsWithoutGroup() {
+        rewriteRun(
+          spec -> spec.recipe(new RemoveRunner("build", "gpu")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on:
+                    labels: [gpu]
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
     void keepScalarLabelWithoutGroup() {
         rewriteRun(
           spec -> spec.recipe(new RemoveRunner("build", "gpu")),
