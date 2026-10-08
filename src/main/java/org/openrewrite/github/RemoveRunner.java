@@ -25,11 +25,13 @@ import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @EqualsAndHashCode(callSuper = false)
 @Value
 public class RemoveRunner extends Recipe {
     private static final JsonPathMatcher RUNS_ON = new JsonPathMatcher("$.jobs.*.runs-on");
+    private static final Pattern TRAILING_COMMENT = Pattern.compile("^[ \\t]*#[^\\n]*");
 
     @Option(displayName = "Job name",
             description = "The name of the job to update, use `*` to affect all the workflow jobs.",
@@ -78,9 +80,13 @@ public class RemoveRunner extends Recipe {
     private Yaml.Sequence removeFrom(Yaml.Sequence sequence) {
         List<Yaml.Sequence.Entry> entries = sequence.getEntries();
         List<Yaml.Sequence.Entry> remaining = new ArrayList<>(entries.size());
+        boolean previousRemoved = false;
         for (Yaml.Sequence.Entry entry : entries) {
-            if (!isRunner(entry.getBlock())) {
-                remaining.add(entry);
+            if (isRunner(entry.getBlock())) {
+                previousRemoved = true;
+            } else {
+                remaining.add(previousRemoved ? entry.withPrefix(withoutTrailingComment(entry.getPrefix())) : entry);
+                previousRemoved = false;
             }
         }
         if (remaining.size() == entries.size() || remaining.isEmpty()) {
@@ -113,6 +119,8 @@ public class RemoveRunner extends Recipe {
                 updated.remove(i);
                 if (i == 0) {
                     updated.set(0, updated.get(0).withPrefix(entry.getPrefix()));
+                } else if (i < updated.size()) {
+                    updated.set(i, updated.get(i).withPrefix(withoutTrailingComment(updated.get(i).getPrefix())));
                 }
                 return runsOn.withEntries(updated);
             }
@@ -124,6 +132,10 @@ public class RemoveRunner extends Recipe {
             return runsOn;
         }
         return runsOn;
+    }
+
+    private static String withoutTrailingComment(String prefix) {
+        return TRAILING_COMMENT.matcher(prefix).replaceFirst("");
     }
 
     private static boolean hasGroup(Yaml.Mapping runsOn) {

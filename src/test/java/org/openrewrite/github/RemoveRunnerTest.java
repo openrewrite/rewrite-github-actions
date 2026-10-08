@@ -122,6 +122,32 @@ class RemoveRunnerTest implements RewriteTest {
     }
 
     @Test
+    void dropTrailingCommentOfRemovedRunner() {
+        rewriteRun(
+          spec -> spec.recipe(new RemoveRunner("build", "gpu")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on:
+                    - self-hosted
+                    - gpu # for CUDA tests
+                    - x64 # architecture
+              """,
+            """
+              jobs:
+                build:
+                  runs-on:
+                    - self-hosted
+                    - x64 # architecture
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
     void removeRunnerFromEveryJob() {
         rewriteRun(
           spec -> spec.recipe(new RemoveRunner("*", "gpu")),
@@ -267,6 +293,32 @@ class RemoveRunnerTest implements RewriteTest {
                 build:
                   runs-on:
                     group: ubuntu-runners
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void dropTrailingCommentOfRemovedLabels() {
+        rewriteRun(
+          spec -> spec.recipe(new RemoveRunner("build", "gpu")),
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  runs-on:
+                    group: ubuntu-runners
+                    labels: gpu # for CUDA tests
+                    custom: value
+              """,
+            """
+              jobs:
+                build:
+                  runs-on:
+                    group: ubuntu-runners
+                    custom: value
               """,
             spec -> spec.path(".github/workflows/ci.yml")
           )
