@@ -714,6 +714,50 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.ReplaceSetupGradleArguments
+examples:
+- description: '`ReplaceSetupGradleArgumentsTest#splitConsecutiveArgumentStepsAndShareOneSetup`'
+  sources:
+  - before: |
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Assemble the project
+              uses: gradle/actions/setup-gradle@v3
+              with:
+                arguments: assemble
+            - name: Run the tests
+              uses: gradle/actions/setup-gradle@v3
+              with:
+                arguments: test
+            - name: Run build in a subdirectory
+              uses: gradle/actions/setup-gradle@v3
+              with:
+                build-root-directory: another-build
+                arguments: build
+    after: |
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@v3
+            - name: Assemble the project
+              run: ./gradlew assemble
+            - name: Run the tests
+              run: ./gradlew test
+            - name: Run build in a subdirectory
+              working-directory: another-build
+              run: ./gradlew build
+    path: .github/workflows/ci.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.SetupJavaAdoptOpenJDKToTemurin
 examples:
 - description: '`SetupJavaAdoptOpenJDKToTemurinTest#actionsSetupJavaAdoptOpenJDKToTemurin`'
