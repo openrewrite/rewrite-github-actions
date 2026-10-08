@@ -55,7 +55,7 @@ public class RemoveRunner extends Recipe {
             @Override
             public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext ctx) {
                 Yaml.Mapping.Entry e = super.visitMappingEntry(entry, ctx);
-                if (!RUNS_ON.matches(getCursor()) || !isTargetJob()) {
+                if (!"runs-on".equals(e.getKey().getValue()) || !RUNS_ON.matches(getCursor()) || !isTargetJob()) {
                     return e;
                 }
                 if (e.getValue() instanceof Yaml.Sequence) {
