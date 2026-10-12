@@ -310,7 +310,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
         return candidate.compareTo(current) > 0;
     }
 
-    private static Map<String, String> loadKnownShas() {
+    static Map<String, String> loadKnownShas() {
         try (InputStream is = PinGitHubActionsToSha.class
                 .getResourceAsStream("/META-INF/rewrite/known-action-shas.properties")) {
             if (is != null) {
