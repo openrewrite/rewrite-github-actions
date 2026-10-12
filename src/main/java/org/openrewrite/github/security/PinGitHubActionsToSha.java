@@ -49,6 +49,8 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     private static final Set<String> OFFICIAL_ORGS = unmodifiableSet(
             new HashSet<>(Arrays.asList("actions", "github")));
 
+    private static final Map<String, String> KNOWN_SHAS = loadKnownShas();
+
     @Option(displayName = "Pin official actions",
             description = "When set to `true`, also pins actions from official GitHub organizations " +
                     "(e.g., `actions/*`, `github/*`). Defaults to `false`, meaning only third-party " +
@@ -61,13 +63,15 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
             description = "Optional list of trusted owners/organizations, actions that belong to these organizations " +
                     "will not be pinned. This option overrides the 'Included actions' list.",
             required = false,
-            example = "my-organization, my-other-organization")
+            example = "gradle")
     @Nullable
     List<String> trustedOwners;
 
     @Option(displayName = "Included actions",
             description = "Optional allow-list of actions to pin. When provided, only `uses:` references " +
                     "matching one of these patterns are pinned; all other actions are left untouched. " +
+                    "Each pattern must match an action in the built-in mapping of known SHAs; it narrows " +
+                    "which mapped actions are pinned, and cannot add new ones. " +
                     "Patterns may be `owner/repo` (exact match), `owner/*` (any repo in an org), or " +
                     "`owner/repo/subpath` (exact match including a subpath). When omitted or empty, all " +
                     "third-party actions (and optionally official actions, per `pinOfficialActions`) are " +
@@ -84,28 +88,29 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                 "network calls; references not found in the mapping are left unchanged and listed in a data " +
                 "table. By default only third-party actions are pinned; set `pinOfficialActions` " +
                 "to include actions from the `actions` and `github` organizations. To pin only a " +
-                "specific allow-list of actions, set `includedActions`.";
+                "subset of the mapped actions, set `includedActions`.";
 
     Set<String> tags = unmodifiableSet( new HashSet<>( Arrays.asList( "github", "actions", "security", "supply-chain" ) ) );
 
     transient UnresolvedActionShas unresolvedActionShas = new UnresolvedActionShas(this);
 
     @Override
-    public Map<String, String> getInitialValue(ExecutionContext ctx) {
-        try (InputStream is = PinGitHubActionsToSha.class
-                .getResourceAsStream("/META-INF/rewrite/known-action-shas.properties")) {
-            if (is != null) {
-                Properties props = new Properties();
-                props.load(is);
-                Map<String, String> map = new LinkedHashMap<>();
-                for (String key : props.stringPropertyNames()) {
-                    map.put(key, props.getProperty(key));
-                }
-                return unmodifiableMap(map);
+    public Validated<Object> validate() {
+        Validated<Object> validated = super.validate();
+        if (includedActions != null) {
+            List<String> unmapped = unmappedPatterns(includedActions);
+            if (!unmapped.isEmpty()) {
+                validated = validated.and(Validated.invalid("includedActions", unmapped,
+                        "must only list actions covered by the built-in mapping of known SHAs, but found no mapping for: " +
+                                String.join(", ", unmapped)));
             }
-        } catch (IOException ignored) {
         }
-        return emptyMap();
+        return validated;
+    }
+
+    @Override
+    public Map<String, String> getInitialValue(ExecutionContext ctx) {
+        return KNOWN_SHAS;
     }
 
     @Override
@@ -305,6 +310,41 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
             return candidateDots > currentDots;
         }
         return candidate.compareTo(current) > 0;
+    }
+
+    private static Map<String, String> loadKnownShas() {
+        try (InputStream is = PinGitHubActionsToSha.class
+                .getResourceAsStream("/META-INF/rewrite/known-action-shas.properties")) {
+            if (is != null) {
+                Properties props = new Properties();
+                props.load(is);
+                Map<String, String> map = new LinkedHashMap<>();
+                for (String key : props.stringPropertyNames()) {
+                    map.put(key, props.getProperty(key));
+                }
+                return unmodifiableMap(map);
+            }
+        } catch (IOException ignored) {
+        }
+        return emptyMap();
+    }
+
+    private static List<String> unmappedPatterns(List<String> patterns) {
+        Set<String> mappedActions = new HashSet<>();
+        for (String key : KNOWN_SHAS.keySet()) {
+            mappedActions.add(key.substring(0, key.lastIndexOf('@')));
+        }
+        List<String> unmapped = new ArrayList<>();
+        for (String pattern : patterns) {
+            if (pattern == null || pattern.trim().isEmpty()) {
+                continue;
+            }
+            List<String> single = singletonList(pattern);
+            if (mappedActions.stream().noneMatch(action -> matchesAllowList(action, single))) {
+                unmapped.add(pattern);
+            }
+        }
+        return unmapped;
     }
 
     private static boolean matchesAllowList(String actionPath, List<String> allowList) {

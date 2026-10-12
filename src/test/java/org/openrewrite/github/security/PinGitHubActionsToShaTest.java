@@ -1030,4 +1030,21 @@ class PinGitHubActionsToShaTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void includedActionsMustBeCoveredByKnownShas() {
+        assertThat(new PinGitHubActionsToSha(false, null,
+          List.of("codecov/codecov-action", "docker/*", "gradle/actions", "gradle/actions/setup-gradle")).validate().isValid())
+          .isTrue();
+
+        var validated = new PinGitHubActionsToSha(false, null,
+          List.of("codecov/codecov-action", "my-org/my-action", "unknown-org/*", "gradle/actions/unknown")).validate();
+        assertThat(validated.isInvalid()).isTrue();
+        assertThat(validated.failures())
+          .singleElement()
+          .satisfies(failure -> {
+              assertThat(failure.getProperty()).isEqualTo("includedActions");
+              assertThat(failure.getMessage()).endsWith("my-org/my-action, unknown-org/*, gradle/actions/unknown");
+          });
+    }
 }
