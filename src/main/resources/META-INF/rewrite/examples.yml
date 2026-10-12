@@ -1376,7 +1376,6 @@ examples:
   - 'false'
   - 'null'
   - 'null'
-  - 'null'
   sources:
   - before: |
       name: CI

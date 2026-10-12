@@ -17,6 +17,7 @@ package org.openrewrite.github.security;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
+import org.openrewrite.github.table.UnresolvedActionShas;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -32,7 +33,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new PinGitHubActionsToSha(false, null, null, null));
+        spec.recipe(new PinGitHubActionsToSha(false, null, null));
     }
 
     @DocumentExample
@@ -87,7 +88,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldPinOfficialActionsWhenOptedIn() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null)),
           yaml(
             """
               name: CI
@@ -136,7 +137,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldPinGitHubOrgWhenOptedIn() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null)),
           yaml(
             """
               name: Security
@@ -214,6 +215,29 @@ class PinGitHubActionsToShaTest implements RewriteTest {
                   steps:
                     - uses: docker://alpine:latest
                       name: Run in Docker
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void shouldReportActionsMissingFromStaticMap() {
+        rewriteRun(
+          spec -> spec.dataTable(UnresolvedActionShas.Row.class, rows -> assertThat(rows).containsExactly(
+            new UnresolvedActionShas.Row(".github/workflows/ci.yml", "my-org/internal-action", "v1"))),
+          yaml(
+            """
+              name: CI
+              on: push
+              jobs:
+                build:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: my-org/internal-action@v1
+                      name: Internal
+                    - uses: actions/checkout@v4
+                      name: Official
               """,
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
           )
@@ -300,7 +324,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldPinActionWithSubpath() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, null, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, null)),
           yaml(
             """
               name: CI
@@ -553,8 +577,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldOnlyPinAllowListedActions() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            null, List.of("codecov/codecov-action", "docker/login-action"))),
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, List.of("codecov/codecov-action", "docker/login-action"))),
           yaml(
             """
               name: CI
@@ -592,8 +615,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldSupportOrgWildcardInAllowList() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            null, List.of("docker/*"))),
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, List.of("docker/*"))),
           yaml(
             """
               name: CI
@@ -631,8 +653,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void allowListMatchesActionWithSubpathByOwnerRepo() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            null, List.of("gradle/actions"))),
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, List.of("gradle/actions"))),
           yaml(
             """
               name: CI
@@ -662,8 +683,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void allowListWithSubpathPatternIsExact() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            null, List.of("gradle/actions/setup-gradle"))),
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, List.of("gradle/actions/setup-gradle"))),
           yaml(
             """
               name: CI
@@ -697,8 +717,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void allowListPinsOfficialActionWithoutPinOfficialFlag() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(false, null,
-            null, List.of("actions/checkout"))),
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, List.of("actions/checkout"))),
           yaml(
             """
               name: CI
@@ -732,7 +751,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void emptyAllowListBehavesAsDefault() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, null, List.of())),
+          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, List.of())),
           yaml(
             """
               name: CI
@@ -762,7 +781,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldUseMostSpecificPatchTagInComment() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null)),
           yaml(
             """
               name: CI
@@ -792,7 +811,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldKeepAlreadySpecificPatchTagInComment() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null)),
           yaml(
             """
               name: CI
@@ -881,7 +900,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldMixPinnedAndUnpinnedActions() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null, null)),
+          spec -> spec.recipe(new PinGitHubActionsToSha(true, null, null)),
           yaml(
             """
               name: Full Pipeline
@@ -926,7 +945,6 @@ class PinGitHubActionsToShaTest implements RewriteTest {
         final var pinOfficialActions = true;
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(pinOfficialActions,
-            null,
             trustedOwners, null
           )),
           yaml(
@@ -973,7 +991,6 @@ class PinGitHubActionsToShaTest implements RewriteTest {
         final var includedActions = List.of("codecov/codecov-action", "docker/login-action");
         rewriteRun(
           spec -> spec.recipe(new PinGitHubActionsToSha(false,
-            null,
             trustedOwners, includedActions
           )),
           yaml(
@@ -1012,5 +1029,22 @@ class PinGitHubActionsToShaTest implements RewriteTest {
             sourceSpecs -> sourceSpecs.path(".github/workflows/ci.yml")
           )
         );
+    }
+
+    @Test
+    void includedActionsMustBeCoveredByKnownShas() {
+        assertThat(new PinGitHubActionsToSha(false, null,
+          List.of("codecov/codecov-action", "docker/*", "gradle/actions", "gradle/actions/setup-gradle")).validate().isValid())
+          .isTrue();
+
+        var validated = new PinGitHubActionsToSha(false, null,
+          List.of("codecov/codecov-action", "my-org/my-action", "unknown-org/*", "gradle/actions/unknown")).validate();
+        assertThat(validated.isInvalid()).isTrue();
+        assertThat(validated.failures())
+          .singleElement()
+          .satisfies(failure -> {
+              assertThat(failure.getProperty()).isEqualTo("includedActions");
+              assertThat(failure.getMessage()).endsWith("my-org/my-action, unknown-org/*, gradle/actions/unknown");
+          });
     }
 }
