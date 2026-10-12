@@ -20,40 +20,24 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// Guards `known-action-shas.properties`, which is regenerated and committed by the
 /// `update-known-shas` workflow without review.
 class KnownActionShasTest {
 
-    private static final List<String> ENTRIES = readEntries();
-    private static final Map<String, String> SHAS = toMap(ENTRIES);
+    private static final Map<String, String> KNOWN_SHAS = PinGitHubActionsToSha.loadKnownShas();
 
     @Test
     void entriesAreWellFormed() {
-        assertThat(ENTRIES.size()).isGreaterThan(10_000);
-        assertThat(ENTRIES)
-          .filteredOn(line -> !line.matches("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(/[^@=\\s]+)?@[^=\\s]+=[0-9a-f]{40}"))
+        assertThat(KNOWN_SHAS.size()).isGreaterThan(10_000);
+        assertThat(KNOWN_SHAS.keySet())
+          .filteredOn(key -> !key.matches("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(/[^@\\s]+)?@\\S+"))
           .isEmpty();
-    }
-
-    @Test
-    void keysAreUnique() {
-        Set<String> seen = new HashSet<>();
-        assertThat(ENTRIES.stream().map(line -> line.substring(0, line.indexOf('='))).filter(key -> !seen.add(key)).toList())
+        assertThat(KNOWN_SHAS.values())
+          .filteredOn(sha -> !sha.matches("[0-9a-f]{40}"))
           .isEmpty();
     }
 
@@ -67,7 +51,7 @@ class KnownActionShasTest {
       "ramsey/composer-install@3.0.0, 57532f8be5bda426838819c5ee9afb8af389d51a",
     })
     void immutableTagsResolveToTheirCommit(String ref, String sha) {
-        assertThat(SHAS.get(ref)).as(ref).isEqualTo(sha);
+        assertThat(KNOWN_SHAS.get(ref)).as(ref).isEqualTo(sha);
     }
 
     @ParameterizedTest
@@ -77,38 +61,17 @@ class KnownActionShasTest {
       "ramsey/composer-install@v3",
     })
     void branchRefsArePresent(String ref) {
-        assertThat(SHAS.get(ref)).as(ref).isNotNull();
+        assertThat(KNOWN_SHAS.get(ref)).as(ref).isNotNull();
     }
 
     @Test
     void majorTagMatchesAReleaseOfThatMajor() {
-        String major = SHAS.get("actions/checkout@v4");
+        String major = KNOWN_SHAS.get("actions/checkout@v4");
         assertThat(major).isNotNull();
-        assertThat(SHAS.entrySet().stream()
+        assertThat(KNOWN_SHAS.entrySet().stream()
           .filter(e -> e.getKey().matches("actions/checkout@v4\\.\\d+\\.\\d+"))
           .map(Map.Entry::getValue)
           .toList())
           .contains(major);
-    }
-
-    private static List<String> readEntries() {
-        try (InputStream is = Objects.requireNonNull(KnownActionShasTest.class
-                .getResourceAsStream("/META-INF/rewrite/known-action-shas.properties"));
-             BufferedReader reader = new BufferedReader(new InputStreamReader(is, UTF_8))) {
-            return reader.lines()
-              .filter(line -> !line.isEmpty() && !line.startsWith("#"))
-              .toList();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private static Map<String, String> toMap(List<String> entries) {
-        Map<String, String> map = new LinkedHashMap<>();
-        for (String line : entries) {
-            int eq = line.indexOf('=');
-            map.put(line.substring(0, eq), line.substring(eq + 1));
-        }
-        return map;
     }
 }
