@@ -20,13 +20,12 @@ import lombok.Value;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.github.IsGitHubActionsFile;
-import org.openrewrite.ipc.http.HttpSender;
+import org.openrewrite.github.table.UnresolvedActionShas;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -41,7 +40,6 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
 
     private static final Pattern SHA_PATTERN = Pattern.compile("^[a-f0-9]{40}$");
     private static final Pattern USES_PATTERN = Pattern.compile("^([^/@]+/[^/@]+(?:/[^@]+)?)@(.+)$");
-    private static final Pattern SHA_RESPONSE_PATTERN = Pattern.compile("\\A\\s*\\{\\s*\"sha\"\\s*:\\s*\"([a-f0-9]{40})\"");
     private static final Pattern TAG_REF_PATTERN = Pattern.compile("^v?\\d.*");
 
     /**
@@ -58,15 +56,6 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
             required = false)
     @Nullable
     Boolean pinOfficialActions;
-
-    @Option(displayName = "GitHub API token",
-            description = "A GitHub personal access token used to resolve tags/branches to commit SHAs " +
-                    "via the GitHub API. Only needed for actions not found in the built-in static mapping. " +
-                    "Without a token, unauthenticated requests are rate-limited to 60/hour.",
-            required = false,
-            example = "ghp_exampleTokenNotARealToken")
-    @Nullable
-    String githubApiToken;
 
     @Option(displayName = "Trusted owners",
             description = "Optional list of trusted owners/organizations, actions that belong to these organizations " +
@@ -91,13 +80,15 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     String displayName = "Pin GitHub Actions to commit SHAs";
 
     String description = "Replaces mutable tag or branch references in GitHub Actions `uses:` declarations with " +
-                "immutable commit SHAs. A static mapping of well-known actions is checked first; if " +
-                "the action is not found, the GitHub API is used to resolve the reference at recipe " +
-                "run time. By default only third-party actions are pinned; set `pinOfficialActions` " +
+                "immutable commit SHAs, using a built-in mapping of well-known actions. The recipe makes no " +
+                "network calls; references not found in the mapping are left unchanged and listed in a data " +
+                "table. By default only third-party actions are pinned; set `pinOfficialActions` " +
                 "to include actions from the `actions` and `github` organizations. To pin only a " +
                 "specific allow-list of actions, set `includedActions`.";
 
     Set<String> tags = unmodifiableSet( new HashSet<>( Arrays.asList( "github", "actions", "security", "supply-chain" ) ) );
+
+    transient UnresolvedActionShas unresolvedActionShas = new UnresolvedActionShas(this);
 
     @Override
     public Map<String, String> getInitialValue(ExecutionContext ctx) {
@@ -125,7 +116,6 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor(Map<String, String> knownShas) {
         boolean pinOfficial = Boolean.TRUE.equals(pinOfficialActions);
-        String apiToken = githubApiToken;
         List<String> allowList = includedActions == null ? emptyList() : includedActions;
         return Preconditions.check(
                 new IsGitHubActionsFile(),
@@ -225,9 +215,12 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                             return null;
                         }
 
-                        // Resolve SHA: static map first, then API fallback
-                        String sha = resolveToSha(actionPath, ref, ctx);
+                        String sha = knownShas.get(actionPath + "@" + ref);
                         if (sha == null) {
+                            unresolvedActionShas.insertRow(ctx, new UnresolvedActionShas.Row(
+                                    getCursor().firstEnclosingOrThrow(SourceFile.class).getSourcePath().toString(),
+                                    actionPath,
+                                    ref));
                             return null;
                         }
 
@@ -237,54 +230,6 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                                 e.withValue(originalScalar.withValue(actionPath + "@" + sha)),
                                 resolveDisplayTag(knownShas, actionPath, sha, ref)
                         );
-                    }
-
-                    private @Nullable String resolveToSha(String actionPath, String ref, ExecutionContext ctx) {
-                        String key = actionPath + "@" + ref;
-
-                        // 1. Check known SHAs map
-                        String sha = knownShas.get(key);
-                        if (sha != null) {
-                            return sha;
-                        }
-
-                        // 2. Fall back to GitHub API
-                        return resolveViaGitHubApi(actionPath, ref, ctx);
-                    }
-
-                    private @Nullable String resolveViaGitHubApi(String actionPath, String ref, ExecutionContext ctx) {
-                        // Extract owner/repo from the action path (strip subpath if present)
-                        String ownerRepo = actionPath;
-                        int thirdSlash = ownerRepo.indexOf('/', ownerRepo.indexOf('/') + 1);
-                        if (thirdSlash > 0) {
-                            ownerRepo = ownerRepo.substring(0, thirdSlash);
-                        }
-
-                        String apiUrl = "https://api.github.com/repos/" + ownerRepo + "/commits/" + ref;
-
-                        HttpSender httpSender = HttpSenderExecutionContextView.view(ctx).getHttpSender();
-                        HttpSender.Request.Builder request = httpSender.get(apiUrl)
-                                .withHeader("Accept", "application/vnd.github+json")
-                                .withHeader("X-GitHub-Api-Version", "2022-11-28")
-                                .withAuthentication("Bearer", apiToken);
-
-                        try (HttpSender.Response response = httpSender.send(request.build())) {
-                            if (!response.isSuccessful()) {
-                                return null;
-                            }
-                            String responseBody = new String(response.getBodyAsBytes(), StandardCharsets.UTF_8);
-                            Matcher shaMatcher = SHA_RESPONSE_PATTERN.matcher(responseBody);
-                            if (shaMatcher.find()) {
-                                String sha = shaMatcher.group(1);
-                                if (SHA_PATTERN.matcher(sha).matches()) {
-                                    return sha;
-                                }
-                            }
-                        } catch (RuntimeException e) {
-                            // Silently skip actions we can't resolve — don't break the build
-                        }
-
-                        return null;
                     }
                 }
         );
@@ -330,8 +275,8 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
      * version tag of an action, so a moving tag like {@code v4} shares its SHA with the exact patch
      * release it points at (e.g. {@code v4.4.0}). This scans the mapping for tags of the same action
      * resolving to {@code sha} and returns the most-specific one, so a reader sees {@code # v4.4.0}
-     * rather than {@code # v4}. Falls back to the user's original ref when the SHA isn't in the map
-     * (e.g. resolved via the API, or a branch reference).
+     * rather than {@code # v4}. Falls back to the user's original ref when no version tag in the map
+     * shares the SHA (e.g. a branch reference such as {@code stable}).
      */
     static String resolveDisplayTag(Map<String, String> knownShas, String actionPath, String sha, String originalRef) {
         String prefix = actionPath + "@";
