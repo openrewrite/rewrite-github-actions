@@ -49,8 +49,6 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     private static final Set<String> OFFICIAL_ORGS = unmodifiableSet(
             new HashSet<>(Arrays.asList("actions", "github")));
 
-    private static final Map<String, String> KNOWN_SHAS = loadKnownShas();
-
     @Option(displayName = "Pin official actions",
             description = "When set to `true`, also pins actions from official GitHub organizations " +
                     "(e.g., `actions/*`, `github/*`). Defaults to `false`, meaning only third-party " +
@@ -98,7 +96,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
     public Validated<Object> validate() {
         Validated<Object> validated = super.validate();
         if (includedActions != null) {
-            List<String> unmapped = unmappedPatterns(includedActions);
+            List<String> unmapped = unmappedPatterns(includedActions, loadKnownShas());
             if (!unmapped.isEmpty()) {
                 validated = validated.and(Validated.invalid("includedActions", unmapped,
                         "must only list actions covered by the built-in mapping of known SHAs, but found no mapping for: " +
@@ -110,7 +108,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
 
     @Override
     public Map<String, String> getInitialValue(ExecutionContext ctx) {
-        return KNOWN_SHAS;
+        return loadKnownShas();
     }
 
     @Override
@@ -329,9 +327,9 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
         return emptyMap();
     }
 
-    private static List<String> unmappedPatterns(List<String> patterns) {
+    private static List<String> unmappedPatterns(List<String> patterns, Map<String, String> knownShas) {
         Set<String> mappedActions = new HashSet<>();
-        for (String key : KNOWN_SHAS.keySet()) {
+        for (String key : knownShas.keySet()) {
             mappedActions.add(key.substring(0, key.lastIndexOf('@')));
         }
         List<String> unmapped = new ArrayList<>();
