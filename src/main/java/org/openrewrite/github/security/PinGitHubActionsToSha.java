@@ -21,6 +21,7 @@ import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.github.IsGitHubActionsFile;
 import org.openrewrite.github.table.UnresolvedActionShas;
+import org.openrewrite.internal.StringUtils;
 import org.openrewrite.yaml.YamlIsoVisitor;
 import org.openrewrite.yaml.tree.Yaml;
 
@@ -334,7 +335,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
         }
         List<String> unmapped = new ArrayList<>();
         for (String pattern : patterns) {
-            if (pattern == null || pattern.trim().isEmpty()) {
+            if (StringUtils.isBlank( pattern )) {
                 continue;
             }
             List<String> single = singletonList(pattern);

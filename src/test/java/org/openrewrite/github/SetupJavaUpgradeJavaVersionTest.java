@@ -29,6 +29,57 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
         spec.recipe(new SetupJavaUpgradeJavaVersion(21));
     }
 
+    @DocumentExample
+    @Test
+    void updatesOldMajorVersion() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              jobs:
+                build:
+                  steps:
+                    - uses: actions/checkout@v2
+                      with:
+                        fetch-depth: 0
+                    - name: set-up-temurin-jdk
+                      uses: actions/setup-java@v2.3.0
+                      with:
+                        java-version: "11"
+                        distribution: temurin
+                    - name: set-up-zulu-jdk
+                      uses: actions/setup-java@v3
+                      with:
+                        java-version: "19"
+                        distribution: zulu
+                    - name: build
+                      run: ./gradlew build test
+              """,
+            """
+              jobs:
+                build:
+                  steps:
+                    - uses: actions/checkout@v2
+                      with:
+                        fetch-depth: 0
+                    - name: set-up-temurin-jdk
+                      uses: actions/setup-java@v2.3.0
+                      with:
+                        java-version: "21"
+                        distribution: temurin
+                    - name: set-up-zulu-jdk
+                      uses: actions/setup-java@v3
+                      with:
+                        java-version: "21"
+                        distribution: zulu
+                    - name: build
+                      run: ./gradlew build test
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
     @Test
     void updatesReferencedMatrixInItsOwnJob() {
         rewriteRun(
@@ -98,57 +149,6 @@ class SetupJavaUpgradeJavaVersionTest implements RewriteTest {
                     - uses: actions/setup-java@v4
                       with:
                         java-version: ${{ inputs.java || matrix.java }}
-              """,
-            spec -> spec.path(".github/workflows/ci.yml")
-          )
-        );
-    }
-
-    @DocumentExample
-    @Test
-    void updatesOldMajorVersion() {
-        rewriteRun(
-          //language=yaml
-          yaml(
-            """
-              jobs:
-                build:
-                  steps:
-                    - uses: actions/checkout@v2
-                      with:
-                        fetch-depth: 0
-                    - name: set-up-temurin-jdk
-                      uses: actions/setup-java@v2.3.0
-                      with:
-                        java-version: "11"
-                        distribution: temurin
-                    - name: set-up-zulu-jdk
-                      uses: actions/setup-java@v3
-                      with:
-                        java-version: "19"
-                        distribution: zulu
-                    - name: build
-                      run: ./gradlew build test
-              """,
-            """
-              jobs:
-                build:
-                  steps:
-                    - uses: actions/checkout@v2
-                      with:
-                        fetch-depth: 0
-                    - name: set-up-temurin-jdk
-                      uses: actions/setup-java@v2.3.0
-                      with:
-                        java-version: "21"
-                        distribution: temurin
-                    - name: set-up-zulu-jdk
-                      uses: actions/setup-java@v3
-                      with:
-                        java-version: "21"
-                        distribution: zulu
-                    - name: build
-                      run: ./gradlew build test
               """,
             spec -> spec.path(".github/workflows/ci.yml")
           )

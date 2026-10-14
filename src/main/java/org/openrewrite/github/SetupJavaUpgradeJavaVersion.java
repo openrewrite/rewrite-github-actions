@@ -20,9 +20,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
+import org.openrewrite.internal.ListUtils;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlVisitor;
-import org.openrewrite.internal.ListUtils;
 import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.HashSet;

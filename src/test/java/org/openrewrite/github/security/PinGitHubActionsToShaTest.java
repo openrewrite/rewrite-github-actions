@@ -841,7 +841,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void resolveDisplayTagPicksMostSpecificTagForSha() {
         // given
-        Map<String, String> knownShas = Map.of(
+        var knownShas = Map.of(
           "actions/checkout@v2", "0717577d45739eb3c851188b29f50ed6c0b2194e",
           "actions/checkout@v2.8.0", "0717577d45739eb3c851188b29f50ed6c0b2194e",
           "actions/checkout@v2.7.0", "ee0669bd1cc54295c223e0bb666b733df41de1c5");
@@ -857,7 +857,7 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void resolveDisplayTagFallsBackToOriginalRefWhenShaUnknown() {
         // given
-        Map<String, String> knownShas = Map.of(
+        var knownShas = Map.of(
           "actions/checkout@v2", "0717577d45739eb3c851188b29f50ed6c0b2194e");
         String today = LocalDate.now(ZoneOffset.UTC).toString();
 

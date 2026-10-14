@@ -849,6 +849,39 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.SetupJavaCaching
+examples:
+- description: '`SetupJavaCachingTest#setupJavaCachingInCompositeAction`'
+  sources:
+  - before: |
+      name: Build
+      description: Composite action
+      runs:
+        using: composite
+        steps:
+          - uses: actions/setup-java
+            with:
+              distribution: 'temurin'
+              java-version: '11'
+          - run: ./gradlew build
+            shell: bash
+    after: |
+      name: Build
+      description: Composite action
+      runs:
+        using: composite
+        steps:
+          - uses: actions/setup-java
+            with:
+              distribution: 'temurin'
+              java-version: '11'
+              cache: 'gradle'
+          - run: ./gradlew build
+            shell: bash
+    path: .github/actions/build/action.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.SetupJavaUpgradeJavaVersion
 examples:
 - description: '`SetupJavaUpgradeJavaVersionTest#updatesOldMajorVersion`'
