@@ -82,8 +82,7 @@ public class RefVersionMismatch extends Recipe {
 
             String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
 
-            // Only check repository actions (not local or docker actions)
-            if (usesValue.startsWith("./") || usesValue.startsWith("docker://")) {
+            if (YamlHelper.isLocalOrDockerUses(usesValue)) {
                 return entry;
             }
 

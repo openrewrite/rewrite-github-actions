@@ -156,6 +156,27 @@ class UnpinnedActionsTest implements RewriteTest {
     }
 
     @Test
+    void shouldNotFlagSelfRepositoryActions() {
+        rewriteRun(
+          yaml(
+            """
+              name: Test Workflow
+              on: push
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: $/actions/my-action
+                    - uses: $/.github/actions/custom
+                call:
+                  uses: $/.github/workflows/reusable.yml
+              """,
+            sourceSpecs -> sourceSpecs.path(".github/workflows/test.yml")
+          )
+        );
+    }
+
+    @Test
     void shouldNotFlagDockerAction() {
         rewriteRun(
           yaml(

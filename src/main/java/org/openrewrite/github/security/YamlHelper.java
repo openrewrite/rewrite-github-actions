@@ -86,4 +86,12 @@ final class YamlHelper {
         return findScalarValue(parentMapping, childKey);
     }
 
+    /**
+     * Whether a {@code uses:} value refers to the same repository ({@code ./…}, or {@code $/…} as
+     * introduced with workflow dependency lockfiles) or to a Docker image, rather than to an
+     * {@code owner/repo@ref} action or reusable workflow.
+     */
+    public static boolean isLocalOrDockerUses(String usesValue) {
+        return usesValue.startsWith("./") || usesValue.startsWith("$/") || usesValue.startsWith("docker://");
+    }
 }

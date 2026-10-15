@@ -184,8 +184,7 @@ public class PinGitHubActionsToSha extends ScanningRecipe<Map<String, String>> {
                         }
                         String usesValue = ((Yaml.Scalar) e.getValue()).getValue();
 
-                        // Skip local actions and docker references
-                        if (usesValue.startsWith("./") || usesValue.startsWith("docker://")) {
+                        if (YamlHelper.isLocalOrDockerUses(usesValue)) {
                             return null;
                         }
 

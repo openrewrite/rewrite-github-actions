@@ -92,8 +92,7 @@ public class Obfuscation extends Recipe {
 
             String usesValue = ((Yaml.Scalar) entry.getValue()).getValue();
 
-            // Skip local actions (start with ./) and docker actions
-            if (usesValue.startsWith("./") || usesValue.startsWith("docker://")) {
+            if (YamlHelper.isLocalOrDockerUses(usesValue)) {
                 return entry;
             }
 

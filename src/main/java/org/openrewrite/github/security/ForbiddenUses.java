@@ -151,8 +151,7 @@ public class ForbiddenUses extends Recipe {
         }
 
         private @Nullable String checkForForbiddenAction(String usesValue) {
-            // Skip local actions and Docker actions
-            if (usesValue.startsWith("./") || usesValue.startsWith("docker://")) {
+            if (YamlHelper.isLocalOrDockerUses(usesValue)) {
                 return null;
             }
 
