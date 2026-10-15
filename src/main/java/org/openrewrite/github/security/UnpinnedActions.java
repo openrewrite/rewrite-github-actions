@@ -85,13 +85,7 @@ public class UnpinnedActions extends Recipe {
         }
 
         private boolean isUnpinned(String usesValue) {
-            // Skip local actions (start with ./)
-            if (usesValue.startsWith("./")) {
-                return false;
-            }
-
-            // Skip Docker actions (start with docker://)
-            if (usesValue.startsWith("docker://")) {
+            if (YamlHelper.isLocalOrDockerUses(usesValue)) {
                 return false;
             }
 
