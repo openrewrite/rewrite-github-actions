@@ -29,7 +29,6 @@ import org.openrewrite.yaml.YamlVisitor;
 import org.openrewrite.yaml.search.FindKey;
 import org.openrewrite.yaml.tree.Yaml;
 
-import java.util.Objects;
 import java.util.Set;
 
 @EqualsAndHashCode(callSuper = false)
@@ -87,10 +86,8 @@ public class UpgradeSlackNotificationVersion2 extends Recipe {
             d = (Yaml.Documents) new DeleteKey(jsonPath + ".env.SLACK_BOT_TOKEN", null)
                     .getVisitor().visitNonNull(d, ctx);
 
-            d = (Yaml.Documents) new ChangeValue(jsonPath + ".uses", "slackapi/slack-github-action@v2.0.0", null)
+            return (Yaml.Documents) new ChangeValue(jsonPath + ".uses", "slackapi/slack-github-action@v2.0.0", null)
                     .getVisitor().visitNonNull(d, ctx);
-
-            return autoFormat(d, ctx, Objects.requireNonNull(getCursor().getParent()));
         }
     }
 }
