@@ -118,9 +118,9 @@ public class SetupJavaUpgradeJavaVersion extends Recipe {
                             return axis;
                         }
                         Set<String> seen = new HashSet<>();
-                        List<Yaml.Sequence.Entry> distinct = ListUtils.map(upgraded, item ->
-                                item.getBlock() instanceof Yaml.Scalar &&
-                                        !seen.add(((Yaml.Scalar) item.getBlock()).getValue()) ? null : item);
+                        List<Yaml.Sequence.Entry> distinct = ListUtils.filter(upgraded, item ->
+                                !(item.getBlock() instanceof Yaml.Scalar &&
+                                        !seen.add(((Yaml.Scalar) item.getBlock()).getValue())));
                         if (distinct.size() != upgraded.size()) {
                             String trailingComma = upgraded.get(upgraded.size() - 1).getTrailingCommaPrefix();
                             distinct = ListUtils.mapLast(distinct, item -> item.withTrailingCommaPrefix(trailingComma));
