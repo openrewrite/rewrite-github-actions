@@ -17,8 +17,10 @@ package org.openrewrite.github;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.semver.Semver;
+import org.openrewrite.yaml.AppendToSequenceVisitor;
 import org.openrewrite.yaml.JsonPathMatcher;
 import org.openrewrite.yaml.YamlVisitor;
 import org.openrewrite.yaml.trait.BlockScalar;
@@ -39,6 +41,8 @@ import static org.openrewrite.semver.Semver.Ecosystem.NODE;
 public class SetupPythonUpgradePythonVersion extends Recipe {
 
     private static final JsonPathMatcher PYTHON_VERSION = new JsonPathMatcher("..steps[?(@.uses =~ 'actions/setup-python@v*.*')].with.python-version");
+    private static final JsonPathMatcher JOB = new JsonPathMatcher("$.jobs.*");
+    private static final Pattern MATRIX_REFERENCE = Pattern.compile("\\$\\{\\{\\s*matrix\\.([a-zA-Z_][a-zA-Z0-9_-]*)\\s*}}");
     private static final Pattern MAJOR_MINOR = Pattern.compile("[0-9]+\\.[0-9]+");
 
     // Concrete versions only; `Semver.isVersion` also accepts ranges such as `3.x` and `3.7 - 3.9`
@@ -55,7 +59,8 @@ public class SetupPythonUpgradePythonVersion extends Recipe {
 
     String displayName = "Upgrade `actions/setup-python` `python-version`";
 
-    String description = "Update the Python version used by `actions/setup-python` if it is below the expected version number.";
+    String description = "Update the Python version used by `actions/setup-python` if it is below the expected version number. " +
+            "A `strategy.matrix` axis that feeds `python-version` gets the expected version added when none of its values reach it.";
 
     Set<String> tags = new LinkedHashSet<>(Arrays.asList("github", "python", "deprecation"));
 
@@ -79,6 +84,11 @@ public class SetupPythonUpgradePythonVersion extends Recipe {
                 }
 
                 Yaml.Scalar currentValue = (Yaml.Scalar) entry.getValue();
+                Matcher matrixReference = MATRIX_REFERENCE.matcher(currentValue.getValue());
+                if (matrixReference.matches()) {
+                    addTargetToMatrixAxis(matrixReference.group(1));
+                    return super.visitMappingEntry(entry, ctx);
+                }
                 // A block scalar's raw value carries the block envelope, so its body is read and written through the trait
                 Optional<BlockScalar> blockScalar = new BlockScalar.Matcher().get(currentValue, getCursor());
                 if (blockScalar.isPresent()) {
@@ -95,12 +105,54 @@ public class SetupPythonUpgradePythonVersion extends Recipe {
                 return super.visitMappingEntry(entry, ctx);
             }
 
+            private void addTargetToMatrixAxis(String axis) {
+                for (Cursor c = getCursor(); c != null; c = c.getParent()) {
+                    if (c.getValue() instanceof Yaml.Mapping.Entry && JOB.matches(c)) {
+                        String job = ((Yaml.Mapping.Entry) c.getValue()).getKey().getValue();
+                        JsonPathMatcher axisValues = new JsonPathMatcher("$.jobs." + job + ".strategy.matrix." + axis);
+                        doAfterVisit(new AppendToSequenceVisitor(axisValues, version, null, false) {
+                            @Override
+                            protected boolean checkExistingSequenceValues(Yaml.Sequence seq, Cursor cursor) {
+                                return !matrixAxisReachesTarget(seq, cursor.getParentOrThrow().getValue(), axis);
+                            }
+                        });
+                        return;
+                    }
+                }
+            }
+
             private boolean hasPythonVersionFile() {
-                Yaml.Mapping with = getCursor().getParentOrThrow().getValue();
-                return with.getEntries().stream()
-                        .anyMatch(e -> "python-version-file".equals(e.getKey().getValue()));
+                return value(getCursor().getParentOrThrow().getValue(), "python-version-file") != null;
             }
         });
+    }
+
+    private boolean matrixAxisReachesTarget(Yaml.Sequence values, Yaml.Mapping matrix, String axis) {
+        if (values.getEntries().stream().anyMatch(e -> reachesTarget(e.getBlock()))) {
+            return true;
+        }
+        // An `include` combination may already supply the target version for this axis, and an expression may supply anything
+        Yaml.Block include = value(matrix, "include");
+        if (!(include instanceof Yaml.Sequence)) {
+            return include != null;
+        }
+        return ((Yaml.Sequence) include).getEntries().stream().anyMatch(combination ->
+                combination.getBlock() instanceof Yaml.Mapping &&
+                        reachesTarget(value((Yaml.Mapping) combination.getBlock(), axis)));
+    }
+
+    private static Yaml.@Nullable Block value(Yaml.Mapping mapping, String key) {
+        return mapping.getEntries().stream().filter(e -> key.equals(e.getKey().getValue()))
+                .map(Yaml.Mapping.Entry::getValue).findFirst().orElse(null);
+    }
+
+    private boolean reachesTarget(Yaml.@Nullable Block candidate) {
+        if (!(candidate instanceof Yaml.Scalar)) {
+            return false;
+        }
+        String value = ((Yaml.Scalar) candidate).getValue();
+        return (CPYTHON_VERSION.matcher(value).matches() || Semver.validate(value, null, NODE).isValid()) &&
+                !isBelowTarget(value);
     }
 
     private boolean isBelowTarget(String currentVersion) {
