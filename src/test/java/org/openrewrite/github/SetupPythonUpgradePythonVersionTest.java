@@ -447,6 +447,178 @@ class SetupPythonUpgradePythonVersionTest implements RewriteTest {
     }
 
     @Test
+    void addTargetVersionToReferencedMatrixAxis() {
+        rewriteRun(
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                flow:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python-version: ['3.10', '3.11', '3.12']
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: ${{ matrix.python-version }}
+                block:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python:
+                        - "3.12"
+                        - "3.13"
+                        - "3.13t"
+                        - pypy3.10
+                      os: [ubuntu-latest, windows-latest]
+                      exclude:
+                        - python: pypy3.10
+                          os: windows-latest
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: ${{matrix.python}}
+                single:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python: [ 3.9 ]
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: ${{ matrix.python }}
+              """,
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                flow:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python-version: ['3.10', '3.11', '3.12', '3.14']
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: ${{ matrix.python-version }}
+                block:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python:
+                        - "3.12"
+                        - "3.13"
+                        - "3.13t"
+                        - pypy3.10
+                        - 3.14
+                      os: [ubuntu-latest, windows-latest]
+                      exclude:
+                        - python: pypy3.10
+                          os: windows-latest
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: ${{matrix.python}}
+                single:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python: [ 3.9, 3.14 ]
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: ${{ matrix.python }}
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
+    void preserveUnaffectedMatrixAxes() {
+        rewriteRun(
+          yaml(
+            """
+              name: CI
+              on:
+                pull_request:
+              jobs:
+                current:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python: ['3.12', '3.14']
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: ${{ matrix.python }}
+                newer:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python: ['3.12', '3.15']
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: ${{ matrix.python }}
+                range:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python: ['3.10', '3.x']
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: ${{ matrix.python }}
+                included:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python: ['3.12']
+                      include:
+                        - python: '3.14'
+                          experimental: true
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: ${{ matrix.python }}
+                versionFile:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python: ['3.12']
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: ${{ matrix.python }}
+                        python-version-file: .python-version
+                unreferenced:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python: ['3.10']
+                  steps:
+                    - run: echo ${{ matrix.python }}
+                dynamic:
+                  runs-on: ubuntu-latest
+                  strategy:
+                    matrix:
+                      python: ${{ fromJSON(inputs.versions) }}
+                  steps:
+                    - uses: actions/setup-python@v5
+                      with:
+                        python-version: ${{ matrix.python }}
+              """,
+            spec -> spec.path(".github/workflows/ci.yml")
+          )
+        );
+    }
+
+    @Test
     void ignoreOtherActionsAndNonWorkflowFiles() {
         rewriteRun(
           yaml(
