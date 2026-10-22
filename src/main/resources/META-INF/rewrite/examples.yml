@@ -737,6 +737,42 @@ examples:
     language: yaml
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.github.SetupGoUpgradeGoVersion
+examples:
+- description: '`SetupGoUpgradeGoVersionTest#upgradeGoVersion`'
+  parameters:
+  - '1.26'
+  sources:
+  - before: |
+      name: CI
+      on:
+        pull_request:
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-go@v6
+              with:
+                go-version: '1.22'
+            - run: go test ./...
+    after: |
+      name: CI
+      on:
+        pull_request:
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-go@v6
+              with:
+                go-version: '1.26'
+            - run: go test ./...
+    path: .github/workflows/ci.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.github.SetupJavaAdoptOpenJDKToTemurin
 examples:
 - description: '`SetupJavaAdoptOpenJDKToTemurinTest#actionsSetupJavaAdoptOpenJDKToTemurin`'
