@@ -42,7 +42,7 @@ recipeList:
       yaml: |-
         workflow_dispatch:
       acceptTheirs: true
-      fileMatcher: '.github/workflows/*.{yml,yaml}'
+      filePattern: '.github/workflows/*.{yml,yaml}'
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.github.AddMergeGroupTrigger
