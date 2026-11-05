@@ -117,7 +117,7 @@ final class OfficialActionVersions {
     }
 
     private static int compare(String a, String b) {
-        return LATEST_RELEASE.compare(unprefixed(a), unprefixed(b));
+        return LATEST_RELEASE.compare(null, unprefixed(a), unprefixed(b));
     }
 
     private static String unprefixed(String version) {
