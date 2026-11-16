@@ -324,7 +324,6 @@ class PinGitHubActionsToShaTest implements RewriteTest {
     @Test
     void shouldPinActionWithSubpath() {
         rewriteRun(
-          spec -> spec.recipe(new PinGitHubActionsToSha(false, null, null)),
           yaml(
             """
               name: CI
